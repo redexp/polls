@@ -1,0 +1,45 @@
+---
+import Main from '../layouts/Main.astro';
+import {LoginButton} from '../components/LoginModal.jsx';
+import {TITLE} from '../const';
+
+const active = (await Astro.glob('../votes/active/*.mdx')).map(item => item.Content);
+const inactive = []; //await Astro.glob('../votes/past/*.mdx');
+---
+
+<Main>
+    <section class="text-center mb-5">
+        <h1 class="display-4 fw-bold">{TITLE}</h1>
+        <p class="lead mb-4 text-start">
+            Цим проєктом Громадська організація «Черкаський інститут міста» започатковує новий підхід до проведення соціологічних досліджень, які з часом мають замінити старі методи вивчення громадської думки.
+        </p>
+        <p class="lead text-start">
+            Завдяки цифровим інструментам соціологічні дослідження можуть стати:
+        </p>
+        <ol class="lead text-start">
+            <li>більш масовими, а значить — якіснішими, з меншими статистичними похибками, відображати суспільну думку, бо тепер опитуваннями легше досягти радикально більшої аудиторії</li>
+            <li>дешевшими та швидшими, бо вже не потрібно утримувати великі команди інтерв’юерів, зустрічатися з опитуваними особисто і вручну аналізувати анкети</li>
+            <li>достовірнішими, бо застосування цифрового підпису та інших цифрових ідентифікаторів унеможливлює надання неправдивих даних людьми, які погодилися взяти участь в опитуванні та відсіяти людей, які не є цільовою групою опитування за місцем проживання, уникнути фальшування, дублювання опитувальників</li>
+        </ol>
+
+        <p class="lead text-start">
+            Ідентифікуйте себе за добомогою сервісу BankID та зможете взяти участь у поточних голосуваннях.
+        </p>
+
+        <LoginButton client:load/>
+    </section>
+
+    {active.length > 0 &&
+    <section>
+        <h2 class="display-5 text-center mb-5">Поточні голосування</h2>
+
+        {active.map(Content => <Content/>)}
+    </section>}
+
+    {inactive.length > 0 &&
+    <section>
+        <h2 class="display-5 text-center mb-5">Минулі голосування</h2>
+
+        {inactive.map(Content => <Content/>)}
+    </section>}
+</Main>

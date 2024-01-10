@@ -1,0 +1,10 @@
+---
+import SummaryLoader from './SummaryLoader.jsx';
+
+const {name} = Astro.props;
+---
+
+<SummaryLoader
+	client:load
+	name={name}
+/>

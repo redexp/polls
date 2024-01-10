@@ -1,0 +1,14 @@
+---
+import AnswerLoader from './AnswerLoader.jsx';
+
+const {type, name, value} = Astro.props;
+---
+
+<AnswerLoader
+	client:load
+	type={type}
+	name={name}
+	value={value}
+>
+	<slot/>
+</AnswerLoader>

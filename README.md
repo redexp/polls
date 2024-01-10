@@ -1,2 +1,0 @@
-# vote
-site for voting

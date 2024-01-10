@@ -1,0 +1,43 @@
+.answer {
+	.form-check {
+		--bs-bg-opacity: 0;
+
+		&:hover,
+		&:has(input:checked) {
+			--bs-bg-opacity: 0.1;
+		}
+
+		&, > * {
+			cursor: pointer;
+		}
+	}
+}
+
+
+.header-link {
+	float: left;
+	margin-left: -45px;
+	text-decoration: none;
+
+	opacity: 0;
+	transition: opacity 150ms;
+
+	&:before {
+		content: '🔗';
+	}
+}
+
+h1, h2, h3, h4 {
+	&:hover .header-link {
+		opacity: 1;
+	}
+}
+
+@media only screen and (max-width: 600px) {
+	.header-link {
+		opacity: 1;
+		font-size: 14px;
+		margin-left: -21px;
+		margin-top: 5px;
+	}
+}
