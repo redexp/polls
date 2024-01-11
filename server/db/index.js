@@ -4,12 +4,12 @@ import {URL} from 'url';
 import {resolve} from 'path';
 
 const url = new URL(import.meta.url);
-url.pathname = resolve(url.pathname, '..', 'database.sqlite');
+url.pathname = resolve(url.pathname, '..', process.env.DB_PATH || 'database.sqlite');
 
 const db = knex({
 	client: Client,
 	connection: {
-		filename: process.env.DB_PATH || url.toString()
+		filename: url.toString()
 	},
 	useNullAsDefault: true,
 });

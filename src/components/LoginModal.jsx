@@ -1,5 +1,4 @@
 import {batch, createEffect} from "solid-js";
-import {Switch, Match} from 'solid-js/web';
 import {createMutable} from "solid-js/store";
 import Modal, {Header, Body, Footer} from './Modal.jsx';
 import appState, {setAppState} from './appState.jsx';
@@ -76,14 +75,10 @@ export function LoginButton({onClick}) {
 				};
 			}}
 		>
-			<Switch>
-				<Match when={!appState.bankId}>
-					<span class="me-2">Увійти за допомогою</span>
-				</Match>
-				<Match when={!!appState.bankId}>
-					<span class="me-2">Вийти з</span>
-				</Match>
-			</Switch>
+			{!appState.bankId ?
+				<span class="me-2">Увійти за допомогою</span> :
+				<span class="me-2">Вийти з</span>
+			}
 
 			<img src="/bankid.png" height={30} alt="BankID" style={{"vertical-align": "top"}}/>
 		</button>

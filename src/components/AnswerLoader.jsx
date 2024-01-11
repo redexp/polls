@@ -1,9 +1,10 @@
 import {createResource, createSignal} from "solid-js";
-import {Show} from 'solid-js/web';
+import {isServer, Show} from 'solid-js/web';
 import {debounce} from '@solid-primitives/scheduled';
 import {onAuth} from './LoginModal.jsx';
 import appState, {reloadStats} from './appState.jsx';
 import ajax from './ajax.jsx';
+import {addNotification} from './Notifications.jsx';
 
 export default function AnswerLoader({type = 'radio', name, value, children}) {
     type = (
@@ -17,7 +18,16 @@ export default function AnswerLoader({type = 'radio', name, value, children}) {
     const id = 'answer-' + Math.round(Math.random() * 10000);
     const [page, setPage] = createSignal(0);
     const [query, setQuery] = createSignal('');
-    const [data] = createResource(() => [page(), query()], ([p, q]) => getAnswers(p, q, name, value));
+    const [data] = createResource(
+        () => [page(), query()],
+        ([p, q]) => getAnswers(p, q, name, value),
+        {
+            initialValue: {
+                pages: 0,
+                rows: [],
+            }
+        }
+    );
 
     const [stat] = createResource(
         () => [appState.bankId, appState.reloadStatsSignal],
@@ -25,7 +35,7 @@ export default function AnswerLoader({type = 'radio', name, value, children}) {
         {
             initialValue: {
                 count: 0,
-                percent: '0%',
+                percent: 0,
                 winner: false,
                 checked: false,
             }
@@ -37,13 +47,24 @@ export default function AnswerLoader({type = 'radio', name, value, children}) {
         setQuery(v);
     }, 300);
 
-    const onInputChange = (e) => {
+    const onChangeAnswer = (e) => {
         const input = e.target;
         const {checked} = e.target;
 
-        onAuth(async (success) => {
+        onAuth((success) => {
             if (success) {
-                postAnswer({name, value, checked}).then(reloadStats, reloadStats);
+                postAnswer({name, value, checked})
+                .then(function (res) {
+                    reloadStats();
+
+                    if (res.is_new) {
+                        addNotification({
+                            type: 'success',
+                            text: 'Ви можете змінити свою відповідь на протязі 10 хвилин',
+                        });
+                    }
+                })
+                .catch(reloadStats);
             }
             else {
                 input.checked = !checked;
@@ -61,7 +82,7 @@ export default function AnswerLoader({type = 'radio', name, value, children}) {
                     value={value}
                     checked={stat().checked}
                     id={id}
-                    onChange={onInputChange}
+                    onChange={onChangeAnswer}
                 />
 
                 <label class="form-check-label" htmlFor={id}>
@@ -76,9 +97,9 @@ export default function AnswerLoader({type = 'radio', name, value, children}) {
                             "progress-bar overflow-visible": true,
                             "bg-success": stat().winner,
                         }}
-                        style={{width: stat().percent, "min-width": '40px'}}
+                        style={{width: stat().percent + '%', "min-width": '40px'}}
                     >
-                        {stat().percent + ' (' + stat().count + ')'}
+                        {stat().percent + '% (' + stat().count + ')'}
                     </div>
                 </div>
 
@@ -96,7 +117,7 @@ export default function AnswerLoader({type = 'radio', name, value, children}) {
                 </Show>
             </div>
 
-            <Show when={page() > 0 && !!data()}>
+            <Show when={page() > 0}>
                 <table class="table table-sm my-5">
                     <thead>
                     <tr>
@@ -180,7 +201,7 @@ let statsPromise = null;
 /**
  * @param {string} vote
  * @param {string} [value]
- * @return {Promise<{count: number, percent: string, winner: boolean, checked: boolean}>}
+ * @return {Promise<{count: number, percent: number, winner: boolean, checked: boolean}>}
  */
 export async function getVoteStats(vote, value) {
     if (!statsVotes.includes(vote)) {
@@ -204,18 +225,18 @@ export async function getVoteStats(vote, value) {
 
     const stats = await statsPromise;
 
+    if (!stats[vote]) {
+        stats[vote] = {};
+    }
+
     if (!value) return stats[vote];
 
-    const data = stats[vote][value] || {
+    return stats[vote][value] || {
         count: 0,
         percent: 0,
         winner: false,
         checked: false,
     };
-
-    data.percent += '%';
-
-    return data;
 }
 
 /**
@@ -226,7 +247,7 @@ export async function getVoteStats(vote, value) {
  * @return {Promise<{pages: number, rows: Array<{number: number, name: string}>}>}
  */
 async function getAnswers(page, query, vote, value) {
-    if (!page) return {rows: [], pages: 0};
+    if (!page || isServer) return {rows: [], pages: 0};
 
     return ajax('/answers', {
         page,

@@ -1,11 +1,23 @@
 import {batch} from 'solid-js';
 import {createMutable} from 'solid-js/store';
+import {isServer} from "solid-js/web";
 
 const appState = createMutable({
-	name: getState('name') || '',
-	bankId: getState('bankId') || '',
+	name: '',
+	bankId: '',
 	reloadStatsSignal: Math.random(),
 });
+
+if (!isServer) {
+	requestAnimationFrame(() => {
+		if (!getState('bankId')) return;
+
+		setAppState({
+			bankId: getState('bankId'),
+			name: getState('name'),
+		});
+	});
+}
 
 export default appState;
 

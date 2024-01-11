@@ -4,18 +4,23 @@ import moment from 'moment';
 import Answers from './models/answers.js';
 import Votes from './models/votes.js';
 
+const IS_DEV = process.env.NODE_ENV !== 'production';
+
 const app = express();
 
-app.use(cors({
-	origin(origin, next) {
-		if (origin === 'http://localhost:4321') {
-			next(null, true);
+if (IS_DEV) {
+	app.use(cors({
+		origin(origin, next) {
+			if (origin === 'http://localhost:4321') {
+				next(null, true);
+			}
+			else {
+				next(new Error('Not allowed'));
+			}
 		}
-		else {
-			next(new Error('Not allowed'));
-		}
-	}
-}));
+	}));
+}
+
 app.use(express.json());
 
 app.post('/answers', function (req, res, next) {
@@ -65,6 +70,11 @@ app.post('/answer', function (req, res, next) {
 		return;
 	}
 
+	const create = async () => {
+		await Answers.create({bank_id, vote, value, name});
+		return {is_new: true};
+	};
+
 	Answers
 	.findAll({bank_id, vote})
 	.then(async (items) => {
@@ -88,22 +98,21 @@ app.post('/answer', function (req, res, next) {
 				}
 			}
 			else if (checked) {
-				await Answers.create({bank_id, vote, value, name});
+				return create();
 			}
 		}
 		else {
+			const answer = items.find(item => item.value === value);
+
 			if (checked) {
-				if (items.some(item => item.value === value)) return;
+				if (answer) return;
 
-				await Answers.create({bank_id, vote, value, name});
+				return create();
 			}
-			else {
-				const answer = items.find(item => item.value === value);
 
-				if (!answer) return;
+			if (!answer) return;
 
-				await Answers.remove(answer.id);
-			}
+			await Answers.remove(answer.id);
 		}
 	})
 	.then(function (data = true) {
@@ -137,4 +146,8 @@ app.use(function (err, req, res, next) {
 	res.sendStatus(500);
 });
 
-app.listen(8000, () => console.log('http://locahost:8000'));
+const PORT = Number(process.env.APP_PORT) || 8000;
+
+app.listen(PORT, () => {
+	console.log('http://locahost:' + PORT);
+});

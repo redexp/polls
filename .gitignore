@@ -1,6 +1,7 @@
 .idea
 
 server/db/config/index.js
+deploy.sh
 
 # build output
 dist/

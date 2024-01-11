@@ -50,7 +50,7 @@ export default function BankIdTestModal() {
 
 			<Footer>
 				<button
-					class="btn btn-secondary"
+					class="btn btn-primary"
 					onClick={onSubmit}
 				>
 					OK
