@@ -18,13 +18,13 @@ export default defineConfig({
 
 function transform() {
 	const mdxRule = /\.mdx$/i;
-	const votesDirRule = /\/votes\/(active|past)$/;
+	const pollsDirRule = /\/polls/;
 	const answerRule = /^(check|dot)$/;
 
 	return (tree, file) => {
 		const {basename, dirname} = file;
 
-		if (!mdxRule.test(basename) || !votesDirRule.test(dirname)) return tree;
+		if (!mdxRule.test(basename) || !pollsDirRule.test(dirname)) return tree;
 
 		/** @type {Array<{type: string, [prop: string]: any}>} */
 		const children = tree.children;
@@ -34,16 +34,15 @@ function transform() {
 		const header = children.find(item => item.type === 'heading');
 
 		if (header) {
-			debugger;
-
-			children[children.indexOf(header)] = createTag('h' + header.depth, {
-				id: name,
-				class: 'mb-3'
-			}, [createTag('a', {class: 'header-link', href: `/votes/${name}`}), ...header.children]);
+			header.children.unshift(
+				createTag('a', {id: name, class: 'header-link', href: `/polls/${name}`})
+			);
 		}
 
-		children.unshift(createImportComponent('Answer'));
-		children.unshift(createImportComponent('Summary'));
+		children.unshift(
+			createImportComponent('Answer'),
+			createImportComponent('Summary')
+		);
 
 		let cur;
 
@@ -141,6 +140,45 @@ function createImportComponent(name) {
 						},
 					}
 				],
+			}
+		}
+	};
+}
+
+function createExportConst(name, string) {
+	return {
+		"type": "mdxjsEsm",
+		"value": `export const ${title} = ${JSON.stringify(string)};`,
+		"data": {
+			"estree": {
+				"type": "Program",
+				"body": [
+					{
+						"type": "ExportNamedDeclaration",
+						"declaration": {
+							"type": "VariableDeclaration",
+							"declarations": [
+								{
+									"type": "VariableDeclarator",
+									"id": {
+										"type": "Identifier",
+										"name": name,
+									},
+									"init": {
+										"type": "Literal",
+										"value": string,
+										"raw": JSON.stringify(string),
+									},
+								}
+							],
+							"kind": "const",
+						},
+						"specifiers": [],
+						"source": null,
+					}
+				],
+				"sourceType": "module",
+				"comments": [],
 			}
 		}
 	};

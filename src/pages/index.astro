@@ -3,8 +3,8 @@ import Main from '../layouts/Main.astro';
 import {LoginButton} from '../components/LoginModal.jsx';
 import {TITLE} from '../const';
 
-const active = (await Astro.glob('../votes/active/*.mdx')).map(item => item.Content);
-const inactive = []; //await Astro.glob('../votes/past/*.mdx');
+const active = (await Astro.glob('../polls/*.mdx')).map(item => item.Content);
+const inactive = []; //await Astro.glob('../polls/past/*.mdx');
 ---
 
 <Main>
