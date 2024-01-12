@@ -23,7 +23,7 @@ const inactive = []; //await Astro.glob('../polls/past/*.mdx');
         </ol>
 
         <p class="lead text-start">
-            Ідентифікуйте себе за добомогою сервісу BankID та зможете взяти участь у поточних голосуваннях.
+            Ідентифікуйте себе за добомогою сервісу BankID та зможете взяти участь у поточних опитуваннях.
         </p>
 
         <LoginButton client:load/>
@@ -31,14 +31,14 @@ const inactive = []; //await Astro.glob('../polls/past/*.mdx');
 
     {active.length > 0 &&
     <section>
-        <h2 class="display-5 text-center mb-5">Поточні голосування</h2>
+        <h2 class="display-5 text-center mb-5">Поточні опитування</h2>
 
         {active.map(Content => <Content/>)}
     </section>}
 
     {inactive.length > 0 &&
     <section>
-        <h2 class="display-5 text-center mb-5">Минулі голосування</h2>
+        <h2 class="display-5 text-center mb-5">Минулі опитування</h2>
 
         {inactive.map(Content => <Content/>)}
     </section>}

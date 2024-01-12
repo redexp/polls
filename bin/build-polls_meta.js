@@ -1,4 +1,4 @@
-import {readdirSync, readFileSync, writeFileSync} from 'fs';
+import {existsSync, readdirSync, readFileSync, writeFileSync} from 'fs';
 import {resolve} from 'path';
 import {remark} from 'remark';
 import remarkMdx from 'remark-mdx';
@@ -9,14 +9,16 @@ const meta = {};
 
 const answerRule = /^(check|dot)$/;
 
-const VOTES_DIR = resolve(url.pathname, '..', '..', 'src', 'votes');
+const POLLS_DIR = resolve(url.pathname, '..', '..', 'src', 'polls');
 
 for (const type of ['active', 'past']) {
-	const dir = resolve(VOTES_DIR, type);
-	const files = readdirSync(dir);
+	const dir = resolve(POLLS_DIR, type === 'active' ? '.' : type);
+	const files = existsSync(dir) ? readdirSync(dir) : [];
 	const active = type === 'active';
 
 	for (const file of files) {
+		if (!file.endsWith('.mdx')) continue;
+
 		const name = file.replace(/\.mdx$/i, '');
 
 		if (meta.hasOwnProperty(name)) {
@@ -67,4 +69,4 @@ for (const type of ['active', 'past']) {
 	}
 }
 
-writeFileSync(resolve(url.pathname, '..', '..', 'server', 'votes_meta.json'), JSON.stringify(meta));
+writeFileSync(resolve(url.pathname, '..', '..', 'server', 'polls_meta.json'), JSON.stringify(meta));

@@ -31,7 +31,7 @@ export default function AnswerLoader({type = 'radio', name, value, children}) {
 
     const [stat] = createResource(
         () => [appState.bankId, appState.reloadStatsSignal],
-        () => getVoteStats(name, value),
+        () => getPollStats(name, value),
         {
             initialValue: {
                 count: 0,
@@ -195,29 +195,29 @@ export default function AnswerLoader({type = 'radio', name, value, children}) {
     );
 }
 
-let statsVotes = [];
+let statsPolls = [];
 let statsPromise = null;
 
 /**
- * @param {string} vote
+ * @param {string} poll
  * @param {string} [value]
  * @return {Promise<{count: number, percent: number, winner: boolean, checked: boolean}>}
  */
-export async function getVoteStats(vote, value) {
-    if (!statsVotes.includes(vote)) {
-        statsVotes.push(vote);
+export async function getPollStats(poll, value) {
+    if (!statsPolls.includes(poll)) {
+        statsPolls.push(poll);
     }
 
     if (!statsPromise) {
         statsPromise = new Promise((done, fail) => {
             setTimeout(() => {
-                ajax('/votes-stats', {
-                    votes: statsVotes,
+                ajax('/polls-stats', {
+                    polls: statsPolls,
                     bank_id: appState.bankId,
                 })
                 .then(done, fail);
 
-                statsVotes = [];
+                statsPolls = [];
                 statsPromise = null;
             }, 150);
         });
@@ -225,13 +225,13 @@ export async function getVoteStats(vote, value) {
 
     const stats = await statsPromise;
 
-    if (!stats[vote]) {
-        stats[vote] = {};
+    if (!stats[poll]) {
+        stats[poll] = {};
     }
 
-    if (!value) return stats[vote];
+    if (!value) return stats[poll];
 
-    return stats[vote][value] || {
+    return stats[poll][value] || {
         count: 0,
         percent: 0,
         winner: false,
@@ -242,18 +242,18 @@ export async function getVoteStats(vote, value) {
 /**
  * @param {number} page
  * @param {string} query
- * @param {string} vote
+ * @param {string} poll
  * @param {string} value
  * @return {Promise<{pages: number, rows: Array<{number: number, name: string}>}>}
  */
-async function getAnswers(page, query, vote, value) {
+async function getAnswers(page, query, poll, value) {
     if (!page || isServer) return {rows: [], pages: 0};
 
     return ajax('/answers', {
         page,
         searchName: query,
-        vote,
-        value
+        poll,
+        value,
     });
 }
 
@@ -261,7 +261,7 @@ function postAnswer({name, value, checked}) {
     return ajax('/answer', {
         bank_id: appState.bankId,
         name: appState.name,
-        vote: name,
+        poll: name,
         value,
         checked,
     });

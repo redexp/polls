@@ -4,7 +4,7 @@ export type Answer = {
 	id: number,
 	bank_id: string,
 	name: string,
-	vote: string,
+	poll: string,
 	value: string,
 	created_at: string,
 };

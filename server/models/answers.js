@@ -7,18 +7,18 @@ const Answers = () => db('answers');
 
 export default {
 	/**
-	 * @param {string} [vote]
+	 * @param {string} [poll]
 	 * @param {string} [value]
 	 * @param {string} [searchName]
 	 * @param {number} offset
 	 * @param {number} limit
 	 * @return {Promise<{rows: import('./answer').Answer[], count: number}>}
 	 */
-	async findAndCount({where: {vote, value, searchName}, offset, limit}) {
+	async findAndCount({where: {poll, value, searchName}, offset, limit}) {
 		const builder = Answers();
 
-		if (vote) {
-			builder.where({vote});
+		if (poll) {
+			builder.where({poll});
 		}
 
 		if (value) {
@@ -63,16 +63,16 @@ export default {
 
 	/**
 	 * @param {string} bank_id
-	 * @param {string} vote
+	 * @param {string} poll
 	 * @return {Promise<import('./answer').Answer[]>}
 	 */
-	async findAll({bank_id, vote}) {
+	async findAll({bank_id, poll}) {
 		return (
 			Answers()
 			.select('*')
 			.where({
 				bank_id: String(bank_id),
-				vote: String(vote),
+				poll: String(poll),
 			})
 		);
 	},
@@ -85,7 +85,7 @@ export default {
 	async create(answer) {
 		return (
 			Answers()
-			.insert(pick(answer, ['bank_id', 'name', 'vote', 'value']), ['id'])
+			.insert(pick(answer, ['bank_id', 'name', 'poll', 'value']), ['id'])
 			.then(rows => rows[0])
 		);
 	},
@@ -116,47 +116,47 @@ export default {
 	},
 
 	/**
-	 * @param {Array<string>} votes
-	 * @return {Promise<{[vote: string]: {[value: string]: {count: number, percent: number, winner: boolean}}}>}
+	 * @param {Array<string>} polls
+	 * @return {Promise<{[poll: string]: {[value: string]: {count: number, percent: number, winner: boolean}}}>}
 	 */
-	async getVotesStats(votes) {
-		if (!Array.isArray(votes) || votes.length === 0) return {};
+	async getPollsStats(polls) {
+		if (!Array.isArray(polls) || polls.length === 0) return {};
 
 		return (
 			Answers()
-			.select('vote', 'value', db.raw('count(*) as count'))
-			.whereIn('vote', votes)
-			.groupBy('vote', 'value')
+			.select('poll', 'value', db.raw('count(*) as count'))
+			.whereIn('poll', polls)
+			.groupBy('poll', 'value')
 			.then(rows => {
 				const totals = {};
 				const max = {};
 
-				for (const {vote, count} of rows) {
-					if (!totals.hasOwnProperty(vote)) {
-						totals[vote] = 0;
-						max[vote] = 0;
+				for (const {poll, count} of rows) {
+					if (!totals.hasOwnProperty(poll)) {
+						totals[poll] = 0;
+						max[poll] = 0;
 					}
 
-					totals[vote] += count;
+					totals[poll] += count;
 
-					if (max[vote] < count) {
-						max[vote] = count;
+					if (max[poll] < count) {
+						max[poll] = count;
 					}
 				}
 
 				const stats = {};
 
-				for (const {vote, value, count} of rows) {
-					if (!stats.hasOwnProperty(vote)) {
-						stats[vote] = {};
+				for (const {poll, value, count} of rows) {
+					if (!stats.hasOwnProperty(poll)) {
+						stats[poll] = {};
 					}
 
-					const total = totals[vote];
+					const total = totals[poll];
 
-					stats[vote][value] = {
+					stats[poll][value] = {
 						count,
 						percent: Number((count * 100 / total).toFixed(2)),
-						winner: max[vote] === count,
+						winner: max[poll] === count,
 					};
 				}
 
@@ -166,27 +166,27 @@ export default {
 	},
 
 	/**
-	 * @param {Array<string>} votes
+	 * @param {Array<string>} polls
 	 * @param {string} bank_id
-	 * @return {Promise<{[vote: string]: Array<string>}>}
+	 * @return {Promise<{[poll: string]: Array<string>}>}
 	 */
-	async getVotesValues(votes, bank_id) {
-		if (!Array.isArray(votes) || votes.length === 0 || !bank_id) return {};
+	async getPollsValues(polls, bank_id) {
+		if (!Array.isArray(polls) || polls.length === 0 || !bank_id) return {};
 
 		return (
 			Answers()
-			.select('vote', 'value')
-			.whereIn('vote', votes)
+			.select('poll', 'value')
+			.whereIn('poll', polls)
 			.andWhere({bank_id})
 			.then(rows => {
 				const values = {};
 
-				for (const {vote, value} of rows) {
-					if (!values.hasOwnProperty(vote)) {
-						values[vote] = [];
+				for (const {poll, value} of rows) {
+					if (!values.hasOwnProperty(poll)) {
+						values[poll] = [];
 					}
 
-					values[vote].push(value);
+					values[poll].push(value);
 				}
 
 				return values;

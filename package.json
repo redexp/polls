@@ -6,7 +6,7 @@
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build",
-    "meta": "node bin/build-votes_meta.js",
+    "meta": "node bin/build-polls_meta.js",
     "server": "node server/index.js"
   },
   "dependencies": {

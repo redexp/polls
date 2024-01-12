@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import moment from 'moment';
 import Answers from './models/answers.js';
-import Votes from './models/votes.js';
+import Polls from './models/polls.js';
 
 const IS_DEV = process.env.NODE_ENV !== 'production';
 
@@ -31,7 +31,7 @@ app.post('/answers', function (req, res, next) {
 
 	res.setHeader('Access-Control-Allow-Origin', '*');
 
-	if (!data.vote || !data.value) {
+	if (!data.poll || !data.value) {
 		res.sendStatus(400);
 		return;
 	}
@@ -39,7 +39,7 @@ app.post('/answers', function (req, res, next) {
 	Answers
 	.findAndCount({
 		where: {
-			vote: String(data.vote),
+			poll: String(data.poll),
 			value: String(data.value),
 			searchName: data.searchName,
 		},
@@ -59,26 +59,26 @@ app.post('/answers', function (req, res, next) {
 });
 
 app.post('/answer', function (req, res, next) {
-	const {bank_id, name, vote, value, checked = true} = req.body;
+	const {bank_id, name, poll, value, checked = true} = req.body;
 
 	if (
 		!bank_id ||
 		!name ||
-		!Votes.isValid(vote, value)
+		!Polls.isValid(poll, value)
 	) {
 		res.sendStatus(400);
 		return;
 	}
 
 	const create = async () => {
-		await Answers.create({bank_id, vote, value, name});
+		await Answers.create({bank_id, poll, value, name});
 		return {is_new: true};
 	};
 
 	Answers
-	.findAll({bank_id, vote})
+	.findAll({bank_id, poll})
 	.then(async (items) => {
-		const answer_type = Votes.getAnswerType(vote);
+		const answer_type = Polls.getAnswerType(poll);
 		const hasAnswer = items.length > 0;
 
 		const answer = items[0];
@@ -121,17 +121,17 @@ app.post('/answer', function (req, res, next) {
 	.catch(next);
 });
 
-app.post('/votes-stats', function (req, res, next) {
-	const {votes, bank_id} = req.body;
+app.post('/polls-stats', function (req, res, next) {
+	const {polls, bank_id} = req.body;
 
 	Promise.all([
-		Answers.getVotesStats(votes),
-		Answers.getVotesValues(votes, bank_id),
+		Answers.getPollsStats(polls),
+		Answers.getPollsValues(polls, bank_id),
 	])
 	.then(([stats, values]) => {
-		for (const vote in stats) {
-			for (const value in stats[vote]) {
-				stats[vote][value].checked = values.hasOwnProperty(vote) && values[vote].includes(value);
+		for (const poll in stats) {
+			for (const value in stats[poll]) {
+				stats[poll][value].checked = values.hasOwnProperty(poll) && values[poll].includes(value);
 			}
 		}
 

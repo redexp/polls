@@ -2,7 +2,7 @@ import {readFileSync} from 'fs';
 import {resolve} from 'path';
 
 const url = new URL(import.meta.url);
-const json = readFileSync(resolve(url.pathname, '..', '..', 'votes_meta.json'), 'utf8');
+const json = readFileSync(resolve(url.pathname, '..', '..', 'polls_meta.json'), 'utf8');
 const data = JSON.parse(json);
 
 /**
@@ -11,13 +11,13 @@ const data = JSON.parse(json);
 const meta = new Map(Object.keys(data).map(name => [name, data[name]]));
 
 export default {
-	isValid(vote, value) {
-		const item = meta.get(vote);
+	isValid(poll, value) {
+		const item = meta.get(poll);
 
 		return !!(item?.values.includes(value));
 	},
 
-	getAnswerType(vote) {
-		return meta.get(vote).answer_type;
+	getAnswerType(poll) {
+		return meta.get(poll).answer_type;
 	}
 };
