@@ -213,18 +213,3 @@ function pick(src, props) {
 
 	return data;
 }
-
-/**
- * @param {import('./answer').Answer} data
- * @param {import('./answer').AnswerProps} props
- * @return {Partial<import('./answer').Answer>}
- */
-function omit(data, props) {
-	data = {...data};
-
-	for (const prop of props) {
-		delete data[prop];
-	}
-
-	return data;
-}
