@@ -145,45 +145,6 @@ function createImportComponent(name) {
 	};
 }
 
-function createExportConst(name, string) {
-	return {
-		"type": "mdxjsEsm",
-		"value": `export const ${title} = ${JSON.stringify(string)};`,
-		"data": {
-			"estree": {
-				"type": "Program",
-				"body": [
-					{
-						"type": "ExportNamedDeclaration",
-						"declaration": {
-							"type": "VariableDeclaration",
-							"declarations": [
-								{
-									"type": "VariableDeclarator",
-									"id": {
-										"type": "Identifier",
-										"name": name,
-									},
-									"init": {
-										"type": "Literal",
-										"value": string,
-										"raw": JSON.stringify(string),
-									},
-								}
-							],
-							"kind": "const",
-						},
-						"specifiers": [],
-						"source": null,
-					}
-				],
-				"sourceType": "module",
-				"comments": [],
-			}
-		}
-	};
-}
-
 function createAnswerTag(type, name) {
 	return createTag('Answer', {type, name});
 }
