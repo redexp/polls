@@ -6,47 +6,75 @@ import {state as testModal} from './BankIdTestModal.jsx';
 
 export const state = createMutable({
 	open: false,
+	confirm: false,
 	callbacks: [],
 });
 
 export default function LoginModal() {
-	createEffect(() => {
-		if (state.open || state.callbacks.length === 0) return;
-
+	const flush = (data) => {
 		for (const cb of state.callbacks) {
-			cb(appState.bankId);
+			cb(data);
 		}
 
 		state.callbacks.splice(0, state.callbacks.length);
-	});
+	};
+
+	const onResolve = () => {
+		flush(appState.bankId);
+		state.open = false;
+	};
+
+	const onReject = () => {
+		flush(false);
+		state.open = false;
+	};
 
 	return (
 		<Modal open={state.open}>
-			<Header>Авторизація</Header>
+			{!appState.bankId &&
+			<Header>
+				Автентифікація
+			</Header>}
 
 			<Body>
-				<LoginButton onClick={() => {
-					state.open = false;
-				}}/>
+				Беручи участь в цьому опитуванні я погоджуюсь на зберігання та обробку моїх даних (<strong>ім'я</strong>, <strong>вік</strong> та <strong>стать</strong>),
+				необхідних для подальшого аналізу та виведення результатів на цьому сайті.
+				Дані будуть оброблюватись лише Соціологічною службою Черкаського інституту міста.
 			</Body>
 
 			<Footer>
+				{appState.bankId ?
+					<button
+						onClick={onResolve}
+						type="button"
+						class="btn btn-primary"
+					>Погоджуюсь</button>
+					:
+					<LoginButton
+						confirm={true}
+						onClick={onResolve}
+					/>
+				}
+
 				<button
-					onClick={() => state.open = false}
+					onClick={onReject}
 					type="button"
 					class="btn btn-secondary"
-				>Закрити</button>
+				>Відмовитись</button>
 			</Footer>
 		</Modal>
 	);
 }
 
-export function LoginButton({onClick}) {
+export function LoginButton(props) {
 	return (
 		<button
 			type="button"
 			class="btn btn-light btn-lg"
+			style={{"white-space": 'nowrap'}}
 			onClick={() => {
+				const {onClick} = props;
+
 				if (appState.bankId) {
 					setAppState({
 						name: '',
@@ -76,17 +104,22 @@ export function LoginButton({onClick}) {
 			}}
 		>
 			{!appState.bankId ?
-				<span class="me-2">Увійти за допомогою</span> :
+				<span class="me-2">
+					{props.confirm ?
+						`Погодитись та увійти з` :
+						`Увійти за допомогою`
+					}
+				</span> :
 				<span class="me-2">Вийти з</span>
 			}
 
-			<img src="/bankid.png" height={30} alt="BankID" style={{"vertical-align": "top"}}/>
+			<img src="/bankid.png" width={80} alt="BankID" style={{"margin-top": '-5px'}}/>
 		</button>
 	);
 }
 
 /**
- * @param {function(valid: boolean): void} cb
+ * @param {function(bankId: string): void} cb
  */
 export function onAuth(cb) {
 	if (appState.bankId) {
@@ -94,6 +127,16 @@ export function onAuth(cb) {
 		return;
 	}
 
+	batch(() => {
+		state.open = true;
+		state.callbacks.push(cb);
+	});
+}
+
+/**
+ * @param {function(bankId: string): void} cb
+ */
+export function onConfirmAndAuth(cb) {
 	batch(() => {
 		state.open = true;
 		state.callbacks.push(cb);

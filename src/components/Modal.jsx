@@ -45,7 +45,7 @@ export function Body({children}) {
 
 export function Footer({children}) {
 	return (
-		<div class="modal-footer">
+		<div class="modal-footer flex-nowrap">
 			{children}
 		</div>
 	);

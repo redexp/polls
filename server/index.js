@@ -5,8 +5,14 @@ import Answers from './models/answers.js';
 import Polls from './models/polls.js';
 
 const IS_DEV = process.env.NODE_ENV !== 'production';
+const PORT = Number(process.env.APP_PORT) || 8000;
+const ANSWER_UPDATE_TIMEOUT = 60 * 10 * 1000; // 10 min
 
 const app = express();
+
+app.listen(PORT, () => {
+	console.log('http://locahost:' + PORT);
+});
 
 if (IS_DEV) {
 	app.use(cors({
@@ -83,7 +89,7 @@ app.post('/answer', function (req, res, next) {
 
 		const answer = items[0];
 
-		if (answer && moment.utc() - moment.utc(answer.created_at) > 60 * 10 * 1000) {
+		if (answer && isExpired(answer)) {
 			res.status(403);
 			return {message: `Змінити свій голос можливо лише на протязі 10 хвилин`};
 		}
@@ -126,16 +132,25 @@ app.post('/polls-stats', function (req, res, next) {
 
 	Promise.all([
 		Answers.getPollsStats(polls),
-		Answers.getPollsValues(polls, bank_id),
+		Answers.getPollsInfo(polls, bank_id),
 	])
-	.then(([stats, values]) => {
-		for (const poll in stats) {
-			for (const value in stats[poll]) {
-				stats[poll][value].checked = values.hasOwnProperty(poll) && values[poll].includes(value);
+	.then(([stats, polls]) => {
+		for (const id in stats) {
+			const poll = polls.get(id);
+
+			for (const value in stats[id]) {
+				stats[id][value].checked = !!poll && poll.values.includes(value);
 			}
 		}
 
-		res.json(stats);
+		res.json({
+			stats,
+			disabled: (
+				Array.from(polls)
+				.filter(([_, poll]) => isExpired(poll))
+				.map(([id]) => id)
+			)
+		});
 	})
 	.catch(next);
 });
@@ -146,8 +161,6 @@ app.use(function (err, req, res, next) {
 	res.sendStatus(500);
 });
 
-const PORT = Number(process.env.APP_PORT) || 8000;
-
-app.listen(PORT, () => {
-	console.log('http://locahost:' + PORT);
-});
+function isExpired({created_at}) {
+	return moment.utc() - moment.utc(created_at) > ANSWER_UPDATE_TIMEOUT;
+}

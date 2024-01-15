@@ -1,7 +1,7 @@
 import {createResource, createSignal} from "solid-js";
 import {isServer, Show} from 'solid-js/web';
 import {debounce} from '@solid-primitives/scheduled';
-import {onAuth} from './LoginModal.jsx';
+import {onConfirmAndAuth} from './LoginModal.jsx';
 import appState, {reloadStats} from './appState.jsx';
 import ajax from './ajax.jsx';
 import {addNotification} from './Notifications.jsx';
@@ -19,7 +19,7 @@ export default function AnswerLoader({type = 'radio', name, value, children}) {
     const [page, setPage] = createSignal(0);
     const [query, setQuery] = createSignal('');
     const [data] = createResource(
-        () => [page(), query()],
+        () => [page(), query(), appState.reloadStatsSignal],
         ([p, q]) => getAnswers(p, q, name, value),
         {
             initialValue: {
@@ -38,6 +38,7 @@ export default function AnswerLoader({type = 'radio', name, value, children}) {
                 percent: 0,
                 winner: false,
                 checked: false,
+                disabled: false,
             }
         }
     );
@@ -51,7 +52,7 @@ export default function AnswerLoader({type = 'radio', name, value, children}) {
         const input = e.target;
         const {checked} = e.target;
 
-        onAuth((success) => {
+        onConfirmAndAuth((success) => {
             if (success) {
                 postAnswer({name, value, checked})
                 .then(function (res) {
@@ -68,19 +69,24 @@ export default function AnswerLoader({type = 'radio', name, value, children}) {
             }
             else {
                 input.checked = !checked;
+                reloadStats();
             }
         });
     };
 
     return (
         <div class="mt-5 answer">
-            <div class="form-check rounded bg-primary">
+            <div
+                class="form-check rounded bg-primary"
+                title={stat().disabled ? `Ви більше не можете змінити вашу відповідь` : ``}
+            >
                 <input
                     class="form-check-input"
                     type={type}
                     name={name}
                     value={value}
                     checked={stat().checked}
+                    disabled={stat().disabled}
                     id={id}
                     onChange={onChangeAnswer}
                 />
@@ -117,7 +123,7 @@ export default function AnswerLoader({type = 'radio', name, value, children}) {
                 </Show>
             </div>
 
-            <Show when={page() > 0}>
+            <Show when={page() > 0 && stat().count > 0}>
                 <table class="table table-sm my-5">
                     <thead>
                     <tr>
@@ -201,7 +207,7 @@ let statsPromise = null;
 /**
  * @param {string} poll
  * @param {string} [value]
- * @return {Promise<{count: number, percent: number, winner: boolean, checked: boolean}>}
+ * @return {Promise<{count: number, percent: number, winner: boolean, checked: boolean, disabled: boolean}>}
  */
 export async function getPollStats(poll, value) {
     if (!statsPolls.includes(poll)) {
@@ -223,20 +229,25 @@ export async function getPollStats(poll, value) {
         });
     }
 
-    const stats = await statsPromise;
+    const data = await statsPromise;
+    const {stats, disabled} = data;
 
-    if (!stats[poll]) {
+    if (!stats.hasOwnProperty(poll)) {
         stats[poll] = {};
     }
 
     if (!value) return stats[poll];
 
-    return stats[poll][value] || {
+    const info = stats[poll][value] || {
         count: 0,
         percent: 0,
         winner: false,
         checked: false,
     };
+
+    info.disabled = disabled.includes(poll);
+
+    return info;
 }
 
 /**

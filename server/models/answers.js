@@ -168,28 +168,39 @@ export default {
 	/**
 	 * @param {Array<string>} polls
 	 * @param {string} bank_id
-	 * @return {Promise<{[poll: string]: Array<string>}>}
+	 * @return {Promise<Map<string, {values: Array<string>, created_at: string}>>}
 	 */
-	async getPollsValues(polls, bank_id) {
-		if (!Array.isArray(polls) || polls.length === 0 || !bank_id) return {};
+	async getPollsInfo(polls, bank_id) {
+		if (!Array.isArray(polls) || polls.length === 0 || !bank_id) {
+			return new Map();
+		}
 
 		return (
 			Answers()
-			.select('poll', 'value')
+			.select('poll', 'value', 'created_at')
 			.whereIn('poll', polls)
 			.andWhere({bank_id})
 			.then(rows => {
-				const values = {};
+				const polls = new Map();
 
-				for (const {poll, value} of rows) {
-					if (!values.hasOwnProperty(poll)) {
-						values[poll] = [];
+				for (const {poll, value, created_at} of rows) {
+					if (!polls.has(poll)) {
+						polls.set(poll, {
+							values: [],
+							created_at,
+						});
 					}
 
-					values[poll].push(value);
+					const item = polls.get(poll);
+
+					item.values.push(value);
+
+					if (item.created_at > created_at) {
+						item.created_at = created_at;
+					}
 				}
 
-				return values;
+				return polls;
 			})
 		);
 	},
