@@ -1,4 +1,4 @@
-import {batch, createEffect} from "solid-js";
+import {batch} from "solid-js";
 import {createMutable} from "solid-js/store";
 import Modal, {Header, Body, Footer} from './Modal.jsx';
 import appState, {setAppState} from './appState.jsx';
