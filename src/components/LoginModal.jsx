@@ -37,9 +37,10 @@ export default function LoginModal() {
 			</Header>}
 
 			<Body>
-				Беручи участь в цьому опитуванні я погоджуюсь на зберігання та обробку моїх даних (<strong>ім'я</strong>, <strong>вік</strong> та <strong>стать</strong>),
+				Беручи участь в цьому опитуванні я погоджуюсь на
+				зберігання та обробку моїх даних (<strong>ім'я</strong>, <strong>вік</strong> та <strong>стать</strong>)
+				Соціологічною службою Черкаського інституту міста,
 				необхідних для подальшого аналізу та виведення результатів на цьому сайті.
-				Дані будуть оброблюватись лише Соціологічною службою Черкаського інституту міста.
 			</Body>
 
 			<Footer>
@@ -71,7 +72,6 @@ export function LoginButton(props) {
 		<button
 			type="button"
 			class="btn btn-light btn-lg"
-			style={{"white-space": 'nowrap'}}
 			onClick={() => {
 				const {onClick} = props;
 
