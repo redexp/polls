@@ -33,7 +33,7 @@ export default function LoginModal() {
 		<Modal open={state.open}>
 			{!appState.bankId &&
 			<Header>
-				Автентифікація
+				Ідентифікація
 			</Header>}
 
 			<Body>
