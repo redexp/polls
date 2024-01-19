@@ -1,7 +1,3 @@
-import {resolve} from "path";
-
-const url = new URL(import.meta.url);
-
 const config = {
 	port: 8000,
 
