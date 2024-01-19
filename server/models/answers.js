@@ -1,5 +1,7 @@
 import db from '../db/index.js';
 
+export const ANSWER_UPDATE_TIMEOUT = 60 * 10 * 1000; // 10 min
+
 /**
  * @returns {import('./answer').AnswersBuilder}
  */

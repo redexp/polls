@@ -12,6 +12,8 @@ const meta = new Map(Object.keys(data).map(name => [name, data[name]]));
 
 export default {
 	isValid(poll, value) {
+		if (!poll) return false;
+
 		const item = meta.get(poll);
 
 		return !!(item?.values.includes(value));

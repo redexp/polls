@@ -1,0 +1,16 @@
+---
+import Base from '../../layouts/Base.astro';
+import CenterCol from '@components/CenterCol.astro';
+import DevBankIDLoginForm from '@components/DevBankIDLoginForm.jsx';
+---
+
+<Base title="⚠️ Dev BankID Login">
+    <CenterCol>
+        <h1 class="display-4 mb-5">⚠️ Тестова сторінка, яка вдає процес ідентифікації через BankID</h1>
+
+        <p>На цьому місті має бути вікно справжнього BankID.</p>
+        <p>Поточне вікно створено лише задля повторення процесу ідентифікації.</p>
+        <p>Будь ласка, введіть імʼя, яке закріпиться за вами лише на етапі розробки.</p>
+        <DevBankIDLoginForm client:load/>
+	</CenterCol>
+</Base>

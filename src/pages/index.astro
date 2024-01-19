@@ -1,6 +1,6 @@
 ---
 import Main from '../layouts/Main.astro';
-import {LoginButton} from '../components/LoginModal.jsx';
+import LoginButton from '@components/LoginButton.jsx';
 import {TITLE} from '../const';
 
 const active = (await Astro.glob('../polls/*.mdx')).map(item => item.Content);
@@ -15,7 +15,9 @@ const inactive = []; //await Astro.glob('../polls/past/*.mdx');
             Ідентифікуйте себе за добомогою системи BankID НБУ та зможете взяти участь у поточних опитуваннях.
         </p>
 
-        <LoginButton client:load/>
+        <div style="min-height: 50px">
+            <LoginButton client:only="solid-js"/>
+        </div>
     </section>
 
     {active.length > 0 &&

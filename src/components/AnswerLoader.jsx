@@ -1,10 +1,10 @@
-import {createResource, createSignal} from "solid-js";
+import {createResource, createSignal, onMount} from "solid-js";
 import {isServer, Show} from 'solid-js/web';
 import {debounce} from '@solid-primitives/scheduled';
 import {onConfirmAndAuth} from './LoginModal.jsx';
-import appState, {reloadStats} from './appState.jsx';
-import ajax from './ajax.jsx';
 import {addNotification} from './Notifications.jsx';
+import appState, {reloadStats} from '@lib/appState.js';
+import ajax from '@lib/ajax.js';
 
 export default function AnswerLoader({type = 'radio', name, value, children}) {
     type = (
@@ -30,7 +30,7 @@ export default function AnswerLoader({type = 'radio', name, value, children}) {
     );
 
     const [stat] = createResource(
-        () => [appState.bankId, appState.reloadStatsSignal],
+        () => [appState.jwt, appState.reloadStatsSignal],
         () => getPollStats(name, value),
         {
             initialValue: {
@@ -48,17 +48,19 @@ export default function AnswerLoader({type = 'radio', name, value, children}) {
         setQuery(v);
     }, 300);
 
-    const onChangeAnswer = (e) => {
-        const input = e.target;
-        const {checked} = e.target;
+    let input;
 
-        onConfirmAndAuth((success) => {
+    const onChangeAnswer = () => {
+        const {checked} = input;
+        const params = {poll: name, value, checked: checked ? 1 : ''};
+
+        onConfirmAndAuth(children.cloneNode(true), params, (success) => {
             if (success) {
                 postAnswer({name, value, checked})
                 .then(function (res) {
                     reloadStats();
 
-                    if (res.is_new) {
+                    if (res?.is_new) {
                         addNotification({
                             type: 'success',
                             text: 'Ви можете змінити свою відповідь на протязі 10 хвилин',
@@ -74,6 +76,23 @@ export default function AnswerLoader({type = 'radio', name, value, children}) {
         });
     };
 
+    onMount(() => {
+       if (isServer) return;
+
+       const url = new URL(location.href);
+       const qs = url.searchParams;
+
+       if (
+           qs.has('jwt') &&
+           (qs.get('poll') === name || url.pathname === '/polls/' + name) &&
+           qs.get('value') === value &&
+           qs.has('checked')
+       ) {
+           input.checked = !!qs.get('checked');
+           onChangeAnswer();
+       }
+    });
+
     return (
         <div class="mt-5 answer">
             <div
@@ -81,6 +100,7 @@ export default function AnswerLoader({type = 'radio', name, value, children}) {
                 title={stat().disabled ? `Ви більше не можете змінити вашу відповідь` : ``}
             >
                 <input
+                    ref={input}
                     class="form-check-input"
                     type={type}
                     name={name}
@@ -96,7 +116,7 @@ export default function AnswerLoader({type = 'radio', name, value, children}) {
                 </label>
             </div>
 
-            <div class="d-lg-flex align-items-center">
+            <div class="d-lg-flex align-items-center" style="min-height: 32px">
                 <div class="progress flex-fill" style="height: 25px">
                     <div
                         classList={{
@@ -219,7 +239,7 @@ export async function getPollStats(poll, value) {
             setTimeout(() => {
                 ajax('/polls-stats', {
                     polls: statsPolls,
-                    bank_id: appState.bankId,
+                    jwt: appState.jwt,
                 })
                 .then(done, fail);
 
@@ -270,8 +290,7 @@ async function getAnswers(page, query, poll, value) {
 
 function postAnswer({name, value, checked}) {
     return ajax('/answer', {
-        bank_id: appState.bankId,
-        name: appState.name,
+        jwt: appState.jwt,
         poll: name,
         value,
         checked,

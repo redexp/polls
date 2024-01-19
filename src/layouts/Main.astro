@@ -1,32 +1,15 @@
 ---
-import 'bootstrap/dist/css/bootstrap.css';
-import '../styles/global.less';
-import {Image} from 'astro:assets';
-import LoginModal from '../components/LoginModal.jsx';
-import BankIdTestModal from '../components/BankIdTestModal.jsx';
-import Notifications from '../components/Notifications.jsx';
+import Base from './Base.astro';
+import CenterCol from '@components/CenterCol.astro';
+import LoginModal from '@components/LoginModal.jsx';
 
 import {TITLE} from '../const';
 
 const {title = TITLE} = Astro.props;
 ---
-<!DOCTYPE html>
-<html lang="ua">
-<head>
-	<meta charset="utf-8"/>
-	<meta name="viewport" content="width=device-width, initial-scale=1"/>
-	<title>{title}</title>
 
-    <link rel="apple-touch-icon" sizes="180x180" href="/logo/apple-touch-icon.png"/>
-    <link rel="icon" type="image/png" sizes="32x32" href="/logo/favicon-32x32.png"/>
-    <link rel="icon" type="image/png" sizes="16x16" href="/logo/favicon-16x16.png"/>
-    <link rel="manifest" href="/site.webmanifest"/>
-    <meta name="msapplication-TileColor" content="#da532c"/>
-    <meta name="theme-color" content="#ffffff"/>
-</head>
-<body>
-<div class="d-flex flex-column align-items-center px-4 pt-5 my-5">
-	<div class="col-lg-6">
+<Base title={title}>
+    <CenterCol>
         <slot/>
 
         <footer class="lead text-bg-light p-3 mt-5">
@@ -48,12 +31,7 @@ const {title = TITLE} = Astro.props;
                 Проєкт з відкритим початковим кодом <a href="//github.com/redexp/polls" class="ms-1"><img src="/github-mark.svg" height="23" alt="GitHub"/></a>
             </p>
         </footer>
-	</div>
-</div>
+    </CenterCol>
 
-<LoginModal client:only="solid-js"/>
-<BankIdTestModal client:only="solid-js"/>
-<Notifications client:only="solid-js"/>
-
-</body>
-</html>
+    <LoginModal client:only="solid-js"/>
+</Base>

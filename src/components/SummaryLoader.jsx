@@ -1,6 +1,6 @@
 import {createMemo, createResource} from "solid-js";
 import {getPollStats} from './AnswerLoader.jsx';
-import appState from './appState.jsx';
+import appState from '@lib/appState.js';
 
 export default function SummaryLoader({name}) {
 	const [total] = createResource(

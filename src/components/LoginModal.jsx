@@ -1,12 +1,13 @@
 import {batch} from "solid-js";
 import {createMutable} from "solid-js/store";
 import Modal, {Header, Body, Footer} from './Modal.jsx';
-import appState, {setAppState} from './appState.jsx';
-import {state as testModal} from './BankIdTestModal.jsx';
+import LoginButton, {setRedirectParams} from './LoginButton.jsx';
+import appState from '@lib/appState.js';
 
 export const state = createMutable({
 	open: false,
-	confirm: false,
+	answerText: '',
+	answerChecked: true,
 	callbacks: [],
 });
 
@@ -20,7 +21,7 @@ export default function LoginModal() {
 	};
 
 	const onResolve = () => {
-		flush(appState.bankId);
+		flush(appState.jwt);
 		state.open = false;
 	};
 
@@ -31,20 +32,31 @@ export default function LoginModal() {
 
 	return (
 		<Modal open={state.open}>
-			{!appState.bankId &&
+			{!appState.jwt &&
 			<Header>
 				Ідентифікація
 			</Header>}
 
 			<Body>
-				Беручи участь в цьому опитуванні я погоджуюсь на
-				зберігання та обробку моїх даних (<strong>ім'я</strong>, <strong>вік</strong> та <strong>стать</strong>)
-				Соціологічною службою Черкаського інституту міста,
-				необхідних для подальшого аналізу та виведення результатів на цьому сайті.
+				<p>
+					{state.answerChecked ?
+						`Ваша відповідь` :
+						`Ви відмовляєтесь від відповіді`
+					}
+				</p>
+
+				<div class="alert alert-light">
+					{state.answerText}
+				</div>
+
+				Беручи участь в цьому опитуванні Ви погоджуюєтесь на
+				зберігання та обробку ваших даних (<strong>ім'я</strong>, <strong>вік</strong> та <strong>стать</strong>)
+				виключно Соціологічною службою Черкаського інституту міста,
+				які необхідні для подальшого аналізу та виведення результатів на цьому сайті.
 			</Body>
 
 			<Footer>
-				{appState.bankId ?
+				{appState.jwt ?
 					<button
 						onClick={onResolve}
 						type="button"
@@ -53,7 +65,8 @@ export default function LoginModal() {
 					:
 					<LoginButton
 						confirm={true}
-						onClick={onResolve}
+						onLogin={onResolve}
+						onLogout={onReject}
 					/>
 				}
 
@@ -67,78 +80,21 @@ export default function LoginModal() {
 	);
 }
 
-export function LoginButton(props) {
-	return (
-		<button
-			type="button"
-			class="btn btn-light btn-lg"
-			onClick={() => {
-				const {onClick} = props;
-
-				if (appState.bankId) {
-					setAppState({
-						name: '',
-						bankId: '',
-					});
-
-					if (onClick) {
-						onClick();
-					}
-
-					return;
-				}
-
-				testModal.open = true;
-				testModal.onLogin = (name) => {
-					if (name) {
-						setAppState({
-							name,
-							bankId: String(Math.random()),
-						});
-					}
-
-					if (onClick) {
-						onClick();
-					}
-				};
-			}}
-		>
-			{!appState.bankId ?
-				<span class="me-2">
-					{props.confirm ?
-						`Погодитись та увійти з` :
-						`Увійти за допомогою`
-					}
-				</span> :
-				<span class="me-2">Вийти з</span>
-			}
-
-			<img src="/bankid.png" width={80} alt="BankID" style={{"margin-top": '-5px'}}/>
-		</button>
-	);
-}
-
 /**
- * @param {function(bankId: string): void} cb
+ * @param {any} answerText
+ * @param {{poll?: string, value?: string}} params
+ * @param {function(jwt: string): void} cb
  */
-export function onAuth(cb) {
-	if (appState.bankId) {
-		cb(true);
-		return;
+export function onConfirmAndAuth(answerText, params, cb) {
+	if (params.poll && location.pathname === '/polls/' + params.poll) {
+		params = {...params, poll_page: 1}
 	}
 
 	batch(() => {
-		state.open = true;
-		state.callbacks.push(cb);
-	});
-}
+		setRedirectParams(params);
 
-/**
- * @param {function(bankId: string): void} cb
- */
-export function onConfirmAndAuth(cb) {
-	batch(() => {
 		state.open = true;
+		state.answerText = answerText;
 		state.callbacks.push(cb);
 	});
 }

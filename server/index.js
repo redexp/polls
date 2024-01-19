@@ -1,12 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 import moment from 'moment';
-import Answers from './models/answers.js';
+import Answers, {ANSWER_UPDATE_TIMEOUT} from './models/answers.js';
 import Polls from './models/polls.js';
-
-const IS_DEV = process.env.NODE_ENV !== 'production';
-const PORT = Number(process.env.APP_PORT) || 8000;
-const ANSWER_UPDATE_TIMEOUT = 60 * 10 * 1000; // 10 min
+import Auth from './models/auth.js';
+import {IS_DEV, PORT, ASTRO_URL} from './config.js';
 
 const app = express();
 
@@ -17,12 +15,7 @@ app.listen(PORT, () => {
 if (IS_DEV) {
 	app.use(cors({
 		origin(origin, next) {
-			if (origin === 'http://localhost:4321') {
-				next(null, true);
-			}
-			else {
-				next(new Error('Not allowed'));
-			}
+			next(null, true);
 		}
 	}));
 }
@@ -34,8 +27,6 @@ app.post('/answers', function (req, res, next) {
 	const page = Number(data.page);
 	const limit = 50;
 	const offset = (page - 1) * limit;
-
-	res.setHeader('Access-Control-Allow-Origin', '*');
 
 	if (!data.poll || !data.value) {
 		res.sendStatus(400);
@@ -65,25 +56,26 @@ app.post('/answers', function (req, res, next) {
 });
 
 app.post('/answer', function (req, res, next) {
-	const {bank_id, name, poll, value, checked = true} = req.body;
-
-	if (
-		!bank_id ||
-		!name ||
-		!Polls.isValid(poll, value)
-	) {
-		res.sendStatus(400);
-		return;
-	}
+	const {jwt, poll, value, checked = true} = req.body;
 
 	const create = async () => {
-		await Answers.create({bank_id, poll, value, name});
+		const user = await Auth.fromJWT(jwt);
+		await Answers.create({...user, poll, value});
 		return {is_new: true};
 	};
 
-	Answers
-	.findAll({bank_id, poll})
-	.then(async (items) => {
+	;(async () => {
+		const user = await Auth.fromJWT(jwt).catch(() => null);
+
+		if (
+			!user ||
+			!Polls.isValid(poll, value)
+		) {
+			res.status(400);
+			return {message: `Параметри, які необхідні щоб запамʼятати вашу відповідь, є некоректними. Спробуйте перезавантажити сторінку, або ж ще раз ідентифікуйте себе через BankID.`};
+		}
+
+		const items = await Answers.findAll({bank_id: user.bank_id, poll});
 		const answer_type = Polls.getAnswerType(poll);
 		const hasAnswer = items.length > 0;
 
@@ -120,7 +112,7 @@ app.post('/answer', function (req, res, next) {
 
 			await Answers.remove(answer.id);
 		}
-	})
+	})()
 	.then(function (data = true) {
 		res.json(data);
 	})
@@ -128,11 +120,11 @@ app.post('/answer', function (req, res, next) {
 });
 
 app.post('/polls-stats', function (req, res, next) {
-	const {polls, bank_id} = req.body;
+	const {polls, jwt} = req.body;
 
 	Promise.all([
 		Answers.getPollsStats(polls),
-		Answers.getPollsInfo(polls, bank_id),
+		Auth.fromJWT(jwt).then((user) => Answers.getPollsInfo(polls, user?.bank_id)),
 	])
 	.then(([stats, polls]) => {
 		for (const id in stats) {
@@ -151,6 +143,50 @@ app.post('/polls-stats', function (req, res, next) {
 				.map(([id]) => id)
 			)
 		});
+	})
+	.catch(next);
+});
+
+app.get('/bankid/auth', function (req, res) {
+	const {poll, value, checked = '', poll_page} = req.query;
+
+	let data;
+
+	if (Polls.isValid(poll, value)) {
+		data = {poll, value, checked, poll_page};
+	}
+
+	res.redirect(Auth.getAuthUrl(data));
+});
+
+app.get('/bankid/callback', function (req, res, next) {
+	const {code, state} = req.query;
+
+	Auth
+	.getAccessData(code, state)
+	.then(async function ({data, state}) {
+		const user = await Auth.getUserData(data.access_token);
+		const jwt = await Auth.toJWT(user);
+		const qs = new URLSearchParams({jwt});
+		let url = '/'
+
+		if (Polls.isValid(state?.poll, state?.value)) {
+			if (state.poll_page) {
+				url = '/polls/' + state.poll;
+			}
+			else {
+				qs.set('poll', state.poll);
+			}
+
+			qs.set('value', state.value);
+			qs.set('checked', state.checked || '');
+		}
+
+		if (IS_DEV) {
+			url = ASTRO_URL + url;
+		}
+
+		res.redirect(url + '?' + qs.toString());
 	})
 	.catch(next);
 });
