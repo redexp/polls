@@ -1,11 +1,17 @@
 const config = {
-	port: 8000,
+	server: {
+		port: 8000,
+		url: '',
+	},
 
-	astro_port: 4321,
+	astro: {
+		port: 4321,
+		url: '',
+	},
 
 	bankid: {
 		dev_port: 8001,
-		base_url: '',
+		url: '',
 		client_id: '',
 		client_secret: '',
 		dataset: 51,
@@ -29,17 +35,25 @@ const config = {
 
 env(config);
 
-if (!config.bankid.base_url) {
-	config.bankid.base_url = 'http://localhost:' + config.bankid.dev_port;
+const local = 'http://localhost:';
+
+if (!config.server.url) {
+	config.server.url = local + config.server.port;
 }
 
-export default config;
+if (!config.bankid.url) {
+	config.bankid.url = local + config.bankid.dev_port;
+}
+
+if (!config.astro.url) {
+	config.astro.url = local + config.astro.port;
+}
 
 export const IS_DEV = process.env.NODE_ENV !== 'production';
-export const PORT = Number(config.port);
+export const SERVER = config.server;
 export const BANKID = config.bankid;
 export const AUTH = config.auth;
-export const ASTRO_URL = 'http://localhost:' + config.astro_port;
+export const ASTRO_URL = config.astro.url;
 
 
 function env(config, prefix = '') {

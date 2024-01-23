@@ -9,10 +9,10 @@ import {BANKID, AUTH} from '../config.js';
 const jwtEncode = promisify(JWT.sign);
 const jwtDecode = promisify(JWT.verify);
 
-const {base_url, client_id, client_secret, jwt_key} = BANKID;
+const {client_id, client_secret, jwt_key} = BANKID;
 
 const ajax = axios.create({
-	baseURL: base_url
+	baseURL: BANKID.url
 });
 
 /**
@@ -22,7 +22,7 @@ const stateMap = new Map();
 
 export default {
 	getAuthUrl(state) {
-		const data = new URLSearchParams({
+		const qs = new URLSearchParams({
 			response_type: 'code',
 			client_id,
 			dataset: BANKID.dataset,
@@ -35,10 +35,10 @@ export default {
 				stateMap.set(state, {data, time: Date.now()});
 			}
 
-			data.set('state', state);
+			qs.set('state', state);
 		}
 
-		return base_url + '/oauth2/authorize?' + data.toString();
+		return BANKID.url + '/oauth2/authorize?' + qs.toString();
 	},
 
 	/**

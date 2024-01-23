@@ -1,11 +1,11 @@
 import express from "express";
-import {PORT, BANKID, ASTRO_URL} from "../config.js";
+import {IS_DEV, SERVER, BANKID, ASTRO_URL} from "../config.js";
 import {randomUUID} from "crypto";
 import moment from 'moment';
 
 const app = express();
 const DEV_PORT = BANKID.dev_port;
-const url = new URL(BANKID.base_url);
+const url = new URL(BANKID.url);
 
 app.listen(DEV_PORT, () => {
 	console.log(url.toString());
@@ -25,7 +25,7 @@ root.get('/oauth2/authorize', function (req, res) {
 		params = '?' + qs({state});
 	}
 
-	res.redirect(ASTRO_URL + '/bankid/dev-login' + params);
+	res.redirect((IS_DEV ? ASTRO_URL : SERVER.url) + '/bankid/dev-login' + params);
 });
 
 const store = new Map();
@@ -41,7 +41,7 @@ root.post('/oauth2/callback', function (req, res) {
 	store.set(code, {access_token, expires_in: 180});
 	store.set(access_token, data);
 
-	res.redirect('http://localhost:' + PORT + '/bankid/callback?' + qs({code, state}));
+	res.redirect(SERVER.url + '/bankid/callback?' + qs({code, state}));
 });
 
 root.post('/oauth2/token', function (req, res) {

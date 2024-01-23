@@ -1,16 +1,15 @@
 import express from 'express';
 import cors from 'cors';
 import moment from 'moment';
-import pick from 'lodash.pick';
 import Answers, {ANSWER_UPDATE_TIMEOUT} from './models/answers.js';
 import Polls from './models/polls.js';
 import Auth from './models/auth.js';
-import {IS_DEV, PORT, ASTRO_URL} from './config.js';
+import {IS_DEV, SERVER, ASTRO_URL} from './config.js';
 
 const app = express();
 
-app.listen(PORT, () => {
-	console.log('http://locahost:' + PORT);
+app.listen(SERVER.port, () => {
+	console.log(SERVER.url);
 });
 
 if (IS_DEV) {
