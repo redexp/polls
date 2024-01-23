@@ -1,14 +1,15 @@
 import axios from 'axios';
 import JWT from 'jsonwebtoken';
 import {promisify} from 'util';
-import {randomUUID} from 'crypto';
-import {BANKID as config} from '../config.js';
+import {createHash, randomUUID} from 'crypto';
+import pick from 'lodash.pick';
+import moment from "moment";
+import {BANKID, AUTH} from '../config.js';
 
 const jwtEncode = promisify(JWT.sign);
 const jwtDecode = promisify(JWT.verify);
 
-const {base_url, client_id, client_secret} = config;
-const jwtKey = config.jwt_key;
+const {base_url, client_id, client_secret, jwt_key} = BANKID;
 
 const ajax = axios.create({
 	baseURL: base_url
@@ -24,7 +25,7 @@ export default {
 		const data = new URLSearchParams({
 			response_type: 'code',
 			client_id,
-			dataset: config.dataset,
+			dataset: BANKID.dataset,
 		});
 
 		if (state) {
@@ -70,6 +71,10 @@ export default {
 		return data;
 	},
 
+	/**
+	 * @param {string} access_token
+	 * @return {Promise<import('./bankid').MinClientData>}
+	 */
 	async getUserData(access_token) {
 		const res = await ajax({
 			url: '/resource/client',
@@ -78,21 +83,56 @@ export default {
 				authorization: `Bearer ${access_token}`
 			},
 			data: {
-				cert: config.cert
+				cert: BANKID.cert
 			}
 		});
 
-		return res.data;
+		/**
+		 * @type {import('./bankid').Client}
+		 */
+		const data = res.data;
+
+		const addr = data.addresses.find(a => a.type === 'juridical');
+
+		if (!addr && AUTH.addresses.length > 0) {
+			throw {type: 'no_juridical_address', context: 'auth'};
+		}
+
+		if (
+			AUTH.addresses.length > 0 &&
+			!AUTH.addresses.some(props => {
+				for (const prop in props) {
+					if (props[prop] !== addr[prop]) return false;
+				}
+
+				return true;
+			})
+		) {
+			throw {type: 'invalid_address', context: 'auth'};
+		}
+
+		/**
+		 * @type {import('./bankid').MinClientData}
+		 */
+		const user = pick(data, [
+			'sex',
+		]);
+
+		user.bank_id = createSHA3Hash(data.inn);
+		user.name = [data.lastName, data.firstName, data.middleName].filter(n => !!n && n !== 'n/a').join(' ');
+		user.age = moment().diff(moment(data.birthDay, 'DD.MM.Y'), 'years');
+
+		return user;
 	},
 
 	async toJWT(data) {
-		return jwtEncode(data, jwtKey, {algorithm: 'HS256'});
+		return jwtEncode(data, jwt_key, {algorithm: 'HS256'});
 	},
 
 	async fromJWT(jwt) {
 		if (!jwt) return null;
 
-		return jwtDecode(jwt, jwtKey);
+		return jwtDecode(jwt, jwt_key);
 	}
 };
 
@@ -106,3 +146,7 @@ setInterval(() => {
 		}
 	}
 }, 60 * 1000);
+
+function createSHA3Hash(data) {
+	return createHash('sha3-256').update(data).digest('hex');
+}

@@ -4,6 +4,8 @@ export type Answer = {
 	id: number,
 	bank_id: string,
 	name: string,
+	age: number,
+	sex: 'M' | 'F',
 	poll: string,
 	value: string,
 	created_at: string,

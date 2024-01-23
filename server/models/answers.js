@@ -1,4 +1,5 @@
 import db from '../db/index.js';
+import pick from 'lodash.pick';
 
 export const ANSWER_UPDATE_TIMEOUT = 60 * 10 * 1000; // 10 min
 
@@ -87,7 +88,7 @@ export default {
 	async create(answer) {
 		return (
 			Answers()
-			.insert(pick(answer, ['bank_id', 'name', 'poll', 'value']), ['id'])
+			.insert(pick(answer, ['bank_id', 'name', 'age', 'sex', 'poll', 'value']), ['id'])
 			.then(rows => rows[0])
 		);
 	},
@@ -210,19 +211,4 @@ export default {
 
 function cap(word) {
 	return word.charAt(0).toUpperCase() + word.slice(1);
-}
-
-/**
- * @param {import('./answer').Answer} src
- * @param {import('./answer').AnswerProps} props
- * @return {Partial<import('./answer').Answer>}
- */
-function pick(src, props) {
-	const data = {};
-
-	for (const prop of props) {
-		data[prop] = src[prop];
-	}
-
-	return data;
 }

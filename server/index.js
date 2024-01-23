@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import moment from 'moment';
+import pick from 'lodash.pick';
 import Answers, {ANSWER_UPDATE_TIMEOUT} from './models/answers.js';
 import Polls from './models/polls.js';
 import Auth from './models/auth.js';
@@ -167,6 +168,7 @@ app.get('/bankid/callback', function (req, res, next) {
 	.then(async function ({data, state}) {
 		const user = await Auth.getUserData(data.access_token);
 		const jwt = await Auth.toJWT(user);
+
 		const qs = new URLSearchParams({jwt});
 		let url = '/'
 
@@ -182,13 +184,17 @@ app.get('/bankid/callback', function (req, res, next) {
 			qs.set('checked', state.checked || '');
 		}
 
-		if (IS_DEV) {
-			url = ASTRO_URL + url;
+		redirect(res, url, qs);
+	})
+	.catch(err => {
+		const qs = new URLSearchParams();
+
+		if (err?.context === 'auth') {
+			qs.set('type', err.type);
 		}
 
-		res.redirect(url + '?' + qs.toString());
-	})
-	.catch(next);
+		redirect(res, '/bankid/auth-error', qs);
+	});
 });
 
 app.use(function (err, req, res, next) {
@@ -199,4 +205,16 @@ app.use(function (err, req, res, next) {
 
 function isExpired({created_at}) {
 	return moment.utc() - moment.utc(created_at) > ANSWER_UPDATE_TIMEOUT;
+}
+
+function redirect(res, url, qs) {
+	if (IS_DEV) {
+		url = ASTRO_URL + url;
+	}
+
+	if (qs) {
+		url += '?' + qs.toString();
+	}
+
+	res.redirect(url);
 }

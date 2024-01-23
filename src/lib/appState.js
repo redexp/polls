@@ -1,6 +1,8 @@
 import {createMutable} from 'solid-js/store';
 import {isServer} from "solid-js/web";
 
+const STORAGE = !isServer && sessionStorage;
+
 const appState = createMutable({
 	jwt: getState('jwt'),
 	reloadStatsSignal: Math.random(),
@@ -23,7 +25,7 @@ if (!isServer) {
 export default appState;
 
 export function setAppState({jwt}) {
-	localStorage.setItem('jwt', jwt);
+	STORAGE.setItem('jwt', jwt);
 
 	appState.jwt = jwt;
 }
@@ -33,5 +35,5 @@ export function reloadStats() {
 }
 
 function getState(name) {
-	return typeof localStorage !== 'undefined' ? localStorage.getItem(name) : '';
+	return STORAGE && STORAGE.getItem(name) || '';
 }

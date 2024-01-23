@@ -1,0 +1,47 @@
+---
+import Base from '@layouts/Base.astro';
+import CenterCol from '@components/CenterCol.astro';
+import Footer from '@components/Footer.astro';
+import {AUTH} from '../../../server/config';
+
+const addresses = (
+	AUTH.addresses
+	.map(addr =>
+		[[addr.state, ' область'], [addr.area, ' район'], [addr.city, '']]
+		.filter(([v]) => !!v)
+		.map(([v, s]) => v + s).join(', ')
+	)
+);
+---
+
+<Base title="Помилка під час ідентифікації">
+    <CenterCol>
+        <h1 class="display-4 mb-5">⚠️ Відбулася помилка під час ідентифікації через BankID</h1>
+
+        <div id="no_juridical_address" class="alert alert-danger d-none">
+            У вас немає адреси реєстрації, яка необхідна для встановлення територіальної громади до якої ви відноситесь
+		</div>
+
+        <div id="invalid_address" class="alert alert-danger d-none">
+            На цьому проєкті є обмеження по адресі реєстрації.
+            Брати участь у опитуваннях можуть лише громадяни з наступних регіонів:
+			<ul>
+				{addresses.map(addr => (
+					<li>{addr}</li>
+				))}
+			</ul>
+		</div>
+
+		<Footer/>
+    </CenterCol>
+
+    <script>
+		const {searchParams: qs} = new URL(location.href);
+		const type = qs.get('type');
+		const div = type && document.getElementById(type);
+
+		if (div) {
+			div.classList.remove('d-none');
+		}
+    </script>
+</Base>

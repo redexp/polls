@@ -10,6 +10,20 @@ const config = {
 		client_secret: '',
 		dataset: 51,
 		jwt_key: 'a6a1f53c-b6c0-11ee-826e-9bcc21332a5e',
+	},
+
+	auth: {
+
+		/**
+		 * @type {import('./models/bankid').Address[]}
+		 */
+		addresses: [
+			{
+				state: 'Черкаська',
+				// area: 'Чаркаський',
+				city: 'Черкаси',
+			}
+		],
 	}
 };
 
@@ -24,6 +38,7 @@ export default config;
 export const IS_DEV = process.env.NODE_ENV !== 'production';
 export const PORT = Number(config.port);
 export const BANKID = config.bankid;
+export const AUTH = config.auth;
 export const ASTRO_URL = 'http://localhost:' + config.astro_port;
 
 

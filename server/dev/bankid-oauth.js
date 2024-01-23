@@ -1,6 +1,7 @@
 import express from "express";
 import {PORT, BANKID, ASTRO_URL} from "../config.js";
 import {randomUUID} from "crypto";
+import moment from 'moment';
 
 const app = express();
 const DEV_PORT = BANKID.dev_port;
@@ -8,6 +9,8 @@ const DEV_PORT = BANKID.dev_port;
 app.listen(DEV_PORT, () => {
 	console.log('http://locahost:' + DEV_PORT);
 });
+
+app.use(express.urlencoded({extended: true}));
 
 app.get('/oauth2/authorize', function (req, res) {
 	let params = '';
@@ -17,23 +20,26 @@ app.get('/oauth2/authorize', function (req, res) {
 		params = '?' + qs({state});
 	}
 
-	res.redirect(ASTRO_URL + '/dev/bankid-login' + params);
+	res.redirect(ASTRO_URL + '/bankid/dev-login' + params);
 });
 
 const store = new Map();
 
-app.get('/oauth2/callback', function (req, res) {
-	const {state, name, age, sex} = req.query;
+app.post('/oauth2/callback', function (req, res) {
+	const {state, ...data} = req.body;
 	const code = randomUUID();
 	const access_token = randomUUID();
 
+	data.birthDay = moment(data.birthDay).format('DD.MM.Y');
+	data.addresses = [data.addresses];
+
 	store.set(code, {access_token, expires_in: 180});
-	store.set(access_token, {bank_id: randomUUID(), name, age, sex});
+	store.set(access_token, data);
 
 	res.redirect('http://localhost:' + PORT + '/bankid/callback?' + qs({code, state}));
 });
 
-app.post('/oauth2/token', express.urlencoded({extended: false}), function (req, res) {
+app.post('/oauth2/token', function (req, res) {
 	const {code} = req.body;
 
 	res.json(store.get(code));
