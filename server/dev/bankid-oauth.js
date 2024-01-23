@@ -5,14 +5,19 @@ import moment from 'moment';
 
 const app = express();
 const DEV_PORT = BANKID.dev_port;
+const url = new URL(BANKID.base_url);
 
 app.listen(DEV_PORT, () => {
-	console.log('http://locahost:' + DEV_PORT);
+	console.log(url.toString());
 });
 
 app.use(express.urlencoded({extended: true}));
 
-app.get('/oauth2/authorize', function (req, res) {
+const root = express.Router({mergeParams: true});
+
+app.use(url.pathname, root);
+
+root.get('/oauth2/authorize', function (req, res) {
 	let params = '';
 	const {state} = req.query;
 
@@ -25,7 +30,7 @@ app.get('/oauth2/authorize', function (req, res) {
 
 const store = new Map();
 
-app.post('/oauth2/callback', function (req, res) {
+root.post('/oauth2/callback', function (req, res) {
 	const {state, ...data} = req.body;
 	const code = randomUUID();
 	const access_token = randomUUID();
@@ -39,13 +44,13 @@ app.post('/oauth2/callback', function (req, res) {
 	res.redirect('http://localhost:' + PORT + '/bankid/callback?' + qs({code, state}));
 });
 
-app.post('/oauth2/token', function (req, res) {
+root.post('/oauth2/token', function (req, res) {
 	const {code} = req.body;
 
 	res.json(store.get(code));
 });
 
-app.post('/resource/client', function (req, res) {
+root.post('/resource/client', function (req, res) {
 	const auth = req.headers['authorization'];
 
 	res.json(store.get(auth.replace('Bearer ', '')));
