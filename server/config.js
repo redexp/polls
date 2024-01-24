@@ -74,5 +74,14 @@ function update(config, prefix = '') {
 }
 
 function get(name) {
-	return process.env[name] || import.meta.env[name];
+	const pEnv = process.env;
+	const iEnv = import.meta.env || {};
+
+	return (
+		pEnv.hasOwnProperty(name) ?
+			pEnv[name] :
+		iEnv.hasOwnProperty(name) ?
+			iEnv[name] :
+			undefined
+	);
 }
