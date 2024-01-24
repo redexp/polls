@@ -102,6 +102,6 @@ import {BANKID} from '@server/config';
     <script>
         const {searchParams: qs} = new URL(location.href);
 
-        document.querySelector('[name="state"]').value = qs.get('state') || '';
+        document.querySelector('[name="state"]').setAttribute('value', qs.get('state') || '');
     </script>
 </Base>

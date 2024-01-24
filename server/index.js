@@ -159,7 +159,7 @@ app.get('/bankid/auth', function (req, res) {
 	res.redirect(Auth.getAuthUrl(data));
 });
 
-app.get('/bankid/callback', function (req, res, next) {
+app.get('/bankid/callback', function (req, res) {
 	const {code, state} = req.query;
 
 	Auth
@@ -196,7 +196,7 @@ app.get('/bankid/callback', function (req, res, next) {
 	});
 });
 
-app.use(function (err, req, res, next) {
+app.use(function (err, req, res, _next) {
 	console.error(err);
 
 	res.sendStatus(500);
