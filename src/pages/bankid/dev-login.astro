@@ -1,7 +1,7 @@
 ---
-import Base from '../../layouts/Base.astro';
+import Base from '@layouts/Base.astro';
 import CenterCol from '@components/CenterCol.astro';
-import DevBankIDLoginForm from '@components/DevBankIDLoginForm.jsx';
+import {BANKID} from '@server/config';
 ---
 
 <Base title="⚠️ Dev BankID Login">
@@ -11,6 +11,97 @@ import DevBankIDLoginForm from '@components/DevBankIDLoginForm.jsx';
         <p>На цьому місті має бути вікно справжнього BankID.</p>
         <p>Поточне вікно створено лише задля повторення процесу ідентифікації.</p>
         <p>Нижче інформація, яку ми отримуємо від BankID. Ви можете заповнити вигаданою інформацією. Усі поля обовʼязкові для заповнення, окрім номеру квартири.</p>
-        <DevBankIDLoginForm client:load/>
+
+        <form
+            action={BANKID.url + '/oauth2/callback'}
+            method="post"
+            class="mt-5"
+        >
+            <input type="hidden" name="state"/>
+
+            <div class="mb-3">
+                <label class="form-label">Ідентифікаційний номер або серія і номер паспорту</label>
+
+                <input
+                    name="inn"
+                    class="form-control"
+                    required
+                />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Повне імʼя</label>
+
+                <div class="input-group">
+                    <input name="lastName" autocomplete="family-name" class="form-control" placeholder="Прізвище" required/>
+                    <input name="firstName" autocomplete="given-name" class="form-control" placeholder="Імʼя" required/>
+                    <input name="middleName" autocomplete="additional-name" class="form-control" placeholder="По батькові" required/>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Дата народження</label>
+
+                <input
+                    name="birthDay"
+                    type="date"
+                    autocomplete="bday"
+                    class="form-control"
+                    required
+                />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Стать</label>
+
+                <select
+                    name="sex"
+                    class="form-select"
+                >
+                    <option value="M">Чоловік</option>
+                    <option value="F">Жінка</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Адреса реєстрації (місце проживання)</label>
+
+                <input type="hidden" name="addresses[type]" value="juridical"/>
+                <input type="hidden" name="addresses[country]" value="UA"/>
+
+                <div class="input-group mb-2">
+                    <input name="addresses[state]" autocomplete="address-level1" class="form-control" placeholder="Область" required/>
+                    <input name="addresses[city]" autocomplete="address-level2" class="form-control" placeholder="Місто" required/>
+                </div>
+
+                <div class="input-group">
+                    <input name="addresses[street]" autocomplete="address-level3" class="form-control" placeholder="Назва вулиці" required/>
+                    <input name="addresses[houseNo]" class="form-control" placeholder="Номер будинку" required/>
+                    <input name="addresses[flatNo]" class="form-control" placeholder="Номер квартири"/>
+                </div>
+            </div>
+
+            <div class="d-flex mt-5">
+                <button
+                    type="submit"
+                    class="btn btn-primary me-2"
+                >
+                    OK
+                </button>
+
+                <a
+                    href="/"
+                    class="btn btn-secondary"
+                >
+                    Відмінити
+                </a>
+            </div>
+        </form>
 	</CenterCol>
+
+    <script>
+        const {searchParams: qs} = new URL(location.href);
+
+        document.querySelector('[name="state"]').value = qs.get('state') || '';
+    </script>
 </Base>
