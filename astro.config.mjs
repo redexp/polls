@@ -1,9 +1,13 @@
 import {defineConfig} from 'astro/config';
 import mdx from '@astrojs/mdx';
 import solid from '@astrojs/solid-js';
+import dotenv from 'dotenv';
+import {resolve} from 'path';
+
+dotenv.config({path: resolve(process.cwd(), '.env.' + (process.env.NODE_ENV || 'development'))});
 
 export default defineConfig({
-	site: 'https://vote.pp.ua',
+	site: 'https://polls.cherkasyurban.institute',
 	integrations: [
 		solid({
 			include: ['**/components/*.jsx']
