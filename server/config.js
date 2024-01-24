@@ -33,7 +33,7 @@ const config = {
 	}
 };
 
-env(config);
+update(config);
 
 const local = 'http://localhost:';
 
@@ -49,26 +49,30 @@ if (!config.astro.url) {
 	config.astro.url = local + config.astro.port;
 }
 
-export const IS_DEV = process.env.NODE_ENV !== 'production';
+export const IS_DEV = get('NODE_ENV') !== 'production';
 export const SERVER = config.server;
 export const BANKID = config.bankid;
 export const AUTH = config.auth;
 export const ASTRO_URL = config.astro.url;
 
 
-function env(config, prefix = '') {
+function update(config, prefix = '') {
 	for (const key in config) {
 		const value = config[key];
 
 		if (value && typeof value === 'object') {
-			env(value, prefix + key + '_');
+			update(value, prefix + key + '_');
 			continue;
 		}
 
-		const prop = (prefix + key).toUpperCase();
+		const env = get((prefix + key).toUpperCase());
 
-		if (!process.env.hasOwnProperty(prop)) continue;
+		if (typeof env === 'undefined') continue;
 
-		config[key] = process.env[prop];
+		config[key] = env;
 	}
+}
+
+function get(name) {
+	return process.env[name] || import.meta.env[name];
 }
