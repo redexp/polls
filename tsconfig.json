@@ -5,6 +5,7 @@
     "strictNullChecks": true,
     "baseUrl": ".",
     "paths": {
+      "@server/*": ["server/*"],
       "@layouts/*": ["src/layouts/*"],
       "@components/*": ["src/components/*"],
       "@lib/*": ["src/lib/*"]
