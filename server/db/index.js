@@ -1,17 +1,10 @@
 import knex from 'knex';
-import Client from '@libsql/knex-libsql';
-import {URL} from 'url';
-import {resolve} from 'path';
+import config from './knexfile.js';
 
-const url = new URL(import.meta.url);
-url.pathname = resolve(url.pathname, '..', process.env.DB_PATH || 'database.sqlite');
+const db = knex(config);
 
-const db = knex({
-	client: Client,
-	connection: {
-		filename: url.toString()
-	},
-	useNullAsDefault: true,
-});
+db.trx = function (queries) {
+	return db.transaction(trx => Promise.all(queries.map(q => q.transacting(trx))));
+};
 
 export default db;
