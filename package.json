@@ -26,6 +26,7 @@
     "@astrojs/solid-js": "^3.0.3",
     "@solid-primitives/scheduled": "^1.4.1",
     "@types/bootstrap": "^5.2.10",
+    "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/lodash.pick": "^4.4.9",
     "astro": "^4.0.8",
