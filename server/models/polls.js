@@ -19,6 +19,10 @@ export default {
 		return !!(item?.values.includes(value));
 	},
 
+	/**
+	 * @param {string} poll
+	 * @return {'dot' | 'check'}
+	 */
 	getAnswerType(poll) {
 		return meta.get(poll).answer_type;
 	}

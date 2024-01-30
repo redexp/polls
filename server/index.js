@@ -1,7 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import moment from 'moment';
+import db from './db/index.js';
 import Answers, {ANSWER_UPDATE_TIMEOUT} from './models/answers.js';
+import Statistic from './models/statistic.js';
 import Polls from './models/polls.js';
 import Auth from './models/auth.js';
 import {IS_DEV, SERVER, ASTRO_URL} from './config.js';
@@ -14,7 +16,7 @@ app.listen(SERVER.port, () => {
 
 if (IS_DEV) {
 	app.use(cors({
-		origin(origin, next) {
+		origin(_origin, next) {
 			next(null, true);
 		}
 	}));
@@ -58,12 +60,6 @@ app.post('/answers', function (req, res, next) {
 app.post('/answer', function (req, res, next) {
 	const {jwt, poll, value, checked = true} = req.body;
 
-	const create = async () => {
-		const user = await Auth.fromJWT(jwt);
-		await Answers.create({...user, poll, value});
-		return {is_new: true};
-	};
-
 	;(async () => {
 		const user = await Auth.fromJWT(jwt).catch(() => null);
 
@@ -74,6 +70,15 @@ app.post('/answer', function (req, res, next) {
 			res.status(400);
 			return {message: `Параметри, які необхідні щоб запамʼятати вашу відповідь, є некоректними. Спробуйте перезавантажити сторінку, або ж ще раз ідентифікуйте себе через BankID.`};
 		}
+
+		const create = async () => {
+			await db.trx([
+				Answers.create({...user, poll, value}),
+				Statistic.create({...user, poll, value}),
+			]);
+
+			return {is_new: true};
+		};
 
 		const items = await Answers.findAll({bank_id: user.bank_id, poll});
 		const answer_type = Polls.getAnswerType(poll);
@@ -89,14 +94,20 @@ app.post('/answer', function (req, res, next) {
 		if (answer_type === 'dot') {
 			if (hasAnswer) {
 				if (checked) {
-					await Answers.updateValue(answer.id, value);
+					await db.trx([
+						Answers.updateValue(answer.id, value),
+						Statistic.updateValue({...user, ...answer}, value),
+					]);
 				}
 				else {
-					await Answers.remove(answer.id);
+					await db.trx([
+						Answers.remove(answer.id),
+						Statistic.remove({...user, ...answer}),
+					]);
 				}
 			}
 			else if (checked) {
-				return create();
+				return create(user);
 			}
 		}
 		else {
@@ -105,12 +116,15 @@ app.post('/answer', function (req, res, next) {
 			if (checked) {
 				if (answer) return;
 
-				return create();
+				return create(user);
 			}
 
 			if (!answer) return;
 
-			await Answers.remove(answer.id);
+			await db.trx([
+				Answers.remove(answer.id),
+				Statistic.remove({...user, ...answer}),
+			]);
 		}
 	})()
 	.then(function (data = true) {
@@ -120,13 +134,12 @@ app.post('/answer', function (req, res, next) {
 });
 
 app.post('/polls-stats', function (req, res, next) {
-	const {polls, jwt} = req.body;
+	const {polls: polls_ids, jwt} = req.body;
 
-	Promise.all([
-		Answers.getPollsStats(polls),
-		Auth.fromJWT(jwt).then((user) => Answers.getPollsInfo(polls, user?.bank_id)),
-	])
-	.then(([stats, polls]) => {
+	Auth.fromJWT(jwt)
+	.then(async (user) => {
+		const [polls, stats] = await Answers.getPollsInfoAndStats(polls_ids, user?.bank_id);
+
 		for (const id in stats) {
 			const poll = polls.get(id);
 
@@ -196,7 +209,7 @@ app.get('/bankid/callback', function (req, res) {
 	});
 });
 
-app.use(function (err, req, res, _next) {
+app.use(function (err, _req, res, _next) {
 	console.error(err);
 
 	res.sendStatus(500);

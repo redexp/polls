@@ -83,22 +83,22 @@ export default {
 	/**
 	 *
 	 * @param {Omit<import('./answer').Answer, 'id' | 'created_at'>} answer
-	 * @return {Promise<{id: number}>}
+	 * @return {Promise<[{id: number}]>}
 	 */
-	async create(answer) {
+	create(answer) {
 		return (
 			Answers()
-			.insert(pick(answer, ['bank_id', 'name', 'age', 'sex', 'poll', 'value']), ['id'])
-			.then(rows => rows[0])
+			.insert(pick(answer, ['bank_id', 'name', 'poll', 'value']))
+			.returning('id')
 		);
 	},
 
 	/**
 	 * @param {number} id
 	 * @param {string} value
-	 * @return {Promise<any>}
+	 * @return {Promise<void>}
 	 */
-	async updateValue(id, value) {
+	updateValue(id, value) {
 		return (
 			Answers()
 			.update({value: String(value)})
@@ -120,7 +120,7 @@ export default {
 
 	/**
 	 * @param {Array<string>} polls
-	 * @return {Promise<{[poll: string]: {[value: string]: {count: number, percent: number, winner: boolean}}}>}
+	 * @return {Promise<import('./answer').PollsStats>}
 	 */
 	async getPollsStats(polls) {
 		if (!Array.isArray(polls) || polls.length === 0) return {};
@@ -171,7 +171,7 @@ export default {
 	/**
 	 * @param {Array<string>} polls
 	 * @param {string} bank_id
-	 * @return {Promise<Map<string, {values: Array<string>, created_at: string}>>}
+	 * @return {Promise<import('./answer').PollsInfo>}
 	 */
 	async getPollsInfo(polls, bank_id) {
 		if (!Array.isArray(polls) || polls.length === 0 || !bank_id) {
@@ -206,6 +206,18 @@ export default {
 				return polls;
 			})
 		);
+	},
+
+	/**
+	 * @param {Array<string>} polls
+	 * @param {string} [bank_id]
+	 * @returns {Promise<[import('./answer').PollsInfo, import('./answer').PollsStats]>}
+	 */
+	async getPollsInfoAndStats(polls, bank_id = '') {
+		return Promise.all([
+			this.getPollsInfo(polls, bank_id),
+			this.getPollsStats(polls),
+		]);
 	},
 }
 
