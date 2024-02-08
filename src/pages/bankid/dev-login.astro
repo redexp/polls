@@ -68,6 +68,7 @@ import {BANKID} from '@server/config';
 
                 <input type="hidden" name="addresses[type]" value="juridical"/>
                 <input type="hidden" name="addresses[country]" value="UA"/>
+                <input type="hidden" name="addresses[area]" value="n/a"/>
 
                 <div class="input-group mb-2">
                     <input name="addresses[state]" autocomplete="address-level1" class="form-control" placeholder="Область" required/>
@@ -100,8 +101,12 @@ import {BANKID} from '@server/config';
 	</CenterCol>
 
     <script>
-        const {searchParams: qs} = new URL(location.href);
+        (() => {
+            const {searchParams: qs} = new URL(location.href);
 
-        document.querySelector('[name="state"]').setAttribute('value', qs.get('state') || '');
+            document
+            .querySelector('[name="state"]')
+            .setAttribute('value', qs.get('state') || '');
+        })();
     </script>
 </Base>
