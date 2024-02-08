@@ -86,7 +86,7 @@ app.post('/answer', function (req, res, next) {
 
 		const answer = items[0];
 
-		if (answer && isExpired(answer)) {
+		if (items.some(isExpired)) {
 			res.status(403);
 			return {message: `Змінити свій голос можливо лише на протязі 10 хвилин`};
 		}
@@ -96,7 +96,8 @@ app.post('/answer', function (req, res, next) {
 				if (checked) {
 					await db.trx([
 						Answers.updateValue(answer.id, value),
-						Statistic.updateValue({...user, ...answer}, value),
+						Statistic.remove({...user, ...answer}),
+						Statistic.create({...user, ...answer, value}),
 					]);
 				}
 				else {

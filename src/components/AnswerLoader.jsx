@@ -6,15 +6,7 @@ import {addNotification} from './Notifications.jsx';
 import appState, {reloadStats} from '@lib/appState.js';
 import ajax from '@lib/ajax.js';
 
-export default function AnswerLoader({type = 'radio', name, value, children}) {
-    type = (
-        type === 'check' ?
-            'checkbox' :
-        type === 'dot' ?
-            'radio' :
-            type
-    );
-
+export default function AnswerLoader({name, value, children}) {
     const id = 'answer-' + Math.round(Math.random() * 10000);
     const [page, setPage] = createSignal(0);
     const [query, setQuery] = createSignal('');
@@ -54,8 +46,17 @@ export default function AnswerLoader({type = 'radio', name, value, children}) {
         const {checked} = input;
         const params = {poll: name, value, checked: checked ? 1 : ''};
 
-        onConfirmAndAuth(children.cloneNode(true), params, (success) => {
-            if (success) {
+        onConfirmAndAuth(
+            children.cloneNode(true),
+            checked,
+            params,
+            (success) => {
+                if (!success) {
+                    input.checked = !checked;
+                    reloadStats();
+                    return;
+                }
+
                 postAnswer({name, value, checked})
                 .then(function (res) {
                     reloadStats();
@@ -69,11 +70,7 @@ export default function AnswerLoader({type = 'radio', name, value, children}) {
                 })
                 .catch(reloadStats);
             }
-            else {
-                input.checked = !checked;
-                reloadStats();
-            }
-        });
+        );
     };
 
     onMount(() => {
@@ -88,7 +85,7 @@ export default function AnswerLoader({type = 'radio', name, value, children}) {
            qs.get('value') === value &&
            qs.has('checked')
        ) {
-           input.checked = !!qs.get('checked');
+           input.checked = !!Number(qs.get('checked'));
            onChangeAnswer();
        }
     });
@@ -102,7 +99,7 @@ export default function AnswerLoader({type = 'radio', name, value, children}) {
                 <input
                     ref={input}
                     class="form-check-input"
-                    type={type}
+                    type="checkbox"
                     name={name}
                     value={value}
                     checked={stat().checked}

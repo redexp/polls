@@ -103,10 +103,11 @@ export default function LoginModal() {
 
 /**
  * @param {any} answerText
+ * @param {boolean} answerChecked
  * @param {{poll?: string, value?: string}} params
  * @param {function(jwt: string): void} cb
  */
-export function onConfirmAndAuth(answerText, params, cb) {
+export function onConfirmAndAuth(answerText, answerChecked, params, cb) {
 	if (params.poll && location.pathname === '/polls/' + params.poll) {
 		params = {...params, poll_page: 1}
 	}
@@ -116,6 +117,7 @@ export function onConfirmAndAuth(answerText, params, cb) {
 
 		state.open = true;
 		state.answerText = answerText;
+		state.answerChecked = answerChecked;
 		state.callbacks.push(cb);
 	});
 }

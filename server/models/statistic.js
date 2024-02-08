@@ -43,10 +43,9 @@ export default {
 
 	/**
 	 * @param {import('./statistic').Statistic} data
-	 * @param {string} newValue
 	 * @return {Promise<void>}
 	 */
-	updateValue(data, newValue) {
+	remove(data) {
 		const query = (
 			Statistic()
 			.select('rowid')
@@ -54,12 +53,10 @@ export default {
 			.limit(1)
 		);
 
-		if (data.value === newValue) return query;
-
 		return (
 			Statistic()
-			.update({value: newValue})
 			.where('rowid', 'in', query)
+			.del()
 		);
 	},
 };
