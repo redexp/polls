@@ -32,6 +32,9 @@ dependencies:
   moment:
     specifier: ^2.30.1
     version: 2.30.1
+  pluscodes:
+    specifier: ^2.6.0
+    version: 2.6.0
 
 devDependencies:
   '@astrojs/mdx':
@@ -4502,6 +4505,10 @@ packages:
     dependencies:
       find-up: 4.1.0
     dev: true
+
+  /pluscodes@2.6.0:
+    resolution: {integrity: sha512-+3sW+Qt+znuN2uMFFvebo2m5MsaTjBXOzEYvkfx4RMeOYnNCQv3OWeQujfRAo6nzg7D+5vD2b3tihtwW3b5pfg==}
+    dev: false
 
   /postcss@8.4.33:
     resolution: {integrity: sha512-Kkpbhhdjw2qQs2O2DGX+8m5OVqEcbB9HRBvuYM9pgrjEFUg30A9LmXNlTAUj4S9kgtGyrMbTzVjH7E+s5Re2yg==}

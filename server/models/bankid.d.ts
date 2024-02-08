@@ -1,9 +1,12 @@
 export type Client = {
+	bank_id: string | null,
+
 	cert: string,
 	memberId: string,
 	sidBi: string,
 	type: "physical",
 
+	name: string,
 	firstName: string,
 	lastName: string,
 	middleName: string | NA,
@@ -59,8 +62,4 @@ export type Document = {
 	issueCountryIso2?: CountryCode,
 };
 
-export type MinClientData = Pick<Client, 'sex'> & {
-	bank_id: string,
-	name: string,
-	age: number,
-};
+export type ValidationErrorTypes = 'no_id' | 'no_name' | 'no_juridical_address' | 'invalid_address';

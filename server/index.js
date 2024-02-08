@@ -5,7 +5,7 @@ import db from './db/index.js';
 import Answers, {ANSWER_UPDATE_TIMEOUT} from './models/answers.js';
 import Statistic from './models/statistic.js';
 import Polls from './models/polls.js';
-import Auth from './models/auth.js';
+import BankID from './models/bankid.js';
 import {IS_DEV, SERVER, ASTRO_URL} from './config.js';
 
 const app = express();
@@ -61,7 +61,7 @@ app.post('/answer', function (req, res, next) {
 	const {jwt, poll, value, checked = true} = req.body;
 
 	;(async () => {
-		const user = await Auth.fromJWT(jwt).catch(() => null);
+		const user = await BankID.fromJWT(jwt).catch(() => null);
 
 		if (
 			!user ||
@@ -136,7 +136,7 @@ app.post('/answer', function (req, res, next) {
 app.post('/polls-stats', function (req, res, next) {
 	const {polls: polls_ids, jwt} = req.body;
 
-	Auth.fromJWT(jwt)
+	BankID.fromJWT(jwt)
 	.then(async (user) => {
 		const [polls, stats] = await Answers.getPollsInfoAndStats(polls_ids, user?.bank_id);
 
@@ -169,20 +169,29 @@ app.get('/bankid/auth', function (req, res) {
 		data = {poll, value, checked, poll_page};
 	}
 
-	res.redirect(Auth.getAuthUrl(data));
+	res.redirect(BankID.getAuthUrl(data));
 });
 
 app.get('/bankid/callback', function (req, res) {
 	const {code, state} = req.query;
 
-	Auth
+	BankID
 	.getAccessData(code, state)
 	.then(async function ({data, state}) {
-		const user = await Auth.getUserData(data.access_token);
-		const jwt = await Auth.toJWT(user);
+		const user = await BankID.getUserData(data.access_token);
+
+		BankID.validateUserData(user);
+
+		const statisticData = await Statistic.fromBankIdUserData(user);
+
+		const jwt = await BankID.toJWT({
+			bank_id: user.bank_id,
+			name: user.name,
+			...statisticData,
+		});
 
 		const qs = new URLSearchParams({jwt});
-		let url = '/'
+		let url = '/';
 
 		if (Polls.isValid(state?.poll, state?.value)) {
 			if (state.poll_page) {
@@ -199,9 +208,11 @@ app.get('/bankid/callback', function (req, res) {
 		redirect(res, url, qs);
 	})
 	.catch(err => {
+		console.log('BankID callback', err);
+
 		const qs = new URLSearchParams();
 
-		if (err?.context === 'auth') {
+		if (err?.context === 'bankid' || err?.context === 'statistic') {
 			qs.set('type', err.type);
 		}
 

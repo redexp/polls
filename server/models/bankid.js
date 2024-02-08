@@ -73,10 +73,10 @@ export default {
 
 	/**
 	 * @param {string} access_token
-	 * @return {Promise<import('./bankid').MinClientData>}
+	 * @return {Promise<import('./bankid').Client>}
 	 */
 	async getUserData(access_token) {
-		const res = await ajax({
+		const {data} = await ajax({
 			url: '/resource/client',
 			method: 'POST',
 			headers: {
@@ -87,15 +87,29 @@ export default {
 			}
 		});
 
-		/**
-		 * @type {import('./bankid').Client}
-		 */
-		const data = res.data;
+		data.bank_id = data.inn && data.inn !== 'n/a' ? createSHA3Hash(data.inn) : null;
+		data.name = [data.lastName, data.firstName, data.middleName].filter(n => !!n && n !== 'n/a').join(' ');
 
-		const addr = data.addresses.find(a => a.type === 'juridical');
+		return data;
+	},
+
+	/**
+	 * @param {import('./bankid').Client} data
+	 * @throws {{type: import('./bankid').ValidationErrorTypes, context: "bankid"}}
+	 */
+	validateUserData(data) {
+		if (!data.bank_id) {
+			throw {type: 'no_id', context: 'bankid'};
+		}
+
+		if (!data.name) {
+			throw {type: 'no_name', context: 'bankid'};
+		}
+
+		const addr = data.addresses?.find(a => a.type === 'juridical');
 
 		if (!addr && AUTH.addresses.length > 0) {
-			throw {type: 'no_juridical_address', context: 'auth'};
+			throw {type: 'no_juridical_address', context: 'bankid'};
 		}
 
 		if (
@@ -108,21 +122,8 @@ export default {
 				return true;
 			})
 		) {
-			throw {type: 'invalid_address', context: 'auth'};
+			throw {type: 'invalid_address', context: 'bankid'};
 		}
-
-		/**
-		 * @type {import('./bankid').MinClientData}
-		 */
-		const user = pick(data, [
-			'sex',
-		]);
-
-		user.bank_id = createSHA3Hash(data.inn);
-		user.name = [data.lastName, data.firstName, data.middleName].filter(n => !!n && n !== 'n/a').join(' ');
-		user.age = moment().diff(moment(data.birthDay, 'DD.MM.Y'), 'years');
-
-		return user;
 	},
 
 	async toJWT(data) {

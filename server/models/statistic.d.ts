@@ -6,7 +6,9 @@ export type Statistic = {
 	value: string,
 	age: number,
 	sex: 'M' | 'F',
-	geo: string,
+	geo: `${string}+`, // Plus Code
 };
 
 export type StatisticBuilder = Knex<Statistic>;
+
+export type StatisticData = Omit<Statistic, 'rowid' | 'poll' | 'value'>;

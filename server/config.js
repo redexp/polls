@@ -30,7 +30,13 @@ const config = {
 				city: 'Черкаси',
 			}
 		],
-	}
+	},
+
+	maps: {
+		api_key: '',
+		language: 'uk',
+		region: 'ua',
+	},
 };
 
 update(config);
@@ -53,6 +59,7 @@ export const IS_DEV = get('NODE_ENV') !== 'production';
 export const SERVER = config.server;
 export const BANKID = config.bankid;
 export const AUTH = config.auth;
+export const MAPS = config.maps;
 export const ASTRO_URL = config.astro.url;
 
 

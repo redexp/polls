@@ -9,7 +9,8 @@ const addresses = (
 	.map(addr =>
 		[[addr.state, ' область'], [addr.area, ' район'], [addr.city, '']]
 		.filter(([v]) => !!v)
-		.map(([v, s]) => v + s).join(', ')
+		.map(([v, s]) => v + s)
+		.join(', ')
 	)
 );
 ---
@@ -18,9 +19,7 @@ const addresses = (
     <CenterCol>
         <h1 class="display-4 mb-5">⚠️ Відбулася помилка під час ідентифікації через BankID</h1>
 
-        <div id="no_juridical_address" class="alert alert-danger d-none">
-            У вас немає адреси реєстрації, яка необхідна для встановлення територіальної громади до якої ви відноситесь
-		</div>
+        <div id="message" class="alert alert-danger d-none"></div>
 
         <div id="invalid_address" class="alert alert-danger d-none">
             На цьому проєкті є обмеження по адресі реєстрації.
@@ -36,12 +35,31 @@ const addresses = (
     </CenterCol>
 
     <script>
-		const {searchParams: qs} = new URL(location.href);
-		const type = qs.get('type');
-		const div = type && document.getElementById(type);
+		(() => {
+			const {searchParams: qs} = new URL(location.href);
+			const type = qs.get('type');
 
-		if (div) {
+			if (!type) return;
+
+			let div = document.getElementById(type);
+
+			if (div) {
+				div.classList.remove('d-none');
+				return;
+			}
+
+			const map = {
+				no_id: `У вас немає документа, за яким можна було б вас ідентифікувати (РНОКП, паспорт або id картка)`,
+				no_name: `Неможливо дізнатися ваше імʼя`,
+				no_juridical_address: `У вас немає адреси реєстрації, яка необхідна для встановлення територіальної громади до якої ви відноситесь`,
+				no_location: `Сервіс Google Maps не може знайти вашої адреси`,
+			};
+
+			if (!map.hasOwnProperty(type)) return;
+
+			div = document.getElementById('message');
+			div.innerText = map[type];
 			div.classList.remove('d-none');
-		}
+		})();
     </script>
 </Base>
