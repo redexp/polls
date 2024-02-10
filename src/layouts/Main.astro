@@ -17,4 +17,14 @@ const {title = TITLE} = Astro.props;
     </CenterCol>
 
     <LoginModal client:only="solid-js"/>
+
+    <script>
+        (() => {
+            const {searchParams: qs} = new URL(location.href);
+            if (!qs.has('poll')) return;
+            const a = document.getElementById(qs.get('poll'));
+            if (!a) return;
+            a.scrollIntoView({behavior: "smooth"});
+        })();
+    </script>
 </Base>
