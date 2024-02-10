@@ -4,6 +4,7 @@ import {Transition} from 'solid-transition-group';
 export default function Modal(props) {
 	return (
 		<Transition
+			appear={true}
 			onEnter={(el, done) => {
 				requestAnimationFrame(() => {
 					el.classList.add('show');
