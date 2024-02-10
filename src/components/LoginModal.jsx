@@ -38,12 +38,10 @@ export default function LoginModal() {
 			</Header>}
 
 			<Body>
-				<p>
-					{state.answerChecked ?
-						`Ваша відповідь` :
-						`Ви відмовляєтесь від відповіді`
-					}
-				</p>
+				{state.answerChecked ?
+					<p>Ваша відповідь</p> :
+					<p>Ви <strong>відмовляєтесь</strong> від відповіді</p>
+				}
 
 				<div class="alert alert-light">
 					{state.answerText}
