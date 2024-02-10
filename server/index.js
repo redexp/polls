@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import moment from 'moment';
+import {randomUUID} from 'crypto';
 import db from './db/index.js';
 import Answers, {ANSWER_UPDATE_TIMEOUT} from './models/answers.js';
 import Statistic from './models/statistic.js';
@@ -173,6 +174,11 @@ app.get('/bankid/auth', function (req, res) {
 	res.redirect(BankID.getAuthUrl(data));
 });
 
+/**
+ * @type {Map<string, {jwt: string, time: number}>}
+ */
+const jwtMap = new Map();
+
 app.get('/bankid/callback', function (req, res) {
 	const {code, state} = req.query;
 
@@ -190,8 +196,11 @@ app.get('/bankid/callback', function (req, res) {
 			name: user.name,
 			...statisticData,
 		});
+		const uuid = randomUUID().slice(0, 8);
 
-		const qs = new URLSearchParams({jwt});
+		jwtMap.set(uuid, {jwt, time: Date.now()});
+
+		const qs = new URLSearchParams({auth_token: uuid});
 		let url = '/';
 
 		if (Polls.isValid(state?.poll, state?.value)) {
@@ -221,11 +230,36 @@ app.get('/bankid/callback', function (req, res) {
 	});
 });
 
+app.post('/bankid/jwt', function (req, res) {
+	const {auth_token: uuid} = req.body;
+
+	if (!uuid || !jwtMap.has(uuid)) {
+		res.json(null);
+		return;
+	}
+
+	res.json({jwt: jwtMap.get(uuid).jwt});
+
+	jwtMap.delete(uuid);
+});
+
 app.use(function (err, _req, res, _next) {
 	console.error(err);
 
 	res.sendStatus(500);
 });
+
+setInterval(() => {
+	if (jwtMap.size === 0) return;
+
+	const now = Date.now();
+
+	for (const [key, {time}] of jwtMap.entries()) {
+		if (now - time > 10_000) {
+			jwtMap.delete(key);
+		}
+	}
+}, 1000);
 
 function isExpired({created_at}) {
 	return moment.utc() - moment.utc(created_at) > ANSWER_UPDATE_TIMEOUT;

@@ -1,5 +1,6 @@
 import {createMutable} from 'solid-js/store';
 import {isServer} from "solid-js/web";
+import ajax from './ajax.js';
 
 const STORAGE = !isServer && sessionStorage;
 
@@ -9,10 +10,19 @@ const appState = createMutable({
 });
 
 if (!isServer) {
-	const url = new URL(location.href);
+	const url = new URL(location);
+	const {searchParams: qs} = url;
 
-	if (url.searchParams.has('jwt')) {
-		setAppState({jwt: url.searchParams.get('jwt')});
+	if (qs.has('auth_token')) {
+		ajax('/bankid/jwt', {auth_token: qs.get('auth_token')}).then(function (data) {
+			if (!data || !data.jwt) return;
+
+			setAppState(data);
+		});
+
+		qs.delete('auth_token');
+
+		history.pushState({}, '', url);
 	}
 
 	window.addEventListener('storage', (e) => {
@@ -24,7 +34,7 @@ if (!isServer) {
 
 export default appState;
 
-export function setAppState({jwt}) {
+export function setAppState({jwt = ''}) {
 	STORAGE.setItem('jwt', jwt);
 
 	appState.jwt = jwt;

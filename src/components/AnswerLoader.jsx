@@ -76,11 +76,10 @@ export default function AnswerLoader({name, value, children}) {
     onMount(() => {
        if (isServer) return;
 
-       const url = new URL(location.href);
+       const url = new URL(location);
        const qs = url.searchParams;
 
        if (
-           qs.has('jwt') &&
            (qs.get('poll') === name || url.pathname === '/polls/' + name) &&
            qs.get('value') === value &&
            qs.has('checked')
