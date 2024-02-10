@@ -110,7 +110,7 @@ export default {
 	 * @param {number} id
 	 * @return {Promise<any>}
 	 */
-	async remove(id) {
+	remove(id) {
 		return (
 			Answers()
 			.del()
