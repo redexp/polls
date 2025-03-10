@@ -11,32 +11,31 @@
     "bankid": "node server/dev/bankid-oauth.js"
   },
   "dependencies": {
-    "@libsql/client": "0.4.0-pre.5",
+    "@libsql/client": "0.14.0",
     "@libsql/knex-libsql": "^0.1.0",
-    "axios": "^1.6.5",
+    "axios": "^1.8.2",
     "cors": "^2.8.5",
-    "express": "^4.18.2",
+    "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "knex": "^3.1.0",
-    "lodash.pick": "^4.4.0",
     "moment": "^2.30.1",
     "pluscodes": "^2.6.0"
   },
   "devDependencies": {
-    "@astrojs/mdx": "^2.0.3",
+    "@astrojs/mdx": "^2.3.1",
     "@astrojs/solid-js": "^3.0.3",
-    "@solid-primitives/scheduled": "^1.4.1",
+    "@solid-primitives/scheduled": "^1.5.0",
     "@types/bootstrap": "^5.2.10",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/lodash.pick": "^4.4.9",
-    "astro": "^4.0.8",
-    "bootstrap": "^5.3.2",
-    "dotenv": "^16.4.0",
-    "less": "^4.2.0",
+    "astro": "^4.16.18",
+    "bootstrap": "^5.3.3",
+    "dotenv": "^16.4.7",
+    "less": "^4.2.2",
     "remark": "^15.0.1",
-    "remark-mdx": "^3.0.0",
-    "solid-js": "^1.8.7",
-    "solid-transition-group": "^0.2.3"
+    "remark-mdx": "^3.1.0",
+    "solid-js": "^1.9.5",
+    "solid-transition-group": "^0.3.0"
   }
 }

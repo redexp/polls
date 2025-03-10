@@ -1,5 +1,5 @@
 import db from '../db/index.js';
-import pick from 'lodash.pick';
+import pick from '../lib/pick.js';
 import moment from "moment";
 import axios from "axios";
 import pc from "pluscodes";

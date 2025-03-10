@@ -2,8 +2,6 @@ import axios from 'axios';
 import JWT from 'jsonwebtoken';
 import {promisify} from 'util';
 import {createHash, randomUUID} from 'crypto';
-import pick from 'lodash.pick';
-import moment from "moment";
 import {BANKID, AUTH} from '../config.js';
 
 const jwtEncode = promisify(JWT.sign);
