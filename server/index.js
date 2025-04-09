@@ -25,7 +25,7 @@ if (IS_DEV) {
 
 app.use(express.json());
 
-app.post('/answers', function (req, res, next) {
+app.post('/answers', async function (req, res) {
 	const data = req.body;
 	const page = Number(data.page);
 	const limit = 50;
@@ -36,8 +36,7 @@ app.post('/answers', function (req, res, next) {
 		return;
 	}
 
-	Answers
-	.findAndCount({
+	const {rows, count} = await Answers.findAndCount({
 		where: {
 			poll: String(data.poll),
 			value: String(data.value),
@@ -45,121 +44,117 @@ app.post('/answers', function (req, res, next) {
 		},
 		offset,
 		limit,
-	})
-	.then(function ({rows, count}) {
-		res.json({
-			rows: rows.map(({name}, i) => ({
-				name,
-				number: offset + i + 1,
-			})),
-			pages: Math.ceil(count / limit),
-		});
-	})
-	.catch(next);
+	});
+
+	res.json({
+		rows: rows.map(({name}, i) => ({
+			name,
+			number: offset + i + 1,
+		})),
+		pages: Math.ceil(count / limit),
+	});
 });
 
-app.post('/answer', function (req, res, next) {
+app.post('/answer', async function (req, res) {
 	const {jwt, poll, value, checked = true} = req.body;
 
-	;(async () => {
-		const user = await BankID.fromJWT(jwt).catch(() => null);
+	const user = await BankID.fromJWT(jwt).catch(() => null);
 
-		if (
-			!user ||
-			!Polls.isValid(poll, value)
-		) {
-			res.status(400);
-			return {message: `Параметри, які необхідні щоб запамʼятати вашу відповідь, є некоректними. Спробуйте перезавантажити сторінку, або ж ще раз ідентифікуйте себе через BankID.`};
-		}
+	if (
+		!user ||
+		!Polls.isValid(poll, value)
+	) {
+		res.status(400);
+		res.json({message: `Параметри, які необхідні щоб запамʼятати вашу відповідь, є некоректними. Спробуйте перезавантажити сторінку, або ж ще раз ідентифікуйте себе через BankID.`});
+		return;
+	}
 
-		const create = async () => {
-			await db.trx([
-				Answers.create({...user, poll, value}),
-				Statistic.create({...user, poll, value}),
-			]);
+	const items = await Answers.findAll({bank_id: user.bank_id, poll});
 
-			return {is_new: true};
-		};
+	if (items.some(isExpired)) {
+		res.status(403);
+		res.json({message: `Змінити свій голос можливо лише на протязі 10 хвилин`});
+		return;
+	}
 
-		const items = await Answers.findAll({bank_id: user.bank_id, poll});
-		const answer_type = Polls.getAnswerType(poll);
-		const hasAnswer = items.length > 0;
+	const create = async () => {
+		await db.trx([
+			Answers.create({...user, poll, value}),
+			Statistic.create({...user, poll, value}),
+		]);
 
-		const answer = items[0];
+		return {is_new: true};
+	};
 
-		if (items.some(isExpired)) {
-			res.status(403);
-			return {message: `Змінити свій голос можливо лише на протязі 10 хвилин`};
-		}
+	const answer_type = Polls.getAnswerType(poll);
+	const hasAnswer = items.length > 0;
 
-		if (answer_type === 'dot') {
-			if (hasAnswer) {
-				if (checked) {
-					await db.trx([
-						Answers.updateValue(answer.id, value),
-						Statistic.remove({...user, ...answer}),
-						Statistic.create({...user, ...answer, value}),
-					]);
-				}
-				else {
-					await db.trx([
-						Answers.remove(answer.id),
-						Statistic.remove({...user, ...answer}),
-					]);
-				}
-			}
-			else if (checked) {
-				return create(user);
-			}
-		}
-		else {
-			const answer = items.find(item => item.value === value);
+	if (answer_type === 'dot') {
+		if (hasAnswer) {
+			const answer = items[0];
 
 			if (checked) {
-				if (answer) return;
-
-				return create(user);
+				await db.trx([
+					Answers.updateValue(answer.id, value),
+					Statistic.remove({...user, ...answer}),
+					Statistic.create({...user, ...answer, value}),
+				]);
 			}
+			else {
+				await db.trx([
+					Answers.remove(answer.id),
+					Statistic.remove({...user, ...answer}),
+				]);
+			}
+		}
+		else if (checked) {
+			res.json(await create(user));
+			return;
+		}
+	}
+	else {
+		const answer = items.find(item => item.value === value);
 
-			if (!answer) return;
-
+		if (checked) {
+			if (!answer) {
+				res.json(await create(user));
+				return;
+			}
+		}
+		else if (answer) {
 			await db.trx([
 				Answers.remove(answer.id),
 				Statistic.remove({...user, ...answer}),
 			]);
 		}
-	})()
-	.then(function (data = true) {
-		res.json(data);
-	})
-	.catch(next);
+	}
+
+	res.json(true);
 });
 
-app.post('/polls-stats', function (req, res, next) {
+app.post('/polls-stats', async function (req, res) {
 	const {polls: polls_ids, jwt} = req.body;
 
-	BankID.fromJWT(jwt)
-	.then(async (user) => {
-		const [polls, stats] = await Answers.getPollsInfoAndStats(polls_ids, user?.bank_id);
+	const user = await BankID.fromJWT(jwt);
 
-		for (const id in stats) {
-			const poll = polls.get(id);
+	const [polls, stats] = await Answers.getPollsInfoAndStats(polls_ids, user?.bank_id);
 
-			for (const value in stats[id]) {
-				stats[id][value].checked = !!poll && poll.values.includes(value);
-			}
+	for (const id in stats) {
+		const poll = polls.get(id);
+
+		for (const value in stats[id]) {
+			stats[id][value].checked = !!poll && poll.values.includes(value);
 		}
+	}
 
-		res.json({
-			stats,
-			disabled: (
-				Array.from(polls)
-				.filter(([_, poll]) => isExpired(poll))
-				.map(([id]) => id)
-			)
-		});
-	})
-	.catch(next);
+	res.json({
+		stats,
+		disabled: (
+			Array.from(polls)
+			.filter(([_, poll]) => isExpired(poll))
+			.map(([id]) => id)
+		),
+	});
 });
 
 app.get('/bankid/auth', function (req, res) {
