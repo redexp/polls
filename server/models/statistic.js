@@ -117,6 +117,10 @@ function getLocation(address) {
 			}
 		})
 		.then(({data}) => {
+			if (data.error_message) {
+				console.error(data);
+			}
+
 			return (
 				data?.results &&
 				data.results[0] &&
