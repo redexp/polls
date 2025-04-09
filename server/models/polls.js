@@ -1,9 +1,4 @@
-import {readFileSync} from 'fs';
-import {resolve} from 'path';
-
-const url = new URL(import.meta.url);
-const json = readFileSync(resolve(url.pathname, '..', '..', 'polls_meta.json'), 'utf8');
-const data = JSON.parse(json);
+import data from '../polls_meta.json' with {type: 'json'};
 
 /**
  * @type {Map<string, {answer_type: 'dot' | 'check', values: Array<string>}>}
@@ -25,5 +20,5 @@ export default {
 	 */
 	getAnswerType(poll) {
 		return meta.get(poll).answer_type;
-	}
+	},
 };
