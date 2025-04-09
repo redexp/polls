@@ -54,7 +54,7 @@ export default function LoginModal() {
 					<li><strong>Вік</strong> та <strong>стать</strong>, які зберігаються без привʼязки до вашого імені</li>
 					<li>
 						<strong>Plus Code місця</strong> у якому знаходиться ваша адреса реєстрації, який також зберігається окремо від імені, але разом з віком та статтю.
-
+						&nbsp;
 						<button
 							onClick={(e) => e.target.nextElementSibling.classList.toggle('d-none')}
 							type="button"
