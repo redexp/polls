@@ -1,3 +1,5 @@
+import {randomUUID} from 'crypto';
+
 const config = {
 	server: {
 		port: 8000,
@@ -15,7 +17,7 @@ const config = {
 		client_id: '',
 		client_secret: '',
 		dataset: 51,
-		jwt_key: 'a6a1f53c-b6c0-11ee-826e-9bcc21332a5e',
+		jwt_key: randomUUID(),
 	},
 
 	auth: {
