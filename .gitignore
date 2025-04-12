@@ -1,7 +1,7 @@
 .idea
 
-server/*.key
-server/*.pub
+server/polls_meta.json
+
 deploy.sh
 
 *.pem
