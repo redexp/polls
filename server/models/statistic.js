@@ -3,7 +3,11 @@ import pick from '../lib/pick.js';
 import moment from "moment";
 import axios from "axios";
 import pc from "pluscodes";
+import {createPublicKey, publicEncrypt, createHash} from 'crypto';
+import statistic_public_key from '../statistic_public_key.pem.json' with {type: 'json'};
 import {MAPS} from '../config.js';
+
+const publicKey = createPublicKey(statistic_public_key);
 
 /**
  * @returns {import('./statistic').StatisticBuilder}
@@ -36,7 +40,10 @@ export default {
 	create(data) {
 		return (
 			Statistic()
-			.insert(clear(data))
+			.insert({
+				hash: hashData(data),
+				data: encryptData(data),
+			})
 			.returning('rowid')
 		);
 	},
@@ -49,7 +56,9 @@ export default {
 		const query = (
 			Statistic()
 			.select('rowid')
-			.where(clear(data))
+			.where({
+				hash: hashData(data)
+			})
 			.limit(1)
 		);
 
@@ -140,5 +149,36 @@ function toAddressString(addr) {
 		.filter(([v]) => !!v && v !== 'n/a')
 		.map(([v, p = '']) => (v + p))
 		.join(', ')
+	);
+}
+
+/**
+ * @param {import('./statistic').Statistic} data
+ * @returns {string} json
+ */
+function stringifyData(data) {
+	return JSON.stringify([data.poll, data.value, data.age, data.sex, data.geo]);
+}
+
+/**
+ * @param {import('./statistic').Statistic} data
+ * @returns {string}
+ */
+export function hashData(data) {
+	return (
+		createHash('sha256')
+		.update(stringifyData(data))
+		.digest('hex')
+	);
+}
+
+/**
+ * @param {import('./statistic').Statistic} data
+ * @returns {Buffer}
+ */
+export function encryptData(data) {
+	return publicEncrypt(
+		publicKey,
+		Buffer.from(stringifyData(data))
 	);
 }

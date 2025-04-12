@@ -8,7 +8,9 @@
     "build": "astro build",
     "meta": "node bin/build-polls_meta.js",
     "server": "node server/index.js",
-    "bankid": "node server/dev/bankid-oauth.js"
+    "bankid": "node server/dev/bankid-oauth.js",
+    "migrate": "knex migrate:latest --knexfile=server/db/knexfile.js",
+    "keys": "node bin/generate-rsa-keys.js"
   },
   "dependencies": {
     "@libsql/client": "0.15.2",
@@ -33,6 +35,7 @@
     "bootstrap": "^5.3.5",
     "dotenv": "^16.4.7",
     "less": "^4.3.0",
+    "minimist": "^1.2.8",
     "remark": "^15.0.1",
     "remark-mdx": "^3.1.0",
     "solid-js": "^1.9.5",

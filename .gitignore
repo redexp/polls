@@ -1,9 +1,13 @@
 .idea
 
-server/db/config/index.js
 server/*.key
 server/*.pub
 deploy.sh
+
+*.pem
+*.pem.json
+
+*.sqlite
 
 # build output
 dist/

@@ -3,14 +3,10 @@
  */
 export function up(knex) {
 	return knex.schema.createTable('statistic', (t) => {
-		t.text('poll');
-		t.text('value');
-		t.integer('age');
-		t.text('sex');
-		t.text('geo');
+		t.text('hash');
+		t.text('data');
 
-		t.index(['poll']);
-		t.index(['poll', 'value']);
+		t.index(['hash']);
 	});
 }
 
