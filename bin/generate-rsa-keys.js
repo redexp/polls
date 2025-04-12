@@ -1,5 +1,5 @@
 import {generateKeyPairSync} from 'crypto';
-import {writeFileSync, existsSync} from 'fs';
+import {writeFileSync} from 'fs';
 import {resolve} from 'path';
 
 const cwd = process.cwd();
