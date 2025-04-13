@@ -1,3 +1,0 @@
-[submodule "src/polls"]
-	path = src/polls
-	url = git@github.com:redexp/chepolls.git
