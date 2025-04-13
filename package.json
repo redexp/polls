@@ -10,7 +10,7 @@
     "server": "node server/index.js",
     "bankid": "node server/dev/bankid-oauth.js",
     "migrate": "knex migrate:latest --knexfile=server/db/knexfile.js",
-    "keys": "node bin/generate-rsa-keys.js"
+    "keys": "node bin/generate-keys.js"
   },
   "dependencies": {
     "@libsql/client": "0.15.2",

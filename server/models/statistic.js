@@ -4,10 +4,9 @@ import moment from "moment";
 import axios from "axios";
 import pc from "pluscodes";
 import {createPublicKey, publicEncrypt, createHash} from 'crypto';
-import statistic_public_key from '../statistic_public_key.pem.json' with {type: 'json'};
-import {MAPS} from '../config.js';
+import {STATISTIC_PUBLIC_KEY, MAPS} from '../config.js';
 
-const publicKey = createPublicKey(statistic_public_key);
+const publicKey = createPublicKey(STATISTIC_PUBLIC_KEY);
 
 /**
  * @returns {import('./statistic').StatisticBuilder}

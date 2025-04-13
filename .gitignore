@@ -4,8 +4,8 @@ server/polls_meta.json
 
 deploy.sh
 
+*.key
 *.pem
-*.pem.json
 
 *.sqlite
 

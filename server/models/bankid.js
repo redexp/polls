@@ -2,12 +2,12 @@ import axios from 'axios';
 import JWT from 'jsonwebtoken';
 import {promisify} from 'util';
 import {createHash, randomUUID} from 'crypto';
-import {BANKID, AUTH} from '../config.js';
+import {BANKID, AUTH, JWT_KEY} from '../config.js';
 
 const jwtEncode = promisify(JWT.sign);
 const jwtDecode = promisify(JWT.verify);
 
-const {client_id, client_secret, jwt_key} = BANKID;
+const {client_id, client_secret} = BANKID;
 
 const ajax = axios.create({
 	baseURL: BANKID.url
@@ -125,13 +125,13 @@ export default {
 	},
 
 	async toJWT(data) {
-		return jwtEncode(data, jwt_key, {algorithm: 'HS256'});
+		return jwtEncode(data, JWT_KEY, {algorithm: 'HS256'});
 	},
 
 	async fromJWT(jwt) {
 		if (!jwt) return null;
 
-		return jwtDecode(jwt, jwt_key);
+		return jwtDecode(jwt, JWT_KEY);
 	}
 };
 

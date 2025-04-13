@@ -1,4 +1,12 @@
-import {randomUUID} from 'crypto';
+import {readFileSync} from 'fs';
+import {resolve, dirname} from 'path';
+
+const {pathname} = new URL(import.meta.url);
+export const SERVER_DIR = dirname(pathname);
+
+export const JWT_KEY = readFileSync(resolve(SERVER_DIR, 'jwt.key'), 'utf-8');
+
+export const STATISTIC_PUBLIC_KEY = readFileSync(resolve(SERVER_DIR, 'statistic_public_key.pem'), 'utf-8');
 
 const config = {
 	server: {
@@ -17,7 +25,6 @@ const config = {
 		client_id: '',
 		client_secret: '',
 		dataset: 51,
-		jwt_key: randomUUID(),
 	},
 
 	auth: {
