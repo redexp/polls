@@ -1,12 +1,19 @@
 import {readFileSync} from 'fs';
 import {resolve, dirname} from 'path';
+import 'dotenv/config.js';
 
 const {pathname} = new URL(import.meta.url);
 export const SERVER_DIR = dirname(pathname);
 
-export const JWT_KEY = readFileSync(resolve(SERVER_DIR, 'jwt.key'), 'utf-8');
+export const JWT_KEY = (
+	process.env.JWT_KEY ||
+	readFileSync(resolve(SERVER_DIR, 'jwt.key'), 'utf-8')
+);
 
-export const STATISTIC_PUBLIC_KEY = readFileSync(resolve(SERVER_DIR, 'statistic_public_key.pem'), 'utf-8');
+export const STATISTIC_PUBLIC_KEY = (
+	process.env.STATISTIC_PUBLIC_KEY ||
+	readFileSync(resolve(SERVER_DIR, 'statistic_public_key.pem'), 'utf-8')
+);
 
 const config = {
 	server: {
@@ -41,10 +48,12 @@ const config = {
 		],
 	},
 
+	// mapbox settings
 	maps: {
-		api_key: '',
-		language: 'uk',
-		region: 'ua',
+		access_token: '',
+		country: 'UA',
+		region: 'Cherkasy Oblast', // taken from mapbox playground
+		place: 'Черкаси',
 	},
 };
 

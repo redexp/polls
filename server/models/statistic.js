@@ -70,85 +70,45 @@ export default {
 };
 
 /**
- * @param {*} data
- * @returns {import('./statistic').Statistic}
- */
-export function clear(data) {
-	return pick(data, [
-		'poll',
-		'value',
-		'age',
-		'sex',
-		'geo',
-	]);
-}
-
-/**
  * @param {import('./bankid').Address} addr
  * @returns {Promise<string>}
  */
-async function getGeoPlusCode(addr) {
-	const isNA = (v) => !v || v === 'n/a';
-
-	let codeLength = 8;
-	let loc = await getLocation(toAddressString(addr));
-
-	if (!loc && !isNA(addr.houseNo)) {
-		loc = await getLocation(toAddressString({...addr, houseNo: 'n/a'}));
-	}
-
-	if (!loc && !isNA(addr.street)) {
-		codeLength = 4;
-		loc = await getLocation(toAddressString({...addr, street: 'n/a', houseNo: 'n/a'}));
-	}
+export async function getGeoPlusCode(addr) {
+	const loc = await getLocation(addr);
 
 	if (!loc) {
 		return 'no_location';
 	}
 
-	return pc.encode({latitude: loc.lat, longitude: loc.lng}, codeLength);
-}
-
-/**
- * @param {string} address
- * @returns {Promise<{lat: number, lng: number}>}
- */
-function getLocation(address) {
-	return (
-		axios
-		.get('https://maps.googleapis.com/maps/api/geocode/json', {
-			params: {
-				address,
-				language: MAPS.language,
-				region: MAPS.region,
-				key: MAPS.api_key,
-			}
-		})
-		.then(({data}) => {
-			if (data.error_message) {
-				console.error(data);
-			}
-
-			return (
-				data?.results &&
-				data.results[0] &&
-				data.results[0].geometry?.location
-			);
-		})
-	);
+	return pc.encode(loc, 8);
 }
 
 /**
  * @param {import('./bankid').Address} addr
- * @returns {string}
+ * @returns {Promise<{latitude: number, longitude: number}>}
  */
-function toAddressString(addr) {
-	return (
-		[[addr.state, ' область'], [addr.area, ' район'], [addr.city], [addr.street], [addr.houseNo]]
-		.filter(([v]) => !!v && v !== 'n/a')
-		.map(([v, p = '']) => (v + p))
-		.join(', ')
-	);
+async function getLocation(addr) {
+	if (isNA(addr.street)) {
+		return null;
+	}
+
+	const {data} = await axios.get('https://api.mapbox.com/search/geocode/v6/forward', {
+		params: {
+			country: MAPS.country,
+			region: MAPS.region,
+			place: MAPS.place,
+			street: addr.street,
+			address_number: isNA(addr.houseNo) ? '' : addr.houseNo,
+			limit: 1,
+			access_token: MAPS.access_token,
+		}
+	});
+
+	return data?.features?.[0]?.properties?.coordinates;
+}
+
+function isNA(v) {
+	return !v || v === 'n/a';
 }
 
 /**
