@@ -2,6 +2,8 @@
 
 server/polls_meta.json
 
+cert
+
 deploy.sh
 
 *.key

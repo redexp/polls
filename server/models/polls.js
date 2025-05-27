@@ -1,9 +1,9 @@
-import data from '../polls_meta.json' with {type: 'json'};
+import {POLLS_META} from '../config.js';
 
 /**
  * @type {Map<string, {answer_type: 'dot' | 'check', values: Array<string>}>}
  */
-const meta = new Map(Object.keys(data).map(name => [name, data[name]]));
+const meta = new Map(Object.keys(POLLS_META).map(name => [name, POLLS_META[name]]));
 
 export default {
 	isValid(poll, value) {

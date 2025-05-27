@@ -1,9 +1,9 @@
 import {readFileSync} from 'fs';
-import {resolve, dirname} from 'path';
+import {resolve} from 'path';
 import 'dotenv/config.js';
 
-const {pathname} = new URL(import.meta.url);
-export const SERVER_DIR = dirname(pathname);
+export const ROOT_DIR = process.cwd();
+export const SERVER_DIR = resolve(ROOT_DIR, 'server');
 
 export const JWT_KEY = (
 	process.env.JWT_KEY ||
@@ -14,6 +14,8 @@ export const STATISTIC_PUBLIC_KEY = (
 	process.env.STATISTIC_PUBLIC_KEY ||
 	readFileSync(resolve(SERVER_DIR, 'statistic_public_key.pem'), 'utf-8')
 );
+
+export const POLLS_META = JSON.parse(readFileSync(resolve(SERVER_DIR, 'polls_meta.json'), 'utf-8'));
 
 const config = {
 	server: {
