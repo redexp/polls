@@ -8,6 +8,7 @@ deploy.sh
 
 *.key
 *.pem
+*.cer
 
 *.sqlite
 
