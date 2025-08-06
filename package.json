@@ -13,11 +13,11 @@
     "keys": "node bin/generate-keys.js"
   },
   "dependencies": {
-    "@libsql/client": "0.15.2",
+    "@libsql/client": "0.15.10",
     "@libsql/knex-libsql": "^0.1.0",
-    "axios": "^1.8.4",
+    "axios": "^1.11.0",
     "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
+    "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "knex": "^3.1.0",
@@ -27,18 +27,18 @@
   "devDependencies": {
     "@astrojs/mdx": "^2.3.1",
     "@astrojs/solid-js": "^3.0.3",
-    "@solid-primitives/scheduled": "^1.5.0",
+    "@solid-primitives/scheduled": "^1.5.2",
     "@types/bootstrap": "^5.2.10",
-    "@types/cors": "^2.8.17",
-    "@types/express": "^5.0.1",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
     "@types/lodash.pick": "^4.4.9",
     "astro": "^4.16.18",
-    "bootstrap": "^5.3.5",
-    "less": "^4.3.0",
+    "bootstrap": "^5.3.7",
+    "less": "^4.4.0",
     "minimist": "^1.2.8",
     "remark": "^15.0.1",
     "remark-mdx": "^3.1.0",
-    "solid-js": "^1.9.5",
+    "solid-js": "^1.9.7",
     "solid-transition-group": "^0.3.0"
   }
 }
