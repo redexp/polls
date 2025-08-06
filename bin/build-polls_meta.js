@@ -3,17 +3,17 @@ import {resolve} from 'path';
 import {remark} from 'remark';
 import remarkMdx from 'remark-mdx';
 
-const url = new URL(import.meta.url);
 const parser = remark().use(remarkMdx);
-const meta = {};
+const meta = new Map();
 
 const answerRule = /^(check|dot)$/;
 
-const POLLS_DIR = resolve(url.pathname, '..', '..', 'src', 'polls');
+const POLLS_DIR = resolve(import.meta.dirname, '..', 'src', 'polls');
+const OUTPUT_FILE = resolve(import.meta.dirname, '..', 'server', 'polls_meta.json');
 
 for (const type of ['active', 'past']) {
-	const dir = resolve(POLLS_DIR, type === 'active' ? '.' : type);
-	const files = existsSync(dir) ? readdirSync(dir) : [];
+	const DIR = resolve(POLLS_DIR, type === 'active' ? '.' : type);
+	const files = existsSync(DIR) ? readdirSync(DIR) : [];
 	const active = type === 'active';
 
 	for (const file of files) {
@@ -21,13 +21,13 @@ for (const type of ['active', 'past']) {
 
 		const name = file.replace(/\.mdx$/i, '');
 
-		if (meta.hasOwnProperty(name)) {
+		if (meta.has(name)) {
 			throw new Error(`Duplicate ${name}`);
 		}
 
 		const info = {file, active, values: []};
 
-		const tree = parser.parse(readFileSync(resolve(dir, file)));
+		const tree = parser.parse(readFileSync(resolve(DIR, file)));
 
 		let value = 0;
 
@@ -65,8 +65,11 @@ for (const type of ['active', 'past']) {
 			}
 		}
 
-		meta[name] = info;
+		meta.set(name, info);
 	}
 }
 
-writeFileSync(resolve(url.pathname, '..', '..', 'server', 'polls_meta.json'), JSON.stringify(meta));
+writeFileSync(
+	OUTPUT_FILE,
+	JSON.stringify(Object.fromEntries(meta))
+);
