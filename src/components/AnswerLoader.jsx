@@ -90,7 +90,7 @@ export default function AnswerLoader({name, value, children}) {
     });
 
     return (
-        <div class="mt-5 answer">
+        <div class="mt-4 answer">
             <div
                 class="form-check rounded bg-primary"
                 title={stat().disabled ? `Ви більше не можете змінити вашу відповідь` : ``}
