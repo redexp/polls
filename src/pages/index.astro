@@ -24,13 +24,21 @@ const inactive = []; //await Astro.glob('../polls/past/*.mdx');
     <section>
         <h2 class="display-5 text-center mb-5">Поточні опитування</h2>
 
-        {active.map(Content => <Content/>)}
+        {active.map(Content => (
+            <article class="mt-5">
+                <Content/>
+            </article>
+        ))}
     </section>}
 
     {inactive.length > 0 &&
     <section>
         <h2 class="display-5 text-center mb-5">Минулі опитування</h2>
 
-        {inactive.map(Content => <Content/>)}
+        {inactive.map(Content => (
+            <article class="mt-5">
+                <Content/>
+            </article>
+        ))}
     </section>}
 </Main>
