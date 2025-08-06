@@ -1,25 +1,20 @@
 ---
+import {basename} from 'node:path';
 import Main from '../../layouts/Main.astro';
 
 export async function getStaticPaths() {
-    const {basename} = await import('path');
 	const polls = await Astro.glob('../../polls/*.mdx');
-    const past = []; //await Astro.glob('../../polls/past/*.mdx');
 
 	return (
 		polls
-        .concat(past)
-		.map(poll => basename(poll.file, '.mdx'))
 		.map(poll => ({
-			params: {poll}
+			params: {poll: basename(poll.file, '.mdx')},
+            props: {poll},
 		}))
 	);
 }
 
-const polls = await Astro.glob('../../polls/*.mdx');
-const past = []; //await Astro.glob('../../polls/past/*.mdx');
-
-const poll = polls.concat(past).find(poll => poll.file.endsWith('/' + Astro.params.poll + '.mdx'));
+const {poll} = Astro.props;
 const Content = poll.Content;
 const titles = await poll.getHeadings();
 ---
