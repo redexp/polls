@@ -1,7 +1,7 @@
 ---
 import Base from '@layouts/Base.astro';
 import CenterCol from '@components/CenterCol.astro';
-import {BANKID} from '@server/config';
+import BANKID from '@server/config/bankid.js';
 ---
 
 <Base title="⚠️ Dev BankID Login">
@@ -101,12 +101,10 @@ import {BANKID} from '@server/config';
 	</CenterCol>
 
     <script>
-        (() => {
-            const {searchParams: qs} = new URL(location.href);
+        const qs = new URLSearchParams(location.search);
 
-            document
-            .querySelector('[name="state"]')
-            .setAttribute('value', qs.get('state') || '');
-        })();
+        document
+        .querySelector('[name="state"]')!
+        .setAttribute('value', qs.get('state') || '');
     </script>
 </Base>

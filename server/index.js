@@ -7,7 +7,8 @@ import Answers, {ANSWER_UPDATE_TIMEOUT} from './models/answers.js';
 import Statistic from './models/statistic.js';
 import Polls from './models/polls.js';
 import BankID from './models/bankid.js';
-import {IS_DEV, SERVER, ASTRO_URL} from './config.js';
+import {IS_DEV, SERVER, ASTRO_URL} from './config';
+import BANKID from './config/bankid.js';
 
 const app = express();
 
@@ -174,7 +175,7 @@ app.get('/bankid/auth', function (req, res) {
  */
 const jwtMap = new Map();
 
-app.get('/bankid/callback', function (req, res) {
+app.get(BANKID.callback_url, function (req, res) {
 	const {code, state} = req.query;
 
 	BankID

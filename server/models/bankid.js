@@ -2,7 +2,9 @@ import axios from 'axios';
 import JWT from 'jsonwebtoken';
 import {promisify} from 'util';
 import {createHash, randomUUID} from 'crypto';
-import {BANKID, AUTH, JWT_KEY} from '../config.js';
+import BANKID from '../config/bankid.js';
+import AUTH from '../config/auth.js';
+import {BANKID_CERT, JWT_KEY} from '../keys';
 
 const jwtEncode = promisify(JWT.sign);
 const jwtDecode = promisify(JWT.verify);
@@ -22,8 +24,10 @@ export default {
 	getAuthUrl(state) {
 		const qs = new URLSearchParams({
 			response_type: 'code',
+			state: 'state',
 			client_id,
 			dataset: BANKID.dataset,
+			originator_url: BANKID.callback_url,
 		});
 
 		if (state) {
@@ -76,14 +80,22 @@ export default {
 	async getUserData(access_token) {
 		const {data} = await ajax({
 			url: '/resource/client',
-			method: 'POST',
+			method: 'post',
 			headers: {
 				authorization: `Bearer ${access_token}`
 			},
 			data: {
-				cert: BANKID.cert
+				cert: BANKID_CERT
 			}
 		});
+
+		if (data.error) {
+			data.code = data.code || data.error;
+			data.message = data.message || data.error_description;
+			throw data;
+		}
+
+		console.log('getUserData', JSON.stringify(data));
 
 		data.bank_id = data.inn && data.inn !== 'n/a' ? createSHA3Hash(data.inn) : null;
 		data.name = [data.lastName, data.firstName, data.middleName].filter(n => !!n && n !== 'n/a').join(' ');

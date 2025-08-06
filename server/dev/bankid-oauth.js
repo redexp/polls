@@ -1,5 +1,6 @@
 import express from "express";
-import {IS_DEV, SERVER, BANKID, ASTRO_URL} from "../config.js";
+import {IS_DEV, SERVER, ASTRO_URL} from "../config";
+import BANKID from '../config/bankid.js';
 import {randomUUID} from "crypto";
 import moment from 'moment';
 
@@ -41,7 +42,7 @@ root.post('/oauth2/callback', function (req, res) {
 	store.set(code, {access_token, expires_in: 180});
 	store.set(access_token, data);
 
-	res.redirect(SERVER.url + '/bankid/callback?' + qs({code, state}));
+	res.redirect(SERVER.url + BANKID.callback_url + '?' + qs({code, state}));
 });
 
 root.post('/oauth2/token', function (req, res) {
