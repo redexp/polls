@@ -1,10 +1,9 @@
 ---
 import Main from '../layouts/Main.astro';
-import LoginButton from '@components/LoginButton.jsx';
+import LoginButton from '../components/LoginButton.jsx';
 import {TITLE} from '../const';
 
 const active = (await Astro.glob('../polls/*.mdx')).map(item => item.Content);
-const inactive = []; //await Astro.glob('../polls/past/*.mdx');
 ---
 
 <Main>
@@ -25,17 +24,6 @@ const inactive = []; //await Astro.glob('../polls/past/*.mdx');
         <h2 class="display-5 text-center mb-5">Поточні опитування</h2>
 
         {active.map(Content => (
-            <article class="mt-5">
-                <Content/>
-            </article>
-        ))}
-    </section>}
-
-    {inactive.length > 0 &&
-    <section>
-        <h2 class="display-5 text-center mb-5">Минулі опитування</h2>
-
-        {inactive.map(Content => (
             <article class="mt-5">
                 <Content/>
             </article>
