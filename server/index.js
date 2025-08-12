@@ -1,5 +1,4 @@
 import express from 'express';
-import cors from 'cors';
 import moment from 'moment';
 import {randomUUID} from 'crypto';
 import db from './db/index.js';
@@ -7,7 +6,7 @@ import Answers, {ANSWER_UPDATE_TIMEOUT} from './models/answers.js';
 import Statistic from './models/statistic.js';
 import Polls from './models/polls.js';
 import BankID from './models/bankid.js';
-import {IS_DEV, SERVER, ASTRO_URL} from './config';
+import {IS_DEV, SERVER, ASTRO_URL} from './config/index.js';
 import BANKID from './config/bankid.js';
 
 const app = express();
@@ -15,14 +14,6 @@ const app = express();
 app.listen(SERVER.port, () => {
 	console.log(SERVER.url);
 });
-
-if (IS_DEV) {
-	app.use(cors({
-		origin(_origin, next) {
-			next(null, true);
-		}
-	}));
-}
 
 app.use(express.json());
 
