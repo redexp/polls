@@ -1,5 +1,5 @@
 import express from "express";
-import {IS_DEV, SERVER, ASTRO_URL} from "../config";
+import {IS_DEV, SERVER, ASTRO_URL} from "../config/index.js";
 import BANKID from '../config/bankid.js';
 import {randomUUID} from "crypto";
 import moment from 'moment';

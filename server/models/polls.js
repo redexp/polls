@@ -1,4 +1,4 @@
-import {POLLS_META_PATH} from '../config';
+import {POLLS_META_PATH} from '../config/index.js';
 import {readFileSync} from "fs";
 
 /**

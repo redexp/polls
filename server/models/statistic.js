@@ -4,8 +4,8 @@ import moment from "moment";
 import axios from "axios";
 import pc from "pluscodes";
 import {createPublicKey, publicEncrypt, createHash} from 'crypto';
-import {MAPS} from '../config';
-import {STATISTIC_PUBLIC_KEY} from '../keys';
+import {MAPS} from '../config/index.js';
+import {STATISTIC_PUBLIC_KEY} from '../keys/index.js';
 
 const publicKey = createPublicKey(STATISTIC_PUBLIC_KEY);
 

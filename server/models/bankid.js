@@ -4,7 +4,7 @@ import {promisify} from 'util';
 import {createHash, randomUUID} from 'crypto';
 import BANKID from '../config/bankid.js';
 import AUTH from '../config/auth.js';
-import {BANKID_CERT, JWT_KEY} from '../keys';
+import {BANKID_CERT, JWT_KEY} from '../keys/index.js';
 
 const jwtEncode = promisify(JWT.sign);
 const jwtDecode = promisify(JWT.verify);
