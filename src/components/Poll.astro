@@ -35,6 +35,7 @@ const active = !poll.data.expire || poll.data.expire > new Date();
 	import answerConfirm, {sendAnswer, tryRestorePendingAnswer} from '../lib/answerConfirm';
 	import {retrieveJwt} from "../lib/auth";
 	import {showInfoModal} from "../lib/modal";
+	import * as notify from '../lib/notify';
 
 	for (const form of qsAll<HTMLFormElement>('form')) {
 		form.addEventListener('submit', onSubmit);
@@ -62,7 +63,7 @@ const active = !poll.data.expire || poll.data.expire > new Date();
 
 		if (!form) return;
 
-		const info = showInfoModal('Дякуємо за Вашу участь у опитуванні');
+		const info = showInfoModal('Дякуємо за Вашу участь у опитуванні', {size: 'default'});
 
 		info.loading(sendAnswer(form));
 	})()
@@ -74,7 +75,7 @@ const active = !poll.data.expire || poll.data.expire > new Date();
 		const confirmed = await answerConfirm(e.target as HTMLFormElement);
 
 		if (confirmed) {
-
+			notify.success('Дякуємо за Вашу участь у опитуванні');
 		}
 	}
 </script>
