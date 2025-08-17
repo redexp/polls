@@ -11,8 +11,14 @@ const jwtDecode = promisify(JWT.verify);
 
 const {client_id, client_secret} = BANKID;
 
-const ajax = axios.create({
-	baseURL: BANKID.url
+const bankApi = axios.create({
+	baseURL: BANKID.url,
+	method: 'POST',
+});
+
+const cryptoApi = axios.create({
+	baseURL: BANKID.crypto_url,
+	method: 'POST',
 });
 
 /**
@@ -49,9 +55,8 @@ export default {
 	 * @return {Promise<{data: {token_type: "bearer", access_token: string, expires_in: number}, state?: any}>}
 	 */
 	async getAccessData(code, state) {
-		const res = await ajax({
+		const res = await bankApi({
 			url: '/oauth2/token',
-			method: 'POST',
 			headers: {'content-type': 'application/x-www-form-urlencoded'},
 			data: {
 				grant_type: 'authorization_code',
@@ -78,9 +83,8 @@ export default {
 	 * @return {Promise<import('./bankid').Client>}
 	 */
 	async getUserData(access_token) {
-		const {data} = await ajax({
+		const {data} = await bankApi({
 			url: '/resource/client',
-			method: 'post',
 			headers: {
 				authorization: `Bearer ${access_token}`
 			},
@@ -95,28 +99,38 @@ export default {
 			throw data;
 		}
 
-		console.log('getUserData', JSON.stringify(data));
+		const res = await cryptoApi({
+			url: '/decrypt',
+			data,
+		});
 
-		data.bank_id = data.inn && data.inn !== 'n/a' ? createSHA3Hash(data.inn) : null;
-		data.name = [data.lastName, data.firstName, data.middleName].filter(n => !!n && n !== 'n/a').join(' ');
+		/** @type {import('./bankid').Client} */
+		const user = res.data;
 
-		return data;
+		if (user.error) {
+			throw user;
+		}
+
+		user.bank_id = data.inn && data.inn !== 'n/a' ? createSHA3Hash(data.inn) : null;
+		user.name = [user.lastName, user.firstName, user.middleName].filter(n => !!n && n !== 'n/a').join(' ');
+
+		return user;
 	},
 
 	/**
-	 * @param {import('./bankid').Client} data
+	 * @param {import('./bankid').Client} user
 	 * @throws {{type: import('./bankid').ValidationErrorTypes, context: "bankid"}}
 	 */
-	validateUserData(data) {
-		if (!data.bank_id) {
+	validateUserData(user) {
+		if (!user.bank_id) {
 			throw {type: 'no_id', context: 'bankid'};
 		}
 
-		if (!data.name) {
+		if (!user.name) {
 			throw {type: 'no_name', context: 'bankid'};
 		}
 
-		const addr = data.addresses?.find(a => a.type === 'juridical');
+		const addr = user.addresses?.find(a => a.type === 'juridical');
 
 		if (!addr && AUTH.addresses.length > 0) {
 			throw {type: 'no_juridical_address', context: 'bankid'};
@@ -126,7 +140,7 @@ export default {
 			AUTH.addresses.length > 0 &&
 			!AUTH.addresses.some(props => {
 				for (const prop in props) {
-					if (props[prop] !== addr[prop]) return false;
+					if (props[prop].toLowerCase() !== addr[prop].toLowerCase()) return false;
 				}
 
 				return true;
@@ -140,6 +154,10 @@ export default {
 		return jwtEncode(data, JWT_KEY, {algorithm: 'HS256'});
 	},
 
+	/**
+	 * @param jwt
+	 * @returns {Promise<import('./statistic').StatisticData|null>}
+	 */
 	async fromJWT(jwt) {
 		if (!jwt) return null;
 

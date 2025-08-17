@@ -25,7 +25,7 @@ export default function LoginButton(props) {
 		<a
 			href={url + (state.redirectParams ? '?' : '') + state.redirectParams}
 			target="_blank"
-			class="btn btn-light btn-lg"
+			class="btn btn-light btn-lg btn-border"
 			onClick={(e) => {
 				if (!appState.jwt) return;
 

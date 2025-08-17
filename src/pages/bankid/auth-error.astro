@@ -1,18 +1,8 @@
 ---
-import Base from '@layouts/Base.astro';
-import CenterCol from '@components/CenterCol.astro';
-import Footer from '@components/Footer.astro';
-import AUTH from '@server/config/auth.js';
-
-const addresses = (
-	AUTH.addresses
-	.map(addr =>
-		[[addr.state, ' область'], [addr.area, ' район'], [addr.city, '']]
-		.filter(([v]) => !!v)
-		.map(([v, s]) => v + s)
-		.join(', ')
-	)
-);
+import Base from '../../layouts/Base.astro';
+import CenterCol from '../../components/CenterCol.astro';
+import Footer from '../../components/Footer.astro';
+import {formatAddresses} from '@server/config/auth.js';
 ---
 
 <Base title="Помилка під час ідентифікації">
@@ -25,7 +15,7 @@ const addresses = (
             На цьому проєкті є обмеження по адресі реєстрації.
             Брати участь у опитуваннях можуть лише громадяни з наступних регіонів:
 			<ul>
-				{addresses.map(addr => (
+				{formatAddresses().map(addr => (
 					<li>{addr}</li>
 				))}
 			</ul>
@@ -35,31 +25,33 @@ const addresses = (
     </CenterCol>
 
     <script>
-		(() => {
-			const {searchParams: qs} = new URL(location.href);
-			const type = qs.get('type');
+		import {byId} from '../../lib/dom';
+		const qs = new URLSearchParams(location.search);
+		const type = qs.get('type');
 
-			if (!type) return;
+		if (type) {
+			const errorTypeNode = byId(type);
 
-			let div = document.getElementById(type);
-
-			if (div) {
-				div.classList.remove('d-none');
-				return;
+			if (errorTypeNode) {
+				errorTypeNode.classList.remove('d-none');
 			}
+			else {
+				formatError(type);
+			}
+		}
 
-			const map = {
-				no_id: `У вас немає документа, за яким можна було б вас ідентифікувати (РНОКП, паспорт або id картка)`,
-				no_name: `Неможливо дізнатися ваше імʼя`,
-				no_juridical_address: `У вас немає адреси реєстрації, яка необхідна для встановлення територіальної громади до якої ви відноситесь`,
-				no_location: `Сервіс Google Maps не може знайти вашої адреси`,
-			};
+		function formatError(type: string) {
+			const map = new Map([
+				['no_id', `У вас немає документа, за яким можна було б вас ідентифікувати (РНОКП, паспорт або id картка)`],
+				['no_name', `Неможливо дізнатися ваше імʼя`],
+				['no_juridical_address', `У вас немає адреси реєстрації, яка необхідна для встановлення територіальної громади до якої ви відноситесь`],
+			]);
 
-			if (!map.hasOwnProperty(type)) return;
+			if (!map.has(type)) return;
 
-			div = document.getElementById('message');
+			const div = byId('message');
 			div.innerText = map[type];
 			div.classList.remove('d-none');
-		})();
+		}
     </script>
 </Base>

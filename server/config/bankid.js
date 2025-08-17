@@ -6,6 +6,9 @@ const BANKID = {
 	client_id: '',
 	client_secret: '',
 	dataset: 51,
+	callback_url: '/bankid/callback',
+	crypto_url: '',
+
 };
 
 update(BANKID, 'BANKID_');
@@ -16,8 +19,8 @@ if (!BANKID.url) {
 	BANKID.url = local + BANKID.dev_port;
 }
 
-if (!BANKID.callback_url) {
-	BANKID.callback_url = '/bankid/callback';
+if (!BANKID.crypto_url) {
+	BANKID.crypto_url = local + 8002;
 }
 
 export default BANKID;

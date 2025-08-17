@@ -1,6 +1,6 @@
-import {addNotification} from '@components/Notifications.jsx';
+import * as notify from './notify.js';
 
-async function ajax(url, body) {
+export default async function ajax(url, body) {
 	return request({
 		method: 'POST',
 		url,
@@ -12,17 +12,12 @@ async function ajax(url, body) {
 		if (res.ok) return data;
 
 		if (typeof data?.message === 'string') {
-			addNotification({
-				type: 'error',
-				text: data.message,
-			});
+			notify.error(data.message);
 		}
 
 		throw res;
 	});
 }
-
-export default ajax;
 
 /**
  * @param {"POST" | "GET"} method
@@ -33,15 +28,7 @@ export default ajax;
  * @param {...*} [params]
  * @return {Promise<any>}
  */
-export async function request({method, url, qs, headers = {}, body, ...params}) {
-	const dev = location.hostname === 'localhost';
-
-	const base = (
-		dev ?
-			'http://localhost:8000' :
-			location.origin
-	);
-
+async function request({method, url, qs, headers = {}, body, ...params}) {
 	if (qs) {
 		url += '?' + (new URLSearchParams(qs)).toString()
 	}
@@ -54,7 +41,7 @@ export async function request({method, url, qs, headers = {}, body, ...params}) 
 		headers['x-requested-with'] = 'XMLHttpRequest';
 	}
 
-	return fetch(base + url, {
+	return fetch(url, {
 		method,
 		headers,
 		body: JSON.stringify(body),

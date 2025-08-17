@@ -1,27 +1,23 @@
 ---
 import Base from './Base.astro';
-import CenterCol from '../components/CenterCol.astro';
 import Footer from '../components/Footer.astro';
-import LoginModal from '../components/LoginModal.jsx';
+import AnswerConfirmModal from '../components/AnswerConfirmModal.astro';
+import InfoModal from '../components/InfoModal.astro';
 
-import {TITLE} from '../const';
+interface Props {
+	title?: string,
+}
 
-const {title = TITLE} = Astro.props;
+const {title} = Astro.props;
 ---
 
 <Base title={title}>
-    <CenterCol>
+    <main class="container pb-5">
         <slot/>
 
         <Footer/>
-    </CenterCol>
+	</main>
 
-    <LoginModal client:only="solid-js"/>
-
-    <script>
-		const pollId = (new URLSearchParams(location.search)).get('poll');
-		if (pollId) {
-			document.getElementById(pollId)?.scrollIntoView({behavior: "smooth"});
-		}
-    </script>
+	<AnswerConfirmModal/>
+    <InfoModal/>
 </Base>

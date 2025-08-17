@@ -20,3 +20,18 @@ AUTH.addresses = (
 );
 
 export default AUTH;
+
+/**
+ * @returns {Array<string>}
+ */
+export function formatAddresses() {
+	return (
+		AUTH.addresses
+		.map(addr =>
+			[['м. ', addr.city], [addr.area, ' район'], [addr.state, ' область']]
+			.filter(([a, b]) => !!a && !!b)
+			.map(([v, s]) => v + s)
+			.join(', ')
+		)
+	);
+}

@@ -1,24 +1,36 @@
 ---
 import {basename} from 'node:path';
+import {render} from 'astro:content';
 import Main from '../../layouts/Main.astro';
+import PollComponent from '../../components/Poll.astro';
+import {polls} from '../../lib/polls';
+import type {Poll} from '../../lib/polls';
 
 export async function getStaticPaths() {
-	const polls = await Astro.glob('../../polls/*.mdx');
-
 	return (
 		polls
 		.map(poll => ({
-			params: {poll: basename(poll.file, '.mdx')},
-            props: {poll},
+			params: {
+				poll: basename(poll.id)
+			},
+            props: {
+				poll
+			},
 		}))
 	);
 }
 
+interface Props {
+	poll: Poll
+}
+
 const {poll} = Astro.props;
-const Content = poll.Content;
-const titles = await poll.getHeadings();
+const {headings} = await render(poll);
 ---
 
-<Main title={titles[0].text}>
-    <Content/>
+<Main title={headings[0]?.text}>
+    <PollComponent
+		poll={poll}
+		extractTitle
+	/>
 </Main>

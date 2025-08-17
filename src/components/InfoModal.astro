@@ -1,0 +1,17 @@
+---
+import Modal from './Modal.astro';
+---
+
+<Modal id="info-modal" size="sm">
+    <Fragment slot="footer">
+        <button
+			type="button"
+			class="btn btn-light"
+			data-close
+			style="min-width: 70px"
+        >
+            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+            <span class="text">OK</span>
+		</button>
+    </Fragment>
+</Modal>

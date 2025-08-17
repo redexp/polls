@@ -1,3 +1,4 @@
+import moment from "moment";
 import db from '../db/index.js';
 import pick from '../lib/pick.js';
 
@@ -66,55 +67,54 @@ export default {
 
 	/**
 	 * @param {string} bank_id
-	 * @param {string} poll
+	 * @param {string} poll_id
 	 * @return {Promise<import('./answer').Answer[]>}
 	 */
-	async findAll({bank_id, poll}) {
+	async findAll({bank_id, poll_id}) {
 		return (
 			Answers()
 			.select('*')
 			.where({
 				bank_id: String(bank_id),
-				poll: String(poll),
+				poll: String(poll_id),
 			})
 		);
 	},
 
 	/**
-	 *
-	 * @param {Omit<import('./answer').Answer, 'id' | 'created_at'>} answer
-	 * @return {Promise<[{id: number}]>}
+	 * @param {import('./statistic').StatisticData} user
+	 * @param {string} poll_id
+	 * @param {Array<string>} values
+	 * @return {Promise<Array<{id: number}>>}
 	 */
-	create(answer) {
+	create(user, poll_id, values) {
 		return (
 			Answers()
-			.insert(pick(answer, ['bank_id', 'name', 'poll', 'value']))
+			.insert(
+				values.map(value => ({
+					bank_id: user.bank_id,
+					name: user.name,
+					poll: poll_id,
+					value
+				}))
+			)
 			.returning('id')
 		);
 	},
 
 	/**
-	 * @param {number} id
-	 * @param {string} value
-	 * @return {Promise<void>}
+	 * @param {import('./statistic').StatisticData} user
+	 * @param {string} poll_id
+	 * @returns {Promise<void>}
 	 */
-	updateValue(id, value) {
-		return (
-			Answers()
-			.update({value: String(value)})
-			.where({id})
-		);
-	},
-
-	/**
-	 * @param {number} id
-	 * @return {Promise<any>}
-	 */
-	remove(id) {
+	remove(user, poll_id) {
 		return (
 			Answers()
 			.del()
-			.where({id})
+			.where({
+				bank_id: user.bank_id,
+				poll: poll_id,
+			})
 		);
 	},
 
@@ -219,6 +219,14 @@ export default {
 			this.getPollsStats(polls),
 		]);
 	},
+}
+
+/**
+ * @param {string} created_at
+ * @returns {boolean}
+ */
+export function isExpired({created_at}) {
+	return moment.utc() - moment.utc(created_at) > ANSWER_UPDATE_TIMEOUT;
 }
 
 function cap(word) {

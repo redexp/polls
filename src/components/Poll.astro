@@ -1,0 +1,80 @@
+---
+import {render} from "astro:content";
+import {basename} from 'node:path';
+import type {Poll} from '../lib/polls';
+import '../styles/poll.less';
+
+interface Props {
+	poll: Poll,
+	extractTitle?: boolean,
+}
+
+const {poll, extractTitle} = Astro.props;
+const {Content, headings} = await render(poll);
+const active = !poll.data.expire || poll.data.expire > new Date();
+---
+
+{!!(extractTitle && headings.length > 0) &&
+<h2 class="display-5 text-center my-5">{headings[0].text}</h2>}
+
+<form
+	id={basename(poll.id)}
+	class="poll card shadow-soft p-3 mt-5"
+	class:list={{titleless: extractTitle, disabled: !active}}
+>
+    <Content/>
+
+	{active &&
+	<div class="toolbar">
+        <button type="submit" class="btn btn-primary">Надіслати відповіді</button>
+    </div>}
+</form>
+
+<script>
+	import {qsAll} from '../lib/dom';
+	import answerConfirm, {sendAnswer, tryRestorePendingAnswer} from '../lib/answerConfirm';
+	import {retrieveJwt} from "../lib/auth";
+	import {showInfoModal} from "../lib/modal";
+
+	for (const form of qsAll<HTMLFormElement>('form')) {
+		form.addEventListener('submit', onSubmit);
+	}
+
+	(async () => {
+		const url = new URL(location.href);
+		const params = url.searchParams;
+		const auth_token = params.get('auth_token');
+		const state = params.get('state');
+
+		if (auth_token || state) {
+			params.delete('auth_token');
+			params.delete('state');
+			history.pushState({}, '', url);
+		}
+
+		if (auth_token) {
+			await retrieveJwt(auth_token);
+		}
+
+		if (!state) return;
+
+		const form = await tryRestorePendingAnswer(state);
+
+		if (!form) return;
+
+		const info = showInfoModal('Дякуємо за Вашу участь у опитуванні');
+
+		info.loading(sendAnswer(form));
+	})()
+	.catch(err => console.error(err));
+
+	async function onSubmit(e: Event) {
+		e.preventDefault();
+
+		const confirmed = await answerConfirm(e.target as HTMLFormElement);
+
+		if (confirmed) {
+
+		}
+	}
+</script>

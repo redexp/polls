@@ -1,0 +1,91 @@
+---
+import Modal from './Modal.astro';
+import LoginButton from './LoginButton.astro';
+---
+
+<Modal
+	id="answer-confirm"
+	title="Ідентифікація"
+	footerAlign="left"
+>
+    Беручи участь в цьому опитуванні Ви погоджуюєтесь на
+    зберігання та обробку ваших даних, а саме:
+    <ul>
+        <li><strong>Повне ім'я</strong>, яке можна буде знайти під цією відповіддю</li>
+        <li><strong>Вік</strong> та <strong>стать</strong>, які зберігаються без привʼязки до вашого імені</li>
+        <li>
+            <strong>Plus Code місця</strong> у якому знаходиться ваша адреса реєстрації, який також зберігається окремо від імені, але разом з віком та статтю.
+            &nbsp;
+            <label
+				class="btn btn-light btn-sm"
+				data-show-plus-code
+            >
+				Детальніше про Plus Code
+				<input type="checkbox"/>
+			</label>
+
+            <div class="my-2">
+                <a href="https://uk.wikipedia.org/wiki/Відкритий_код_розташування" target="_blank">Plus Code ↗</a> - це одна з клітинок на мапі розміром приблизно 180 на 300 метрів, посеред якої знаходиться ваша адреса реєстрації.
+                Ось приклад такої клітинки, на якій знаходиться <a href="https://plus.codes/8GXJC3V5+" target="_blank">центральна площа міста Черкаси ↗</a>.
+                Plus Code цієї площі буде записаний як <strong>8GXJC3V5+</strong>.
+                Погодьтесь, маючи інформацію про цю клітинку, неможливо сказати, що мається на увазі - чи площа, чи сквер, чи одна з жилих будівель.
+                Таким чином ми повністю анонімізуєм вашу персональну адресу, але маєм інформацію, щоб робити статистичні висновки.
+            </div>
+        </li>
+    </ul>
+    Ваші данні обробляються виключно Соціологічною службою Черкаського інституту міста,
+    які необхідні для подальшого статистичного аналізу та виведення його результатів на цьому сайті.
+
+	<Fragment slot="footer">
+		<LoginButton
+			id="confirm-auth-btn"
+			loginTitle="Погодитись та увійти з"
+			logout={false}
+		/>
+
+        <button
+			id="confirm-btn"
+			type="button"
+			class="btn btn-primary"
+			style="min-width: 122px"
+        >
+            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+            <span class="text">Погоджуюсь</span>
+		</button>
+
+        <button
+			type="button"
+			class="btn btn-light"
+			data-close
+		>Відмовитись</button>
+	</Fragment>
+</Modal>
+
+<style lang="less">
+	label.btn {
+		input {
+			opacity: 0;
+			width: 1px;
+			height: 1px;
+		}
+
+		+ div {
+			display: none;
+		}
+
+		&:has(input:checked) + div {
+			display: block;
+		}
+	}
+</style>
+
+<script>
+	import {onChange} from '../lib/auth';
+	import {byId, qs} from '../lib/dom';
+
+	onChange(authed => {
+		qs('#answer-confirm .modal-header').classList.toggle('d-none', authed);
+		byId('confirm-auth-btn').classList.toggle('d-none', authed);
+		byId('confirm-btn').classList.toggle('d-none', !authed);
+	});
+</script>

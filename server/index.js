@@ -1,23 +1,28 @@
 import express from 'express';
-import moment from 'moment';
 import {randomUUID} from 'crypto';
 import db from './db/index.js';
-import Answers, {ANSWER_UPDATE_TIMEOUT} from './models/answers.js';
+import Answers, {isExpired} from './models/answers.js';
 import Statistic from './models/statistic.js';
-import Polls from './models/polls.js';
+import Polls, {reloadPollsMeta} from './models/polls.js';
 import BankID from './models/bankid.js';
 import {IS_DEV, SERVER, ASTRO_URL} from './config/index.js';
 import BANKID from './config/bankid.js';
 
+reloadPollsMeta()
+.catch(err => {
+	console.error(err);
+	process.exit(1);
+});
+
 const app = express();
 
 app.listen(SERVER.port, () => {
-	console.log(SERVER.url);
+	console.log('http://localhost:' + SERVER.port);
 });
 
 app.use(express.json());
 
-app.post('/answers', async function (req, res) {
+app.post('/api/answers', async function (req, res) {
 	const data = req.body;
 	const page = Number(data.page);
 	const limit = 50;
@@ -47,21 +52,26 @@ app.post('/answers', async function (req, res) {
 	});
 });
 
-app.post('/answer', async function (req, res) {
-	const {jwt, poll, value, checked = true} = req.body;
+app.post('/api/answer', async function (req, res) {
+	/** @type {AnswerData & {jwt: string}} */
+	const data = req.body;
+	const {jwt, poll_id, values} = data;
 
 	const user = await BankID.fromJWT(jwt).catch(() => null);
 
 	if (
 		!user ||
-		!Polls.isValid(poll, value)
+		!Polls.isValid(poll_id, values)
 	) {
 		res.status(400);
 		res.json({message: `Параметри, які необхідні щоб запамʼятати вашу відповідь, є некоректними. Спробуйте перезавантажити сторінку, або ж ще раз ідентифікуйте себе через BankID.`});
 		return;
 	}
 
-	const items = await Answers.findAll({bank_id: user.bank_id, poll});
+	const items = await Answers.findAll({
+		bank_id: user.bank_id,
+		poll_id,
+	});
 
 	if (items.some(isExpired)) {
 		res.status(403);
@@ -69,62 +79,22 @@ app.post('/answer', async function (req, res) {
 		return;
 	}
 
-	const create = async () => {
+	if (items.length > 0) {
 		await db.trx([
-			Answers.create({...user, poll, value}),
-			Statistic.create({...user, poll, value}),
+			Answers.remove(user, poll_id),
+			Statistic.remove(user, poll_id, items.map(item => item.value)),
 		]);
-
-		return {is_new: true};
-	};
-
-	const answer_type = Polls.getAnswerType(poll);
-	const hasAnswer = items.length > 0;
-
-	if (answer_type === 'dot') {
-		if (hasAnswer) {
-			const answer = items[0];
-
-			if (checked) {
-				await db.trx([
-					Answers.updateValue(answer.id, value),
-					Statistic.remove({...user, ...answer}),
-					Statistic.create({...user, ...answer, value}),
-				]);
-			}
-			else {
-				await db.trx([
-					Answers.remove(answer.id),
-					Statistic.remove({...user, ...answer}),
-				]);
-			}
-		}
-		else if (checked) {
-			res.json(await create(user));
-			return;
-		}
 	}
-	else {
-		const answer = items.find(item => item.value === value);
 
-		if (checked) {
-			if (!answer) {
-				res.json(await create(user));
-				return;
-			}
-		}
-		else if (answer) {
-			await db.trx([
-				Answers.remove(answer.id),
-				Statistic.remove({...user, ...answer}),
-			]);
-		}
-	}
+	await db.trx([
+		Answers.create(user, poll_id, values),
+		Statistic.create(user, poll_id, values),
+	]);
 
 	res.json(true);
 });
 
-app.post('/polls-stats', async function (req, res) {
+app.post('/api/polls-stats', async function (req, res) {
 	const {polls: polls_ids, jwt} = req.body;
 
 	const user = await BankID.fromJWT(jwt);
@@ -149,16 +119,15 @@ app.post('/polls-stats', async function (req, res) {
 	});
 });
 
-app.get('/bankid/auth', function (req, res) {
-	const {poll, value, checked = '', poll_page} = req.query;
+app.get('/api/bankid/auth', function (req, res) {
+	const url = new URL(req.get('referer'));
 
-	let data;
-
-	if (Polls.isValid(poll, value)) {
-		data = {poll, value, checked, poll_page};
-	}
-
-	res.redirect(BankID.getAuthUrl(data));
+	res.redirect(
+		BankID.getAuthUrl({
+			state: req.query?.state,
+			return: url.pathname,
+		})
+	);
 });
 
 /**
@@ -178,29 +147,18 @@ app.get(BANKID.callback_url, function (req, res) {
 
 		const statisticData = await Statistic.fromBankIdUserData(user);
 
-		const jwt = await BankID.toJWT({
-			bank_id: user.bank_id,
-			name: user.name,
-			...statisticData,
-		});
+		const jwt = await BankID.toJWT(statisticData);
+
 		const uuid = randomUUID().slice(0, 8);
 
 		jwtMap.set(uuid, {jwt, time: Date.now()});
 
-		const qs = new URLSearchParams({auth_token: uuid});
-		let url = '/';
+		const url = state?.return || '/';
 
-		if (Polls.isValid(state?.poll, state?.value)) {
-			if (state.poll_page) {
-				url = '/polls/' + state.poll;
-			}
-			else {
-				qs.set('poll', state.poll);
-			}
-
-			qs.set('value', state.value);
-			qs.set('checked', state.checked || '');
-		}
+		const qs = new URLSearchParams({
+			auth_token: uuid,
+			state: state?.state,
+		});
 
 		redirect(res, url, qs);
 	})
@@ -217,7 +175,7 @@ app.get(BANKID.callback_url, function (req, res) {
 	});
 });
 
-app.post('/bankid/jwt', function (req, res) {
+app.post('/api/bankid/jwt', function (req, res) {
 	const {auth_token: uuid} = req.body;
 
 	if (!uuid || !jwtMap.has(uuid)) {
@@ -247,10 +205,6 @@ setInterval(() => {
 		}
 	}
 }, 1000);
-
-function isExpired({created_at}) {
-	return moment.utc() - moment.utc(created_at) > ANSWER_UPDATE_TIMEOUT;
-}
 
 function redirect(res, url, qs) {
 	if (IS_DEV) {

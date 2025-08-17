@@ -1,0 +1,66 @@
+---
+interface Props {
+	id?: string,
+	loginTitle?: string,
+	logout?: boolean,
+	size?: 'lg',
+}
+
+const {id, loginTitle, size, logout = true} = Astro.props;
+const url = '/api/bankid/auth';
+---
+
+<a
+	id={id}
+	href={url}
+	class="btn btn-light login-btn"
+	class:list={{"btn-lg": size === 'lg'}}
+>
+    <span class="me-2" data-type="login">{loginTitle || 'Увійти за допомогою'}</span>
+
+	{logout &&
+	<span class="me-2" data-type="logout">Вийти з</span>}
+
+    <img
+		src="/bankid.png"
+		width={80}
+		alt="BankID"
+		style={{marginTop: '-5px'}}
+	/>
+</a>
+
+<style lang="less">
+	.login-btn {
+		[data-type="logout"] {
+			display: none;
+		}
+
+		&.logged-in {
+			[data-type="login"] {
+				display: none;
+			}
+
+			[data-type="logout"] {
+				display: inline;
+			}
+		}
+	}
+</style>
+
+<script>
+	import {onChange, removeJwt} from '../lib/auth';
+	import {qsAll} from '../lib/dom';
+
+	onChange((state) => {
+		for (const btn of qsAll<HTMLAnchorElement>('.login-btn')) {
+			btn.classList.toggle('logged-in', state);
+
+			btn.onclick = function (e) {
+				if (state) {
+					e.preventDefault();
+					removeJwt();
+				}
+			};
+		}
+	});
+</script>

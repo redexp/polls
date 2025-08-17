@@ -1,6 +1,6 @@
 import {createMutable} from 'solid-js/store';
 import {isServer} from "solid-js/web";
-import ajax from './ajax.js';
+// import ajax from './ajax.js';
 
 const STORAGE = !isServer && sessionStorage;
 
@@ -9,28 +9,28 @@ const appState = createMutable({
 	reloadStatsSignal: Math.random(),
 });
 
-if (!isServer) {
-	const url = new URL(location);
-	const {searchParams: qs} = url;
-
-	if (qs.has('auth_token')) {
-		ajax('/bankid/jwt', {auth_token: qs.get('auth_token')}).then(function (data) {
-			if (!data || !data.jwt) return;
-
-			setAppState(data);
-		});
-
-		qs.delete('auth_token');
-
-		history.pushState({}, '', url);
-	}
-
-	window.addEventListener('storage', (e) => {
-		if (e.key !== 'jwt') return;
-
-		appState.jwt = e.newValue;
-	});
-}
+// if (!isServer) {
+// 	const url = new URL(location);
+// 	const {searchParams: qs} = url;
+//
+// 	if (qs.has('auth_token')) {
+// 		ajax('/bankid/jwt', {auth_token: qs.get('auth_token')}).then(function (data) {
+// 			if (!data || !data.jwt) return;
+//
+// 			setAppState(data);
+// 		});
+//
+// 		qs.delete('auth_token');
+//
+// 		history.pushState({}, '', url);
+// 	}
+//
+// 	window.addEventListener('storage', (e) => {
+// 		if (e.key !== 'jwt') return;
+//
+// 		appState.jwt = e.newValue;
+// 	});
+// }
 
 export default appState;
 

@@ -2,10 +2,15 @@
 import 'bootstrap/dist/css/bootstrap.css';
 import '../styles/global.less';
 
-import {TITLE} from '../const';
-import Notifications from "@components/Notifications.jsx";
+interface Props {
+	title?: string,
+}
 
-const {title = TITLE} = Astro.props;
+let {title} = Astro.props;
+
+if (!title) {
+	title = import.meta.env.TITLE;
+}
 ---
 <!DOCTYPE html>
 <html lang="ua">
@@ -25,7 +30,16 @@ const {title = TITLE} = Astro.props;
 
 <slot/>
 
-<Notifications client:only="solid-js"/>
+<div
+	id="notifications"
+	class="fixed-top flex-column align-items-center"
+	style="display: none"
+>
+    <div class="alert alert-dismissible mb-2">
+		<span></span>
+        <button type="button" class="btn-close"></button>
+    </div>
+</div>
 
 </body>
 </html>

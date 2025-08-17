@@ -3,8 +3,8 @@ import {isServer, Show} from 'solid-js/web';
 import {debounce} from '@solid-primitives/scheduled';
 import {onConfirmAndAuth} from './LoginModal.jsx';
 import {addNotification} from './Notifications.jsx';
-import appState, {reloadStats} from '@lib/appState.js';
-import ajax from '@lib/ajax.js';
+import appState, {reloadStats} from '../lib/appState.js';
+import ajax from '../lib/ajax.js';
 
 export default function AnswerLoader({name, value, children}) {
     const id = 'answer-' + Math.round(Math.random() * 10000);
@@ -233,7 +233,7 @@ export async function getPollStats(poll, value) {
     if (!statsPromise) {
         statsPromise = new Promise((done, fail) => {
             setTimeout(() => {
-                ajax('/polls-stats', {
+                ajax('/api/polls-stats', {
                     polls: statsPolls,
                     jwt: appState.jwt,
                 })
@@ -276,7 +276,7 @@ export async function getPollStats(poll, value) {
 async function getAnswers(page, query, poll, value) {
     if (!page || isServer) return {rows: [], pages: 0};
 
-    return ajax('/answers', {
+    return ajax('/api/answers', {
         page,
         searchName: query,
         poll,
@@ -285,7 +285,7 @@ async function getAnswers(page, query, poll, value) {
 }
 
 function postAnswer({name, value, checked}) {
-    return ajax('/answer', {
+    return ajax('/api/answer', {
         jwt: appState.jwt,
         poll: name,
         value,

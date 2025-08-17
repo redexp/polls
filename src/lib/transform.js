@@ -1,148 +1,99 @@
 export default function transform() {
-	const mdxRule = /\.mdx$/i;
-	const pollsDirRule = /\/polls/;
-	const answerRule = /^(check|dot)$/;
+	return transformInput;
+}
 
-	return (tree, file) => {
-		const {basename, dirname} = file;
+/**
+ * @param {import('hast').Root} root
+ */
+function transformInput(root) {
+	const group = {
+		id: 0,
+		type: '',
+		inputId: 0,
+	};
 
-		if (!mdxRule.test(basename) || !pollsDirRule.test(dirname)) return tree;
-
-		/** @type {Array<{type: string, [prop: string]: any}>} */
-		const children = tree.children;
-
-		const name = basename.replace(mdxRule, '');
-
-		const header = children.find(item => item.type === 'heading');
-
-		if (header) {
-			header.children.unshift(
-				createTag('a', {id: name, class: 'header-link', href: `/polls/${name}`})
-			);
+	for (const block of root.children) {
+		if (block.tagName === 'hr') {
+			group.id++;
+			group.type = '';
+			group.inputId = 0;
+			continue;
 		}
 
-		children.unshift(
-			createImportComponent('Answer'),
-			createImportComponent('Summary')
-		);
+		if (block.tagName !== 'p') continue;
 
-		let cur;
+		const {children} = block;
+
+		for (const item of children) {
+			if (item.type !== 'text') continue;
+
+			const match = (
+				item.value.match(/^\s*(\[)([^\]"]+)\]/) ||
+				item.value.match(/^\s*(\()([^\)"]+)\)/)
+			);
+
+			if (!match) continue;
+
+			group.inputId++;
+
+			const type = match[1];
+
+			if (!group.type) {
+				group.type = type;
+			}
+
+			if (type !== group.type) {
+				throw new Error(`Mix of input types in one group`);
+			}
+
+			const name = (
+				type === '[' ?
+					group.id + '-' + group.inputId :
+					group.id
+			);
+
+			/** @type {import('hast').Element} */
+			const input = {
+				type: 'element',
+				tagName: 'input',
+				properties: {
+					type: type === '[' ? 'checkbox' : 'radio',
+					name,
+					value: match[2],
+					class: 'form-check-input'
+				},
+			};
+
+			children.splice(children.indexOf(item), 0, input);
+
+			item.value = item.value.replace(match[0], '');
+		}
+
+		if (group.type === '') continue;
+
+		let label;
 
 		for (let i = 0; i < children.length; i++) {
 			const item = children[i];
+			const t = item.tagName;
 
-			if (
-				item.type === 'paragraph' &&
-				item.children[0]?.type === 'mdxJsxTextElement' &&
-				answerRule.test(item.children[0].name)
-			) {
-				cur = createAnswerTag(item.children[0].name, name);
-				children[i] = cur;
-				item.children.splice(0, 1);
-				cur.children.push(item);
+			if (t === 'input') {
+				children[i] = label = {
+					type: 'element',
+					tagName: 'label',
+					properties: {},
+					children: [item],
+				};
+				continue;
 			}
-			else if (cur && item.type === 'paragraph') {
-				cur.children.push(item);
-				children.splice(i, 1);
-				i--;
-			}
-			else if (cur) {
-				cur = null;
-			}
+
+			if (!label) continue;
+
+			label.children.push(item);
+
+			children[i] = null;
 		}
 
-		let value = 0;
-		let lastAnswer;
-
-		for (const item of children) {
-			if (item.type !== 'mdxJsxFlowElement' || item.name !== 'Answer') continue;
-
-			lastAnswer = item;
-
-			if (!item.attributes.some(a => a.name === 'name')) {
-				item.attributes.push({
-					type: "mdxJsxAttribute",
-					name: "name",
-					value: name,
-				});
-			}
-
-			if (!item.attributes.some(a => a.name === 'value')) {
-				value++;
-
-				item.attributes.push({
-					type: "mdxJsxAttribute",
-					name: "value",
-					value: String(value),
-				});
-			}
-		}
-
-		if (lastAnswer) {
-			children.splice(
-				children.indexOf(lastAnswer) + 1,
-				0,
-				createTag('Summary', {
-					name
-				})
-			);
-		}
-
-		return tree;
-	};
-}
-
-function createImportComponent(name) {
-	const path = `@components/${name}.astro`;
-
-	return {
-		"type": "mdxjsEsm",
-		"value": `import ${name} from '${path}';`,
-		"data": {
-			"estree": {
-				"type": "Program",
-				"sourceType": "module",
-				"comments": [],
-				"body": [
-					{
-						"type": "ImportDeclaration",
-						"specifiers": [
-							{
-								"type": "ImportDefaultSpecifier",
-								"local": {
-									"type": "Identifier",
-									"name": name,
-								},
-							}
-						],
-						"source": {
-							"type": "Literal",
-							"value": path,
-							"raw": `'${path}'`,
-						},
-					}
-				],
-			}
-		}
-	};
-}
-
-function createAnswerTag(type, name) {
-	return createTag('Answer', {type, name});
-}
-
-function createTag(name, attributes = {}, children = []) {
-	return {
-		"type": "mdxJsxFlowElement",
-		"name": name,
-		"attributes": Object.keys(attributes).map(name => ({
-			"type": "mdxJsxAttribute",
-			"name": name,
-			"value": attributes[name],
-		})),
-		"children": children,
-		"data": {
-			"_mdxExplicitJsx": true
-		}
-	};
+		block.children = children.filter(item => !!item);
+	}
 }

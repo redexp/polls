@@ -1,0 +1,47 @@
+---
+interface Props {
+	id?: string,
+	title?: string,
+	size?: 'sm'|'lg'|'xl',
+	footerAlign?: 'left' | 'right',
+}
+
+const {
+	id,
+	title,
+	size,
+	footerAlign = 'right',
+} = Astro.props;
+---
+
+<div
+	id={id}
+	class="modal fade"
+	tabindex="-1"
+	data-close
+>
+    <div
+		class="modal-dialog modal-dialog-centered"
+		class:list={{
+			"modal-sm": size === 'sm',
+			"modal-lg": size === 'lg',
+			"modal-xl": size === 'xl',
+		}}
+	>
+        <div class="modal-content">
+			{!!title &&
+			<div class="modal-header">
+				<h5 class="modal-title">{title}</h5>
+				<button type="button" class="btn-close" data-close aria-label="Close"></button>
+			</div>}
+
+            <div class="modal-body">
+                <slot/>
+            </div>
+
+            <div class="modal-footer" class:list={{"justify-content-start": footerAlign === 'left'}}>
+                <slot name="footer"/>
+            </div>
+        </div>
+    </div>
+</div>

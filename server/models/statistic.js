@@ -9,6 +9,11 @@ import {STATISTIC_PUBLIC_KEY} from '../keys/index.js';
 
 const publicKey = createPublicKey(STATISTIC_PUBLIC_KEY);
 
+const mapApi = axios.create({
+	baseURL: 'https://api.mapbox.com',
+	method: 'GET',
+});
+
 /**
  * @returns {import('./statistic').StatisticBuilder}
  */
@@ -21,6 +26,8 @@ export default {
 	 */
 	async fromBankIdUserData(user) {
 		const data = pick(user, [
+			'bank_id',
+			'name',
 			'sex',
 		]);
 
@@ -34,37 +41,42 @@ export default {
 	},
 
 	/**
-	 * @param {import('./statistic').Statistic} data
-	 * @return {Promise<[{rawid: number}]>}
+	 * @param {import('./statistic').StatisticData} user
+	 * @param {string} poll_id
+	 * @param {Array<string>} values
+	 * @return {Promise<Array<{id: number}>>}
 	 */
-	create(data) {
+	create(user, poll_id, values) {
 		return (
 			Statistic()
-			.insert({
-				hash: hashData(data),
-				data: encryptData(data),
-			})
+			.insert(
+				values.map(value => {
+					const data = {
+						...user,
+						poll: poll_id,
+						value,
+					};
+
+					return {
+						hash: hashData(data),
+						data: encryptData(data),
+					};
+				})
+			)
 			.returning('rowid')
 		);
 	},
 
 	/**
-	 * @param {import('./statistic').Statistic} data
+	 * @param {import('./statistic').StatisticData} user
+	 * @param {string} poll_id
+	 * @param {Array<string>} values
 	 * @return {Promise<void>}
 	 */
-	remove(data) {
-		const query = (
-			Statistic()
-			.select('rowid')
-			.where({
-				hash: hashData(data)
-			})
-			.limit(1)
-		);
-
+	remove(user, poll_id, values) {
 		return (
 			Statistic()
-			.where('rowid', 'in', query)
+			.where('hash', 'in', values.map(value => hashData({...user, poll: poll_id, value})))
 			.del()
 		);
 	},
@@ -93,7 +105,8 @@ async function getLocation(addr) {
 		return null;
 	}
 
-	const {data} = await axios.get('https://api.mapbox.com/search/geocode/v6/forward', {
+	const {data} = await mapApi({
+		url: '/search/geocode/v6/forward',
 		params: {
 			country: MAPS.country,
 			region: MAPS.region,
