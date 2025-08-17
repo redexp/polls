@@ -1,6 +1,6 @@
 import {byId, loading} from './dom.ts';
 
-export function showModal(id: string): Modal {
+export function showModal(id: string, params?: ModalParams): Modal {
 	const root = byId<HTMLDivElement>(id);
 
 	const modal = {
@@ -26,6 +26,12 @@ export function showModal(id: string): Modal {
 			});
 		},
 	} as Modal;
+
+	if (params?.size) {
+		const dialog = root.querySelector('.modal-dialog')!;
+		dialog.classList.toggle('modal-sm', params.size === 'sm');
+		dialog.classList.toggle('modal-lg', params.size === 'lg');
+	}
 
 	root.style.display = 'block';
 
@@ -53,11 +59,15 @@ export function hideModal(id: string) {
 	root.classList.remove('show');
 }
 
-export function showInfoModal(text: string): Modal {
-	const modal = showModal('info-modal');
-	const body = modal.node.querySelector<HTMLDivElement>('.modal-body')!;
+export function showInfoModal(text: string, params?: ModalParams): Modal {
+	const modal = showModal('info-modal', {
+		size: 'sm',
+		...params,
+	});
+
 	modal.loadingBtn = modal.node.querySelector<HTMLButtonElement>('.btn')!;
 
+	const body = modal.node.querySelector<HTMLDivElement>('.modal-body')!;
 	body.innerText = text;
 
 	return modal;
@@ -69,4 +79,8 @@ export type Modal = {
 	onClose?: () => void,
 	close(): void,
 	loading(state: Promise<any>): void,
+};
+
+export type ModalParams = {
+	size?: 'sm'|'lg'|'default',
 };
