@@ -6,7 +6,6 @@
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build",
-    "meta": "node bin/build-polls_meta.js",
     "server": "node server/index.js",
     "bankid": "node server/dev/bankid-oauth.js",
     "migrate": "knex migrate:latest --knexfile=server/db/knexfile.js",
