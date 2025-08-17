@@ -12,6 +12,7 @@ export function up(knex) {
 
 		t.index(['poll']);
 		t.index(['poll', 'value']);
+		t.index(['poll', 'bank_id']);
 	});
 }
 
