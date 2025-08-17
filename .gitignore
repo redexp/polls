@@ -1,8 +1,6 @@
 .idea
 
-server/polls_meta.json
-
-cert
+server/keys/*.json
 
 deploy.sh
 
