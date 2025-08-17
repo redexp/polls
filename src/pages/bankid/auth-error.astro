@@ -7,7 +7,7 @@ import {formatAddresses} from '@server/config/auth.js';
 
 <Base title="Помилка під час ідентифікації">
     <CenterCol>
-        <h1 class="display-4 mb-5">⚠️ Відбулася помилка під час ідентифікації через BankID</h1>
+        <h2 class="mb-5">⚠️ Відбулася помилка під час ідентифікації через BankID</h2>
 
         <div id="message" class="alert alert-danger d-none"></div>
 
@@ -50,7 +50,7 @@ import {formatAddresses} from '@server/config/auth.js';
 			if (!map.has(type)) return;
 
 			const div = byId('message');
-			div.innerText = map[type];
+			div.innerText = map.get(type)!;
 			div.classList.remove('d-none');
 		}
     </script>
