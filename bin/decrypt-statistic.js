@@ -45,7 +45,7 @@ const outputDB = knex({
 
 /**
  * @param {string} data
- * @returns {import('../server/models/statistic.d.ts').StatisticValues}
+ * @returns {import('../server/models/statistic').StatisticValues}
  */
 function decrypt(data) {
 	const json = privateDecrypt(privateKey, data).toString();
@@ -53,57 +53,48 @@ function decrypt(data) {
 	return JSON.parse(json);
 }
 
-(async () => {
-	const has = await outputDB.schema.hasTable('statistic');
+const has = await outputDB.schema.hasTable('statistic');
 
-	if (has) {
-		await outputDB.schema.dropTable('statistic');
-	}
+if (has) {
+	await outputDB.schema.dropTable('statistic');
+}
 
-	await outputDB.schema.createTable('statistic', function (t) {
-		t.text('poll');
-		t.text('value');
-		t.integer('age');
-		t.text('sex');
-		t.text('geo');
+await outputDB.schema.createTable('statistic', function (t) {
+	t.text('poll');
+	t.text('value');
+	t.integer('age');
+	t.text('sex');
+	t.text('geo');
 
-		t.index(['poll']);
-		t.index(['poll', 'value']);
-	});
+	t.index(['poll']);
+	t.index(['poll', 'value']);
+});
 
-	const source = () => inputDB('statistic');
-	const target = () => outputDB('statistic');
-	const getCount = (db) => db.count({count: '*'}).then(rows => rows[0].count);
+const source = () => inputDB('statistic');
+const target = () => outputDB('statistic');
+const getCount = (db) => db.count({count: '*'}).then(rows => rows[0].count);
 
-	const count = await getCount(source());
-	const limit = 500;
+const count = await getCount(source());
+const limit = 500;
 
-	for (let i = 0; i < count; i+=limit) {
-		const rows = await source().select('data').orderBy('rowid').offset(i).limit(limit);
+for (let i = 0; i < count; i+=limit) {
+	const rows = await source().select('data').orderBy('rowid').offset(i).limit(limit);
 
-		await target().insert(rows.map(({data}) => {
-			const values = decrypt(data);
+	await target().insert(rows.map(({data}) => {
+		const values = decrypt(data);
 
-			return {
-				poll: values[0],
-				value: values[1],
-				age: values[2],
-				sex: values[3],
-				geo: values[4],
-			};
-		}));
-	}
+		return {
+			poll: values[0],
+			value: values[1],
+			age: values[2],
+			sex: values[3],
+			geo: values[4],
+		};
+	}));
+}
 
-	const total = await getCount(target());
+const total = await getCount(target());
 
-	console.log('decrypted %d rows', total);
-})()
-.then(
-	() => {
-		process.exit();
-	},
-	err => {
-		console.error(err);
-		process.exit(1);
-	},
-);
+console.log('decrypted %d rows', total);
+
+process.exit();
