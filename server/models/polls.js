@@ -10,46 +10,36 @@ import {resolve, basename} from 'node:path';
 /** @type {Map<string, PollMeta>} */
 const polls = new Map();
 
-export default {
-	/**
-	 * @param {string} poll_id
-	 * @param {Array<string>} values
-	 * @returns {boolean|string}
-	 */
-	isValid(poll_id, values) {
-		if (
-			!poll_id ||
-			!Array.isArray(values) ||
-			values.length === 0
-		) {
-			return "empty_values";
-		}
+/**
+ * @param {string} poll_id
+ * @param {Array<string>} values
+ * @returns {boolean|string}
+ */
+export function isValidPollValues(poll_id, values) {
+	if (
+		!poll_id ||
+		!Array.isArray(values) ||
+		values.length === 0
+	) {
+		return "empty_values";
+	}
 
-		const poll = polls.get(poll_id);
+	const poll = polls.get(poll_id);
 
-		if (!poll) return "invalid_poll_id";
+	if (!poll) return "invalid_poll_id";
 
-		const set = new Set(values);
+	const set = new Set(values);
 
-		if (set.difference(poll.values).size > 0) return "invalid_values";
+	if (set.difference(poll.values).size > 0) return "invalid_values";
 
-		for (const group of poll.groups) {
-			if (group.type !== 'radio') continue;
+	for (const group of poll.groups) {
+		if (group.type !== 'radio') continue;
 
-			if (group.values.intersection(set).size > 1) return "many_radio_values";
-		}
+		if (group.values.intersection(set).size > 1) return "many_radio_values";
+	}
 
-		return true;
-	},
-
-	/**
-	 * @param {string} poll
-	 * @return {'dot' | 'check'}
-	 */
-	getAnswerType(poll) {
-		return polls.get(poll).answer_type;
-	},
-};
+	return true;
+}
 
 export async function reloadPollsMeta() {
 	polls.clear();

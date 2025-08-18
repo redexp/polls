@@ -3,7 +3,7 @@ import {randomUUID} from 'crypto';
 import db from './db/index.js';
 import Answers, {isExpired} from './models/answers.js';
 import Statistic from './models/statistic.js';
-import Polls, {reloadPollsMeta} from './models/polls.js';
+import {isValidPollValues, reloadPollsMeta} from './models/polls.js';
 import BankID from './models/bankid.js';
 import {IS_DEV, SERVER, ASTRO_URL} from './config/index.js';
 import BANKID from './config/bankid.js';
@@ -65,7 +65,7 @@ app.post('/api/answer', async function (req, res) {
 		return;
 	}
 
-	const valid = Polls.isValid(poll_id, values);
+	const valid = isValidPollValues(poll_id, values);
 
 	if (valid !== true) {
 		res.status(400);
