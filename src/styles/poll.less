@@ -7,6 +7,16 @@
 		}
 	}
 
+	> p > img {
+		@media (max-width: 768px) {
+			max-width: 480px;
+		}
+
+		@media (max-width: 576px) {
+			max-width: 100%;
+		}
+	}
+
 	label {
 		display: block;
 		margin-bottom: 8px;
@@ -24,5 +34,11 @@
 		margin: 0 -1rem;
 		padding: 1rem 1rem 0;
 		border-top: 1px solid var(--border);
+	}
+}
+
+#confirm-auth-btn {
+	@media (max-width: 520px) {
+		margin-bottom: 15px;
 	}
 }
