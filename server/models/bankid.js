@@ -111,7 +111,20 @@ export default {
 			throw user;
 		}
 
-		user.bank_id = data.inn && data.inn !== 'n/a' ? createSHA3Hash(data.inn) : null;
+		const {inn, documents = []} = user;
+		const passport = (!inn || inn === 'n/a') && documents.find(item => item.type === 'passport');
+		const idPassport = !passport && documents.find(item => item.type === 'idpassport');
+
+		user.bank_id = (
+			inn && inn !== 'n/a' ?
+				createSHA3Hash(inn) :
+			passport ?
+				createSHA3Hash(passport.series + ':' + passport.number) :
+			idPassport ?
+				createSHA3Hash(idPassport.series + '|' + idPassport.number) :
+				null
+		);
+
 		user.name = [user.lastName, user.firstName, user.middleName].filter(n => !!n && n !== 'n/a').join(' ');
 
 		return user;
@@ -176,6 +189,10 @@ setInterval(() => {
 	}
 }, 60 * 1000);
 
+/**
+ * @param {string} data
+ * @returns {string}
+ */
 function createSHA3Hash(data) {
 	return createHash('sha3-256').update(data).digest('hex');
 }
