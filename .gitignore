@@ -2,7 +2,7 @@
 
 server/keys/*.json
 
-deploy.sh
+*.sh
 
 *.key
 *.pem
