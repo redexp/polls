@@ -21,23 +21,23 @@ const Statistic = () => db('statistic');
 
 export default {
 	/**
-	 * @param {import('./bankid').Client} user
+	 * @param {import('./bankid').Client} client
 	 * @returns {Promise<import('./statistic').UserData>}
 	 */
-	async createUserData(user) {
-		const data = pick(user, [
+	async createUserData(client) {
+		const user = pick(client, [
 			'bank_id',
 			'name',
 			'sex',
 		]);
 
-		data.age = moment().diff(moment(user.birthDay, 'DD.MM.Y'), 'years');
+		user.age = moment().diff(moment(client.dateOfBirth, 'DD.MM.Y'), 'years');
 
-		const addr = user.addresses.find(a => a.type === 'juridical');
+		const addr = client.addresses.find(a => a.type === 'juridical');
 
-		data.geo = await getGeoPlusCode(addr);
+		user.geo = await getGeoPlusCode(addr);
 
-		return data;
+		return user;
 	},
 
 	/**
