@@ -1,10 +1,26 @@
-import {resolve} from 'path';
+import {resolve, } from 'node:path';
+import {URL} from "node:url";
+import dotenv from 'dotenv';
 import {update, get} from '../lib/env.js';
-import 'dotenv/config.js';
+
+const dirname = import.meta.dirname || resolve(new URL(import.meta.url).pathname, '..');
+
+export const ROOT_DIR = resolve(dirname, '..', '..');
+export const SRC_DIR = resolve(ROOT_DIR, 'src');
+export const SERVER_DIR = resolve(ROOT_DIR, 'server');
+
+dotenv.config({
+	path: [
+		resolve(ROOT_DIR, '.env'),
+		resolve(SERVER_DIR, '.env'),
+	],
+});
+
+export const DB_FILENAME = get('DB_FILENAME') || 'database.sqlite';
 
 export const POLLS_DIR = (
 	get('POLLS_DIR') ||
-	resolve(import.meta.dirname, '..', '..', 'src', 'polls')
+	resolve(SRC_DIR, 'polls')
 );
 
 const config = {

@@ -1,7 +1,10 @@
 import {readFileSync} from "node:fs";
 import {resolve} from 'node:path';
+import {SERVER_DIR} from '../config/index.js';
 
-const read = (file, enc) => readFileSync(resolve(import.meta.dirname, file), enc)
+const KEYS_DIR = resolve(SERVER_DIR, 'keys');
+
+const read = (file, enc) => readFileSync(resolve(KEYS_DIR, file), enc);
 
 export const JWT_KEY = (
 	process.env.JWT_KEY ||
@@ -20,5 +23,5 @@ export const BANKID_CERT = (
 
 export const GOOGLE_SERVICE_ACCOUNT = (
 	process.env.GOOGLE_SERVICE_ACCOUNT ||
-	resolve(import.meta.dirname, 'service_account.json')
+	resolve(KEYS_DIR, 'service_account.json')
 );
