@@ -59,12 +59,20 @@ app.post('/api/answer', async function (req, res) {
 
 	const user = await BankID.fromJWT(jwt).catch(() => null);
 
-	if (
-		!user ||
-		!Polls.isValid(poll_id, values)
-	) {
+	if (!user) {
 		res.status(400);
-		res.json({message: `Параметри, які необхідні щоб запамʼятати вашу відповідь, є некоректними. Спробуйте перезавантажити сторінку, або ж ще раз ідентифікуйте себе через BankID.`});
+		res.json({message: `Ми не можемо Вас ідентифікувати, пройдіть будь ласка ідентифікацію через BankID ще раз.`});
+		return;
+	}
+
+	const valid = Polls.isValid(poll_id, values);
+
+	if (valid !== true) {
+		res.status(400);
+		res.json({
+			type: valid,
+			message: `Параметри, які необхідні щоб запамʼятати вашу відповідь, є некоректними. Спробуйте перезавантажити сторінку.`,
+		});
 		return;
 	}
 
@@ -169,6 +177,9 @@ app.get(BANKID.callback_url, function (req, res) {
 
 		if (err?.context === 'bankid' || err?.context === 'statistic') {
 			qs.set('type', err.type);
+		}
+		else if (err?.code === 'invalid_must_key') {
+			qs.set('type', 'no_id');
 		}
 
 		redirect(res, '/bankid/auth-error', qs);
