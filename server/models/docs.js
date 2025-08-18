@@ -1,12 +1,10 @@
-import {readFile} from 'node:fs/promises';
-import {resolve} from 'node:path';
 import {google} from 'googleapis';
 import {unified} from 'unified';
 import remarkParse from 'remark-parse';
 import remarkRehype from 'remark-rehype';
 import rehypeStringify from 'rehype-stringify';
 import {GOOGLE_SERVICE_ACCOUNT} from '../keys/index.js';
-import {DOCS, IS_DEV} from '../config/index.js';
+import {DOCS} from '../config/index.js';
 
 const auth = new google.auth.GoogleAuth({
 	keyFile: GOOGLE_SERVICE_ACCOUNT,
@@ -65,25 +63,6 @@ export function rmImageReference(root) {
  */
 export function mdToHtml(md) {
 	return parser.process(md);
-}
-
-/**
- * @param {string} name
- * @param {Array<string>} list
- * @returns {Promise<string>}
- */
-export async function template(name, list) {
-	if (name !== 'index') {
-		name += '/index';
-	}
-
-	const tpl = await readFile(resolve(import.meta.dirname, '..', '..', IS_DEV ? 'dist' : 'public', 'templates', name + '.html'), 'utf8');
-
-	return tpl.replace(/(<\w+ id="template"[^>]*>)(<\/\w+>)/, function (x, start, end) {
-		start = start.replace(' id="template"', '');
-
-		return list.map(html => start + html + end).join('\n');
-	});
 }
 
 function getDrive() {
