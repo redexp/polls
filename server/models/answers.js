@@ -1,5 +1,6 @@
 import moment from "moment";
 import db from '../db/index.js';
+import cap from '../lib/cap.js';
 
 export const ANSWER_UPDATE_TIMEOUT = 60 * 10 * 1000; // 10 min
 
@@ -226,8 +227,4 @@ export default {
  */
 export function isExpired({created_at}) {
 	return moment.utc() - moment.utc(created_at) > ANSWER_UPDATE_TIMEOUT;
-}
-
-function cap(word) {
-	return word.charAt(0).toUpperCase() + word.slice(1);
 }

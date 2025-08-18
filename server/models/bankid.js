@@ -2,6 +2,7 @@ import axios from 'axios';
 import JWT from 'jsonwebtoken';
 import {promisify} from 'util';
 import {createHash, randomUUID} from 'crypto';
+import cap from '../lib/cap.js';
 import BANKID from '../config/bankid.js';
 import AUTH from '../config/auth.js';
 import {BANKID_CERT, JWT_KEY} from '../keys/index.js';
@@ -125,7 +126,12 @@ export default {
 				null
 		);
 
-		user.name = [user.lastName, user.firstName, user.middleName].filter(n => !!n && n !== 'n/a').join(' ');
+		user.name = (
+			[user.lastName, user.firstName, user.middleName]
+			.filter(n => !!n && n !== 'n/a')
+			.map(n => cap(n.trim()))
+			.join(' ')
+		);
 
 		return user;
 	},
