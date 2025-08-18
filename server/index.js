@@ -149,22 +149,16 @@ app.get(BANKID.callback_url, function (req, res) {
 	BankID
 	.getAccessData(code, state)
 	.then(async function ({data, state}) {
-		const user = await BankID.getUserData(data.access_token);
+		const client = await BankID.getClientData(data.access_token);
 
-		BankID.validateUserData(user);
+		BankID.validateUserData(client);
 
-		const statisticData = await Statistic.fromBankIdUserData(user);
-
-		const jwt = await BankID.toJWT(statisticData);
-
-		const uuid = randomUUID().slice(0, 8);
-
-		jwtMap.set(uuid, {jwt, time: Date.now()});
+		const auth_token = await toJwtAuthToken(client);
 
 		const url = state?.return || '/';
 
 		const qs = new URLSearchParams({
-			auth_token: uuid,
+			auth_token,
 			state: state?.state,
 		});
 
@@ -227,4 +221,26 @@ function redirect(res, url, qs) {
 	}
 
 	res.redirect(url);
+}
+
+/**
+ * @param {import('./models/bankid').Client} client
+ * @returns {Promise<string>}
+ */
+async function toJwtAuthToken(client) {
+	const userData = await Statistic.createUserData(client);
+
+	const jwt = await BankID.toJWT(userData);
+
+	let uuid;
+
+	for (let i = 0; i < 10; i++) {
+		uuid = randomUUID().slice(0, 8);
+
+		if (!jwtMap.has(uuid)) break;
+	}
+
+	jwtMap.set(uuid, {jwt, time: Date.now()});
+
+	return uuid;
 }
