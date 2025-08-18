@@ -14,7 +14,7 @@ export default {
 	/**
 	 * @param {string} poll_id
 	 * @param {Array<string>} values
-	 * @returns {boolean}
+	 * @returns {boolean|string}
 	 */
 	isValid(poll_id, values) {
 		if (
@@ -22,21 +22,21 @@ export default {
 			!Array.isArray(values) ||
 			values.length === 0
 		) {
-			return false;
+			return "empty_values";
 		}
 
 		const poll = polls.get(poll_id);
 
-		if (!poll) return false;
+		if (!poll) return "invalid_poll_id";
 
 		const set = new Set(values);
 
-		if (set.difference(poll.values).size > 0) return false;
+		if (set.difference(poll.values).size > 0) return "invalid_values";
 
 		for (const group of poll.groups) {
 			if (group.type !== 'radio') continue;
 
-			if (group.values.intersection(set).size > 1) return false;
+			if (group.values.intersection(set).size > 1) return "many_radio_values";
 		}
 
 		return true;
@@ -72,13 +72,16 @@ export async function reloadPollsMeta() {
 			};
 		}
 
-		const md = await readFile(resolve(POLLS_DIR, filepath), 'utf8');
-
 		let group = {
 			type: '',
 			values: new Set(),
 		};
 
+		let md = await readFile(resolve(POLLS_DIR, filepath), 'utf8');
+
+		md = md.replace(/^\s*\\\[([^\]]+)\\\]/gm, '[$1]'); // replace \[...\] with [...]
+
+		// find at line start --- or [ or (
 		md.replace(/^\s*(---|[\[\(]).*$/gm, function (line, mode) {
 			if (mode === '---') {
 				if (!group.type) return line;
@@ -96,8 +99,8 @@ export async function reloadPollsMeta() {
 			const type = mode === '[' ? 'checkbox' : 'radio';
 			const match = line.trim().match(
 				type === 'checkbox' ?
-					/^\[([^\]]+)\]/ :
-					/^\(([^\)]+)\)/
+					/^\[([^\]]+)\](:?)/ : // match [...], colon `:` et the end means - image ref, then ignore it
+					/^\(([^\)]+)\)/       // match (...)
 			);
 			const value = match && match[1].trim();
 
@@ -108,6 +111,8 @@ export async function reloadPollsMeta() {
 					line,
 				};
 			}
+
+			if (type === 'checkbox' && match[2] === ':') return line; // means it's image ref like - [image]: <data....
 
 			if (!value) {
 				throw {
