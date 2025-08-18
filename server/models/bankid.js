@@ -82,7 +82,7 @@ export default {
 	 * @param {string} access_token
 	 * @return {Promise<import('./bankid').Client>}
 	 */
-	async getUserData(access_token) {
+	async getClientData(access_token) {
 		const {data} = await bankApi({
 			url: '/resource/client',
 			headers: {
@@ -169,7 +169,7 @@ export default {
 
 	/**
 	 * @param jwt
-	 * @returns {Promise<import('./statistic').StatisticData|null>}
+	 * @returns {Promise<import('./statistic').UserData|null>}
 	 */
 	async fromJWT(jwt) {
 		if (!jwt) return null;

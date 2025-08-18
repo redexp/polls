@@ -22,9 +22,9 @@ const Statistic = () => db('statistic');
 export default {
 	/**
 	 * @param {import('./bankid').Client} user
-	 * @returns {Promise<import('./statistic').StatisticData>}
+	 * @returns {Promise<import('./statistic').UserData>}
 	 */
-	async fromBankIdUserData(user) {
+	async createUserData(user) {
 		const data = pick(user, [
 			'bank_id',
 			'name',
@@ -41,7 +41,7 @@ export default {
 	},
 
 	/**
-	 * @param {import('./statistic').StatisticData} user
+	 * @param {import('./statistic').UserData} user
 	 * @param {string} poll_id
 	 * @param {Array<string>} values
 	 * @return {Promise<Array<{id: number}>>}
@@ -68,7 +68,7 @@ export default {
 	},
 
 	/**
-	 * @param {import('./statistic').StatisticData} user
+	 * @param {import('./statistic').UserData} user
 	 * @param {string} poll_id
 	 * @param {Array<string>} values
 	 * @return {Promise<void>}

@@ -82,7 +82,7 @@ export default {
 	},
 
 	/**
-	 * @param {import('./statistic').StatisticData} user
+	 * @param {import('./statistic').UserData} user
 	 * @param {string} poll_id
 	 * @param {Array<string>} values
 	 * @return {Promise<Array<{id: number}>>}
@@ -103,7 +103,7 @@ export default {
 	},
 
 	/**
-	 * @param {import('./statistic').StatisticData} user
+	 * @param {import('./statistic').UserData} user
 	 * @param {string} poll_id
 	 * @returns {Promise<void>}
 	 */
