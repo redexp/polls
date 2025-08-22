@@ -66,19 +66,28 @@ export default {
 	},
 
 	/**
-	 * @param {string} bank_id
 	 * @param {string} poll_id
+	 * @param {string} [bank_id]
 	 * @return {Promise<import('./answer').Answer[]>}
 	 */
-	async findAll({bank_id, poll_id}) {
+	async findAll({poll_id, bank_id}) {
+		const where = {
+			poll: String(poll_id),
+		};
+
+		if (bank_id) {
+			where.bank_id = String(bank_id);
+		}
+
 		return (
 			Answers()
 			.select('*')
-			.where({
-				bank_id: String(bank_id),
-				poll: String(poll_id),
-			})
+			.where(where)
 		);
+	},
+
+	query() {
+		return Answers();
 	},
 
 	/**

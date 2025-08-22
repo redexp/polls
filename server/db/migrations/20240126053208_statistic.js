@@ -2,16 +2,16 @@
  * @param { import("knex").Knex } knex
  */
 export function up(knex) {
-	return knex.schema.createTable('answers', (t) => {
+	return knex.schema.createTable('statistic', (t) => {
+		t.string('user_id', 64).notNullable(); // sha3-256(bank_id + poll)
 		t.text('poll').notNullable();
 		t.text('value').notNullable();
-		t.string('bank_id', 64).notNullable();
-		t.text('name');
-		t.datetime('created_at').defaultTo(knex.raw(`(datetime('now'))`));
+		t.integer('age');
+		t.string('sex', 1); // F|M
+		t.string('geo', 9); //no_loc|8GXJC3V5+
 
 		t.index(['poll']);
 		t.index(['poll', 'value']);
-		t.index(['poll', 'bank_id']);
 	});
 }
 
@@ -19,5 +19,5 @@ export function up(knex) {
  * @param { import("knex").Knex } knex
  */
 export function down({schema}) {
-	return schema.dropTable('answers');
+	return schema.dropTable('statistic');
 }

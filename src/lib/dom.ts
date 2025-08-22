@@ -1,5 +1,5 @@
-export function qs<T = HTMLElement>(selector: string): T {
-	return document.querySelector(selector) as T;
+export function qs<T = HTMLElement>(selector: string, root?: HTMLElement): T {
+	return (root || document).querySelector(selector) as T;
 }
 
 export function qsAll<T = HTMLElement>(selector: string): T[] {
@@ -10,32 +10,56 @@ export function byId<T = HTMLElement>(id: string): T {
 	return document.getElementById(id) as T;
 }
 
-export function hidden<T = HTMLElement>(selector: string, state: boolean): T {
-	const node = qs(selector);
-	node.classList.toggle('d-none', state);
-	return node as T;
-}
-
 export function loading(btn: HTMLButtonElement, state: boolean) {
 	btn.disabled = state;
 	btn.classList.toggle('loading', state);
 }
 
-export function getValue(id: string): string {
-	return byId<HTMLInputElement>(id).value;
+export function getValues(selector: string): string[] {
+	return qsAll<HTMLInputElement>(selector).map(inp => inp.value);
 }
 
-export function setValue(id: string, value: string) {
-	const input = byId<HTMLInputElement>(id);
+export function each<T, E extends HTMLElement = HTMLElement>(selector: string, apply: (item: T, querySelector: typeof qs, tpl: E) => void) {
+	const root = qs(selector);
+	const tpl = root.firstElementChild!.cloneNode(true);
 
-	input.value = value;
+	const map = new Map<T, E>();
 
-	input.dispatchEvent(new Event('input', {
-		bubbles: true,
-		cancelable: true,
-	}));
-}
+	const add = function (item: T) {
+		const node = tpl.cloneNode(true) as E;
 
-export function getText(id: string): string {
-	return byId(id).innerText;
+		const querySelector = (s) => qs(s, node);
+
+		apply(item, querySelector as typeof qs, node);
+
+		map.set(item, node);
+
+		root.appendChild(node);
+	};
+
+	const remove = function (item: T) {
+		map.get(item)?.remove();
+		map.delete(item);
+	};
+
+	const reset = function (list: T[]) {
+		for (let i = root.childNodes.length - 1; i >= 0; i--) {
+			root.childNodes.item(i).remove();
+		}
+
+		for (const item of list) {
+			add(item);
+		}
+	};
+
+	reset([]);
+
+	return {
+		root,
+		tpl,
+		map,
+		add,
+		remove,
+		reset,
+	};
 }

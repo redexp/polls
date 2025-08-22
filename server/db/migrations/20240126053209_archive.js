@@ -2,11 +2,11 @@
  * @param { import("knex").Knex } knex
  */
 export function up(knex) {
-	return knex.schema.createTable('statistic', (t) => {
-		t.text('hash');
+	return knex.schema.createTable('archive', (t) => {
+		t.text('poll');
 		t.text('data');
 
-		t.index(['hash']);
+		t.index(['poll']);
 	});
 }
 
@@ -14,5 +14,5 @@ export function up(knex) {
  * @param { import("knex").Knex } knex
  */
 export function down({schema}) {
-	return schema.dropTable('statistic');
+	return schema.dropTable('archive');
 }

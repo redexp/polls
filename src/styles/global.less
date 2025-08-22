@@ -60,6 +60,29 @@ body {
 			display: none;
 		}
 	}
+
+	&.arrow {
+		&::before {
+			content: '';
+			display: inline-block;
+			width: 0;
+			height: 0;
+			border: 6px solid transparent;
+		}
+
+		&.left::before {
+			border-right-color: black;
+		}
+		&.right::before {
+			border-left-color: black;
+		}
+		&.up::before {
+			border-bottom-color: black;
+		}
+		&.down::before {
+			border-top-color: black;
+		}
+	}
 }
 
 #notifications {

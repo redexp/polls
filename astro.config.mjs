@@ -8,7 +8,9 @@ export default defineConfig({
 	site: SERVER.url,
 	env: {
 		schema: {
-			TITLE: envField.string({context: 'client', access: 'public'})
+			TITLE: envField.string({context: 'client', access: 'public'}),
+			PUBLIC_MAP_TOKEN: envField.string({context: 'client', access: 'public'}),
+			MAP_CENTER: envField.string({context: 'client', access: 'public'}),
 		}
 	},
 	markdown: {
@@ -20,6 +22,9 @@ export default defineConfig({
 			include: ['**/components/*.jsx']
 		}),
 	],
+	devToolbar: {
+		enabled: false,
+	},
 	vite: {
 		server: {
 			proxy: {

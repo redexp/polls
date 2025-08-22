@@ -1,13 +1,13 @@
-import {byId} from './dom.ts';
+import {each} from './dom.ts';
 
-const root = byId<HTMLDivElement>('notifications');
-const tpl = root.firstElementChild!.cloneNode(true);
+const ctrl = each<Noti>('#notifications', function (item, q, node) {
+	node.classList.toggle('alert-success', item.type === 'success');
+	node.classList.toggle('alert-danger', item.type === 'error');
+	q('span').innerText = item.text;
+	q<HTMLButtonElement>('.btn-close').onclick = () => ctrl.remove(item);
+});
 
-for (let i = root.childNodes.length - 1; i >= 0; i--) {
-	root.childNodes.item(i).remove();
-}
-
-root.style.display = '';
+ctrl.root.style.display = '';
 
 export function success(text: string) {
 	add({
@@ -24,12 +24,7 @@ export function error(text: string) {
 }
 
 function add(item: Noti) {
-	const node = tpl.cloneNode(true) as HTMLDivElement;
-	node.classList.toggle('alert-success', item.type === 'success');
-	node.classList.toggle('alert-danger', item.type === 'error');
-	node.querySelector('span')!.innerText = item.text;
-	node.querySelector<HTMLButtonElement>('.btn-close')!.onclick = () => node.remove();
-	root.appendChild(node);
+	ctrl.add(item);
 
 	const timeout = item.timeout || (
 		item.type === 'success' ?
@@ -38,8 +33,8 @@ function add(item: Noti) {
 	);
 
 	setTimeout(() => {
-		node.remove();
-	}, timeout)
+		ctrl.remove(item);
+	}, timeout);
 }
 
 export type Noti = {

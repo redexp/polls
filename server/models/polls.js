@@ -3,44 +3,16 @@ import {readdir, readFile} from "node:fs/promises";
 import {resolve, basename} from 'node:path';
 
 /**
- * @typedef {{type: 'checkbox'|'radio', values: Set<string>}} ValuesGroup
- * @typedef {{id: string, values: Set<string>, groups: Array<ValuesGroup>}} PollMeta
+ * @typedef {{type: 'checkbox'|'radio', values: Array<string>}} ValuesGroup
+ * @typedef {{id: string, values: Array<string>, groups: Array<ValuesGroup>}} PollMeta
  */
 
 /** @type {Map<string, PollMeta>} */
-const polls = new Map();
+export const polls = new Map();
 
 /**
- * @param {string} poll_id
- * @param {Array<string>} values
- * @returns {boolean|string}
+ * @returns {Promise<Map<string, PollMeta>>}
  */
-export function isValidPollValues(poll_id, values) {
-	if (
-		!poll_id ||
-		!Array.isArray(values) ||
-		values.length === 0
-	) {
-		return "empty_values";
-	}
-
-	const poll = polls.get(poll_id);
-
-	if (!poll) return "invalid_poll_id";
-
-	const set = new Set(values);
-
-	if (set.difference(poll.values).size > 0) return "invalid_values";
-
-	for (const group of poll.groups) {
-		if (group.type !== 'radio') continue;
-
-		if (group.values.intersection(set).size > 1) return "many_radio_values";
-	}
-
-	return true;
-}
-
 export async function reloadPollsMeta() {
 	polls.clear();
 
@@ -51,7 +23,7 @@ export async function reloadPollsMeta() {
 
 		const poll = {
 			id: basename(filepath, '.md'),
-			values: new Set(),
+			values: [],
 			groups: [],
 		};
 
@@ -64,7 +36,7 @@ export async function reloadPollsMeta() {
 
 		let group = {
 			type: '',
-			values: new Set(),
+			values: [],
 		};
 
 		let md = await readFile(resolve(POLLS_DIR, filepath), 'utf8');
@@ -80,7 +52,7 @@ export async function reloadPollsMeta() {
 
 				group = {
 					type: '',
-					values: new Set(),
+					values: [],
 				};
 
 				return line;
@@ -112,7 +84,7 @@ export async function reloadPollsMeta() {
 				};
 			}
 
-			if (poll.values.has(value)) {
+			if (poll.values.includes(value)) {
 				throw {
 					type: 'value_duplicate',
 					file: filepath,
@@ -129,8 +101,8 @@ export async function reloadPollsMeta() {
 			}
 
 			group.type = type;
-			group.values.add(value);
-			poll.values.add(value);
+			group.values.push(value);
+			poll.values.push(value);
 		});
 
 		if (group.type !== '' && !poll.groups.includes(group)) {
@@ -141,4 +113,67 @@ export async function reloadPollsMeta() {
 	}
 
 	return polls;
+}
+
+/**
+ * @param {string} poll_id
+ * @param {Array<string>} values
+ * @returns {boolean|string}
+ */
+export function isValidPollValues(poll_id, values) {
+	if (
+		!poll_id ||
+		!Array.isArray(values) ||
+		values.length === 0
+	) {
+		return "empty_values";
+	}
+
+	const poll = polls.get(poll_id);
+
+	if (!poll) return "invalid_poll_id";
+
+	if (!includesAll(poll.values, values)) return "invalid_values";
+
+	for (const group of poll.groups) {
+		if (group.type !== 'radio') continue;
+
+		if (!includesOnlyOne(group.values, values)) return "many_radio_values";
+	}
+
+	return true;
+}
+
+/**
+ * @param {Array<string>} values
+ * @param {Array<string>} list
+ * @returns {boolean}
+ */
+function includesAll(values, list) {
+	for (const v of list) {
+		if (!values.includes(v)) return false;
+	}
+
+	return true;
+}
+
+/**
+ * @param {Array<string>} values
+ * @param {Array<string>} list
+ * @returns {boolean}
+ */
+function includesOnlyOne(values, list) {
+	let count = 0;
+
+	for (const v of list) {
+		if (values.includes(v)) {
+			count++;
+
+			if (count > 1) {
+				return false;
+			}
+		}
+	}
+
+	return true;
 }

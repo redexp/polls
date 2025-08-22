@@ -19,7 +19,19 @@ const mapApi = axios.create({
  */
 const Statistic = () => db('statistic');
 
+/**
+ * @returns {import('./statistic').ArchiveBuilder}
+ */
+const Archive = () => db('archive');
+
 export default {
+	/**
+	 * @returns {import('./statistic').StatisticBuilder}
+	 */
+	query() {
+		return Statistic();
+	},
+
 	/**
 	 * @param {import('./bankid').Client} client
 	 * @returns {Promise<import('./statistic').UserData>}
@@ -44,26 +56,22 @@ export default {
 	 * @param {import('./statistic').UserData} user
 	 * @param {string} poll_id
 	 * @param {Array<string>} values
-	 * @return {Promise<Array<{id: number}>>}
+	 * @return {Promise<void>}
 	 */
 	create(user, poll_id, values) {
+		const {bank_id, ...data} = user;
+		const user_id = hashUserId(bank_id, poll_id);
+
 		return (
 			Statistic()
 			.insert(
-				values.map(value => {
-					const data = {
-						...user,
-						poll: poll_id,
-						value,
-					};
-
-					return {
-						hash: hashData(data),
-						data: encryptData(data),
-					};
-				})
+				values.map(value => ({
+					...data,
+					user_id,
+					poll: poll_id,
+					value,
+				}))
 			)
-			.returning('rowid')
 		);
 	},
 
@@ -73,10 +81,37 @@ export default {
 	 * @param {Array<string>} values
 	 * @return {Promise<void>}
 	 */
-	remove(user, poll_id, values) {
+	archive(user, poll_id, values) {
+		user = {
+			...user,
+			user_id: hashUserId(user.bank_id, poll_id),
+		};
+
+		return (
+			Archive()
+			.insert(
+				values.map(value => ({
+					poll: poll_id,
+					data: encryptData(user, value),
+				}))
+			)
+		);
+	},
+
+	/**
+	 * @param {import('./statistic').UserData} user
+	 * @param {string} poll_id
+	 * @return {Promise<void>}
+	 */
+	remove(user, poll_id) {
+		const user_id = hashUserId(user.bank_id, poll_id);
+
 		return (
 			Statistic()
-			.where('hash', 'in', values.map(value => hashData({...user, poll: poll_id, value})))
+			.where({
+				user_id,
+				poll: poll_id,
+			})
 			.del()
 		);
 	},
@@ -90,7 +125,7 @@ export async function getGeoPlusCode(addr) {
 	const loc = await getLocation(addr);
 
 	if (!loc) {
-		return 'no_location';
+		return 'no_loc';
 	}
 
 	return pc.encode(loc, 8);
@@ -126,32 +161,34 @@ function isNA(v) {
 }
 
 /**
- * @param {import('./statistic').Statistic} data
- * @returns {string} json
- */
-function stringifyData(data) {
-	return JSON.stringify([data.poll, data.value, data.age, data.sex, data.geo]);
-}
-
-/**
- * @param {import('./statistic').Statistic} data
+ * @param {string} bank_id
+ * @param {string} poll_id
  * @returns {string}
  */
-export function hashData(data) {
+export function hashUserId(bank_id, poll_id) {
 	return (
-		createHash('sha256')
-		.update(stringifyData(data))
+		createHash('sha3-256')
+		.update(bank_id + '|' + poll_id)
 		.digest('hex')
 	);
 }
 
 /**
- * @param {import('./statistic').Statistic} data
+ * @param {import('./statistic').UserData} user
+ * @param {string} value
  * @returns {Buffer}
  */
-export function encryptData(data) {
+export function encryptData(user, value) {
 	return publicEncrypt(
 		publicKey,
-		Buffer.from(stringifyData(data))
+		Buffer.from(
+			JSON.stringify([
+				user.user_id,
+				value,
+				user.age,
+				user.sex,
+				user.geo,
+			])
+		)
 	);
 }

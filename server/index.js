@@ -7,6 +7,7 @@ import {isValidPollValues, reloadPollsMeta} from './models/polls.js';
 import BankID from './models/bankid.js';
 import {IS_DEV, SERVER, ASTRO_URL} from './config/index.js';
 import BANKID from './config/bankid.js';
+import {router as map} from './map.js';
 
 reloadPollsMeta()
 .catch(err => {
@@ -21,6 +22,8 @@ app.listen(SERVER.port, () => {
 });
 
 app.use(express.json());
+
+app.use('/api/map', map);
 
 app.post('/api/answers', async function (req, res) {
 	const data = req.body;
@@ -90,7 +93,7 @@ app.post('/api/answer', async function (req, res) {
 	if (items.length > 0) {
 		await db.trx([
 			Answers.remove(user, poll_id),
-			Statistic.remove(user, poll_id, items.map(item => item.value)),
+			Statistic.remove(user, poll_id),
 		]);
 	}
 
