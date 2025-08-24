@@ -93,6 +93,12 @@ importers:
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
+      open-location-code:
+        specifier: ^1.0.3
+        version: 1.0.3
+      open-location-code-typescript:
+        specifier: ^1.5.0
+        version: 1.5.0
       remark:
         specifier: ^15.0.1
         version: 15.0.1
@@ -2327,6 +2333,12 @@ packages:
 
   oniguruma-to-es@4.3.3:
     resolution: {integrity: sha512-rPiZhzC3wXwE59YQMRDodUwwT9FZ9nNBwQQfsd1wfdtlKEyCdRV0avrTcSZ5xlIvGRVPd/cx6ZN45ECmS39xvg==}
+
+  open-location-code-typescript@1.5.0:
+    resolution: {integrity: sha512-nGlOwLrmexCqCxEx7Vy6hsHGA9NmrUf/1bZNj0XzP5WrXYj+Oz1MJwUWFv3N012P/Y15bwC+ViVuCV6inoI1KQ==}
+
+  open-location-code@1.0.3:
+    resolution: {integrity: sha512-DBm14BSn40Ee241n80zIFXIT6+y8Tb0I+jTdosLJ8Sidvr2qONvymwqymVbHV2nS+1gkDZ5eTNpnOIVV0Kn2fw==}
 
   p-limit@6.2.0:
     resolution: {integrity: sha512-kuUqqHNUqoIWp/c467RI4X6mmyuojY5jGutNU0wVTmEOOfcuwLqyMVoAi9MKi2Ak+5i9+nhmrK4ufZE8069kHA==}
@@ -5991,6 +6003,10 @@ snapshots:
       oniguruma-parser: 0.12.1
       regex: 6.0.1
       regex-recursion: 6.0.2
+
+  open-location-code-typescript@1.5.0: {}
+
+  open-location-code@1.0.3: {}
 
   p-limit@6.2.0:
     dependencies:

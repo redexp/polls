@@ -130,20 +130,13 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 </style>
 
 <script>
-	import mapbox from 'mapbox-gl';
 	import {PUBLIC_MAP_TOKEN, MAP_CENTER} from "astro:env/client";
 	import ajax from '../lib/ajax.js';
 	import {getValues, qs, each} from '../lib/dom';
 	import {error} from '../lib/notify';
+	import {createMap, buildGeoJSON, updateMapData} from '../lib/map';
 
-	mapbox.accessToken = PUBLIC_MAP_TOKEN;
-
-	const map = new mapbox.Map({
-		container: 'map',
-		style: 'mapbox://styles/mapbox/streets-v12',
-		center: JSON.parse(MAP_CENTER),
-		zoom: 12.5,
-	});
+	const map = createMap('map');
 
 	const params = new URLSearchParams(location.search);
 	const poll_id = params.get('poll')!;
@@ -181,10 +174,12 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 			.map(list => list.join(', '))
 			.filter(v => !!v.trim())
 			.join('; ')
-		);
+		) || 'Усі відповіді';
 
 		q('button').addEventListener('click', function () {
+			filters.splice(filters.indexOf(item), 1);
 			legend.remove(item);
+			updateMap();
 		});
 
 		q('input').addEventListener('change', function (e) {
@@ -256,6 +251,6 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 	async function updateMap() {
 		const list = await ajax('/api/map/geo', filters.filter(item => item.active));
 
-		console.log(list);
+		updateMapData(map, buildGeoJSON([].concat(...list)));
 	}
 </script>

@@ -1,4 +1,5 @@
 import {Router} from 'express';
+import pluscode from 'pluscodes';
 import {polls} from './models/polls.js';
 import db from './db/index.js';
 import Statistic from './models/statistic.js';
@@ -123,7 +124,7 @@ router.post('/geo', async function (req, res) {
 
 			q
 			.select('geo')
-			.count({count: '*'})
+			.countDistinct({count: 'user_id'})
 			.where('poll', filter.poll_id)
 			.whereNot('geo', 'no_loc')
 
@@ -149,6 +150,15 @@ router.post('/geo', async function (req, res) {
 			return q;
 		})
 	);
+
+	for (const items of list) {
+		for (const item of items) {
+			const geo = pluscode.decode(item.geo);
+			item.lat = geo.latitude;
+			item.lng = geo.longitude;
+			item.res = geo.resolution;
+		}
+	}
 
 	res.json(list);
 });
