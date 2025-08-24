@@ -10,10 +10,7 @@ export const SRC_DIR = resolve(ROOT_DIR, 'src');
 export const SERVER_DIR = resolve(ROOT_DIR, 'server');
 
 dotenv.config({
-	path: [
-		resolve(ROOT_DIR, '.env'),
-		resolve(SERVER_DIR, '.env'),
-	],
+	path: resolve(ROOT_DIR, '.env'),
 });
 
 export const DB_FILENAME = get('DB_FILENAME') || 'database.sqlite';
