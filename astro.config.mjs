@@ -1,5 +1,4 @@
 import {defineConfig, envField} from 'astro/config';
-import solid from '@astrojs/solid-js';
 import remarkBreaks from 'remark-breaks';
 import {SERVER} from './server/config';
 import transform from './src/lib/transform.js';
@@ -17,11 +16,6 @@ export default defineConfig({
 		remarkPlugins: [remarkBreaks],
 		rehypePlugins: [[transform, {}]],
 	},
-	integrations: [
-		solid({
-			include: ['**/components/*.jsx']
-		}),
-	],
 	devToolbar: {
 		enabled: false,
 	},

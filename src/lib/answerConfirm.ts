@@ -60,7 +60,7 @@ export default function answerConfirm(form: HTMLFormElement): Promise<boolean> {
 }
 
 export function sendAnswer(form: HTMLFormElement): Promise<void> {
-	return ajax('/api/answer', {
+	return ajax('/api/answers', {
 		...createAnswerData(form),
 		jwt: getJwt(),
 	});
