@@ -2,7 +2,7 @@ import {Router} from "express";
 import db from './db/index.js';
 import Answers, {isExpired} from './models/answers.js';
 import Statistic from './models/statistic.js';
-import {isValidPollValues} from './models/polls.js';
+import {isPublicPoll, isValidPollValues} from './models/polls.js';
 import BankID from './models/bankid.js';
 
 export const router = Router({mergeParams: true});
@@ -47,6 +47,10 @@ router.post('/', async function (req, res) {
 			Answers.remove(user, poll_id),
 			Statistic.remove(user, poll_id),
 		]);
+	}
+
+	if (!isPublicPoll(poll_id)) {
+		user.name = null;
 	}
 
 	await db.trx([

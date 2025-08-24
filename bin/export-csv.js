@@ -1,6 +1,6 @@
 import minimist from "minimist";
 import {createWriteStream} from 'node:fs';
-import {reloadPollsMeta} from '../server/models/polls.js';
+import {reloadPollsData} from '../server/models/polls.js';
 import db from '../server/db/index.js';
 import ranges from '../server/config/age-groups.js';
 
@@ -10,7 +10,7 @@ const POLL_ID = args['poll'];
 const TYPE = args['type'] || 'simple';
 const OUTPUT = args['out'] || POLL_ID + '-' + TYPE + '.csv';
 
-const polls = await reloadPollsMeta();
+const polls = await reloadPollsData();
 
 if (!polls.has(POLL_ID)) {
 	throw new Error('Invalid --poll');

@@ -1,11 +1,8 @@
-import {POLLS_DIR} from '../config/index.js';
 import {readdir, readFile} from "node:fs/promises";
 import {resolve, basename} from 'node:path';
-
-/**
- * @typedef {{type: 'checkbox'|'radio', values: Array<string>}} ValuesGroup
- * @typedef {{id: string, values: Array<string>, groups: Array<ValuesGroup>}} PollMeta
- */
+import {parse} from 'yaml';
+import moment from "moment";
+import {POLLS_DIR} from '../config/index.js';
 
 /** @type {Map<string, PollMeta>} */
 export const polls = new Map();
@@ -13,7 +10,7 @@ export const polls = new Map();
 /**
  * @returns {Promise<Map<string, PollMeta>>}
  */
-export async function reloadPollsMeta() {
+export async function reloadPollsData() {
 	polls.clear();
 
 	const list = await readdir(POLLS_DIR, {recursive: true});
@@ -23,6 +20,8 @@ export async function reloadPollsMeta() {
 
 		const poll = {
 			id: basename(filepath, '.md'),
+			expire: null,
+			public: false,
 			values: [],
 			groups: [],
 		};
@@ -40,6 +39,16 @@ export async function reloadPollsMeta() {
 		};
 
 		let md = await readFile(resolve(POLLS_DIR, filepath), 'utf8');
+
+		// yaml
+		md = md.replace(/^---+\s*\r?\n(.*?)\r?\n---+\s*\r?\n/s, function (_, yaml) {
+			const data = parse(yaml);
+
+			poll.expire = data.expire && moment(data.expire);
+			poll.public = !!data.public;
+
+			return '';
+		});
 
 		md = md.replace(/^\s*\\\[([^\]]+)\\\]/gm, '[$1]'); // replace \[...\] with [...]
 
@@ -142,6 +151,12 @@ export function isValidPollValues(poll_id, values) {
 	}
 
 	return true;
+}
+
+export function isPublicPoll(poll_id) {
+	const poll = polls.get(poll_id);
+
+	return !!poll?.public;
 }
 
 /**

@@ -1,11 +1,11 @@
 import express from 'express';
-import {reloadPollsMeta} from './models/polls.js';
+import {reloadPollsData} from './models/polls.js';
 import {SERVER} from './config/index.js';
 import {router as bankid} from './bankid.js';
 import {router as answers} from './answers.js';
 import {router as map} from './map.js';
 
-reloadPollsMeta()
+reloadPollsData()
 .catch(err => {
 	console.error(err);
 	process.exit(1);

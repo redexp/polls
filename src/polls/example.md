@@ -1,6 +1,6 @@
 ---
 expire: 2025-12-01
-anonymous: true
+public: true
 ---
 
 ## Заголовок опитування
