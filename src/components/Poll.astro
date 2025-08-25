@@ -20,8 +20,30 @@ const active = !poll.data.expire || poll.data.expire > new Date();
 <form
 	id={basename(poll.id)}
 	class="poll card shadow-soft p-3 mt-5"
-	class:list={{titleless: extractTitle, disabled: !active}}
+	class:list={{
+		titleless: extractTitle,
+		disabled: !active,
+		public: !!poll.data.public,
+	}}
 >
+	<p class="d-flex gap-1">
+		<span
+			class="badge"
+			class:list={{
+				"text-bg-success": active,
+				"text-bg-secondary": !active,
+			}}
+		>{active ? 'Активне' : 'Завершилось'}</span>
+
+		<span
+			class="badge"
+			class:list={{
+				"text-bg-success": poll.data.public,
+				"text-bg-secondary": !poll.data.public,
+			}}
+		>{poll.data.public ? 'Публічне' : 'Анонімне'}</span>
+	</p>
+
     <Content/>
 
 	{active &&

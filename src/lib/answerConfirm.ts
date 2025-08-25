@@ -16,6 +16,8 @@ export default function answerConfirm(form: HTMLFormElement): Promise<boolean> {
 
 		const modal = showModal('answer-confirm');
 
+		modal.node.querySelector('[data-name]')!.classList.toggle('d-none', !form.classList.contains('public'));
+
 		modal.onClose = () => {
 			const data = getPendingData();
 

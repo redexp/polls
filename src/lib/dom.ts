@@ -23,7 +23,7 @@ export function each<T, E extends HTMLElement = HTMLElement>(selector: string, a
 	const root = qs(selector);
 	const tpl = root.firstElementChild!.cloneNode(true);
 
-	const map = new Map<T, E>();
+	const nodes = new Map<T, E>();
 
 	const add = function (item: T) {
 		const node = tpl.cloneNode(true) as E;
@@ -32,14 +32,14 @@ export function each<T, E extends HTMLElement = HTMLElement>(selector: string, a
 
 		apply(item, querySelector as typeof qs, node);
 
-		map.set(item, node);
+		nodes.set(item, node);
 
 		root.appendChild(node);
 	};
 
 	const remove = function (item: T) {
-		map.get(item)?.remove();
-		map.delete(item);
+		nodes.get(item)?.remove();
+		nodes.delete(item);
 	};
 
 	const reset = function (list: T[]) {
@@ -57,7 +57,7 @@ export function each<T, E extends HTMLElement = HTMLElement>(selector: string, a
 	return {
 		root,
 		tpl,
-		map,
+		nodes,
 		add,
 		remove,
 		reset,
