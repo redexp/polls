@@ -134,7 +134,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 	import ajax from '../lib/ajax.js';
 	import {getValues, qs, each} from '../lib/dom';
 	import {error} from '../lib/notify';
-	import {createMap, buildGeoJSON, updateMapData} from '../lib/map';
+	import {createMap, buildGeoJSON, updateMapData, toggleCityRegions} from '../lib/map';
 
 	const map = createMap('map');
 
@@ -162,10 +162,10 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 
 	const filters: Filter[] = [];
 
-	const legend = each<Filter>('#legend', function (item, q) {
-		const {values, sex, age} = item;
+	const legend = each<Filter & {title?: string}>('#legend', function (item, q) {
+		const {title, values, sex, age} = item;
 
-		q('span').innerText = (
+		q('span').innerText = title || (
 			[
 				values,
 				sex.map(s => s === 'F' ? 'Жінки' : 'Чоловіки'),
@@ -176,18 +176,24 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 			.join('; ')
 		) || 'Усі відповіді';
 
-		q('button').addEventListener('click', function () {
-			filters.splice(filters.indexOf(item), 1);
+		q('button').onclick = function () {
+			const index = filters.indexOf(item);
+			if (index > -1) {
+				filters.splice(index, 1);
+			}
+
 			legend.remove(item);
 			updateMap();
-		});
+		};
 
-		q('input').addEventListener('change', function (e) {
+		q('input').onchange = function (e) {
 			const inp = e.target as HTMLInputElement;
 			item.active = inp.checked;
 			updateMap();
-		});
+		};
 	});
+
+	addCityRegions();
 
 	await updateAnswers();
 
@@ -246,6 +252,27 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 				label.querySelector('strong')!.innerText = String(count);
 			}
 		}
+	}
+
+	function addCityRegions() {
+		const cityRegions = {
+			poll_id,
+			title: 'Регіони міста',
+			values: [],
+			sex: [],
+			age: [],
+			};
+
+		legend.add(cityRegions);
+
+		const node = legend.nodes.get(cityRegions)!;
+		const input = node.querySelector('input')! as HTMLInputElement;
+
+		input.checked = false;
+
+		input.onchange = function () {
+			toggleCityRegions(map, input.checked);
+		};
 	}
 
 	async function updateMap() {
