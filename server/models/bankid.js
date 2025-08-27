@@ -35,7 +35,7 @@ const admins = (
 const stateMap = new Map();
 
 const BankID = {
-	getAuthUrl(state) {
+	getAuthUrl(data) {
 		const qs = new URLSearchParams({
 			response_type: 'code',
 			state: 'state',
@@ -44,14 +44,15 @@ const BankID = {
 			originator_url: BANKID.callback_url,
 		});
 
-		if (state) {
-			if (typeof state === 'object') {
-				const data = state;
-				state = randomUUID();
-				stateMap.set(state, {data, time: Date.now()});
-			}
+		if (data) {
+			const uuid = randomUUID();
+			stateMap.set(uuid, {data, time: Date.now()});
 
-			qs.set('state', state);
+			qs.set('state', uuid);
+
+			if (Number(data.dataset) === 23) {
+				qs.set('dataset', data.dataset);
+			}
 		}
 
 		return BANKID.url + '/oauth2/authorize?' + qs.toString();
@@ -133,9 +134,10 @@ const BankID = {
 
 	/**
 	 * @param {import('./bankid').Client} user
+	 * @param {number} [dataset]
 	 * @throws {{type: import('./bankid').ValidationErrorTypes, context: "bankid"}}
 	 */
-	validateUserData(user) {
+	validateUserData(user, dataset) {
 		if (!user.bank_id) {
 			throw {type: 'no_id', context: 'bankid'};
 		}
@@ -143,6 +145,8 @@ const BankID = {
 		if (!user.name) {
 			throw {type: 'no_name', context: 'bankid'};
 		}
+
+		if (Number(dataset) < 51) return;
 
 		const addr = user.addresses?.find(a => a.type === 'juridical');
 

@@ -4,10 +4,18 @@ interface Props {
 	loginTitle?: string,
 	logout?: boolean,
 	size?: 'lg',
+	dataset?: number,
 }
 
-const {id, loginTitle, size, logout = true} = Astro.props;
-const url = '/api/bankid/auth';
+const {
+	id,
+	loginTitle,
+	size,
+	logout = true,
+	dataset
+} = Astro.props;
+
+const url = '/api/bankid/auth' + (dataset ? '?d=' + dataset : '');
 ---
 
 <a

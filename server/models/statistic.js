@@ -7,6 +7,8 @@ import {createPublicKey, publicEncrypt, createHash} from 'crypto';
 import {MAPS} from '../config/index.js';
 import {STATISTIC_PUBLIC_KEY} from '../keys/index.js';
 
+export const NO_LOC = 'no_loc';
+
 const publicKey = createPublicKey(STATISTIC_PUBLIC_KEY);
 
 const mapApi = axios.create({
@@ -43,9 +45,13 @@ export default {
 			'sex',
 		]);
 
-		user.age = moment().diff(moment(client.dateOfBirth, 'DD.MM.Y'), 'years');
+		user.age = (
+			client.dateOfBirth ?
+				moment().diff(moment(client.dateOfBirth, 'DD.MM.Y'), 'years') :
+				0
+		);
 
-		const addr = client.addresses.find(a => a.type === 'juridical');
+		const addr = client.addresses?.find(a => a.type === 'juridical');
 
 		user.geo = await getGeoPlusCode(addr);
 
@@ -122,10 +128,12 @@ export default {
  * @returns {Promise<string>}
  */
 export async function getGeoPlusCode(addr) {
+	if (!addr) return NO_LOC;
+
 	const loc = await getLocation(addr);
 
 	if (!loc) {
-		return 'no_loc';
+		return NO_LOC;
 	}
 
 	return pc.encode(loc, 8);

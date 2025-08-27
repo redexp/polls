@@ -1,7 +1,7 @@
 import {showModal, showInfoModal} from './modal.ts';
 import type {Modal} from './modal.ts';
 import {hasAuth, getJwt} from './auth.ts';
-import {byId} from './dom.ts';
+import {byId, setLinkParams} from './dom.ts';
 import ajax from './ajax';
 
 const PENDING_KEY = 'pending_for_auth';
@@ -28,15 +28,11 @@ export default function answerConfirm(form: HTMLFormElement): Promise<boolean> {
 			done(false);
 		};
 
-		const authBtn = byId<HTMLAnchorElement>('confirm-auth-btn');
-
 		let pending_id: string;
 
 		if (!hasAuth()) {
 			pending_id = storeAnswer(form);
-			const url = new URL(authBtn.href);
-			url.searchParams.set('state', pending_id);
-			authBtn.href = url.toString();
+			setLinkParams('#confirm-auth-btn', {state: pending_id});
 		}
 
 		const confirmBtn = byId<HTMLButtonElement>('confirm-btn');

@@ -19,6 +19,15 @@ export function getValues(selector: string): string[] {
 	return qsAll<HTMLInputElement>(selector).map(inp => inp.value);
 }
 
+export function setLinkParams(selector: string, params: {[name: string]: string}) {
+	const link = qs<HTMLAnchorElement>(selector);
+	const url = new URL(link.href);
+	for (const [name, value] of Object.entries(params)) {
+		url.searchParams.set(name, value);
+	}
+	link.href = url.toString();
+}
+
 export function each<T, E extends HTMLElement = HTMLElement>(selector: string, apply: (item: T, querySelector: typeof qs, tpl: E) => void, reverse?: boolean) {
 	const root = qs(selector);
 	const tpl = root.firstElementChild!.cloneNode(true);

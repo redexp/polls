@@ -22,7 +22,7 @@ router.get(config.callback_url, function (req, res) {
 	.then(async function ({data, state}) {
 		const client = await BankID.getClientData(data.access_token);
 
-		BankID.validateUserData(client);
+		BankID.validateUserData(client, state.dataset);
 
 		const auth_token = await toJwtAuthToken(client);
 
@@ -62,6 +62,7 @@ api.get('/auth', function (req, res) {
 		BankID.getAuthUrl({
 			state: req.query?.state,
 			return: url.pathname,
+			dataset: req.query.d
 		})
 	);
 });
