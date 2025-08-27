@@ -8,7 +8,6 @@ const BANKID = {
 	dataset: 51,
 	callback_url: '/bankid/callback',
 	crypto_url: '',
-
 };
 
 update(BANKID, 'BANKID_');

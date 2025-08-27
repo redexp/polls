@@ -19,7 +19,7 @@ export function getValues(selector: string): string[] {
 	return qsAll<HTMLInputElement>(selector).map(inp => inp.value);
 }
 
-export function each<T, E extends HTMLElement = HTMLElement>(selector: string, apply: (item: T, querySelector: typeof qs, tpl: E) => void) {
+export function each<T, E extends HTMLElement = HTMLElement>(selector: string, apply: (item: T, querySelector: typeof qs, tpl: E) => void, reverse?: boolean) {
 	const root = qs(selector);
 	const tpl = root.firstElementChild!.cloneNode(true);
 
@@ -34,7 +34,12 @@ export function each<T, E extends HTMLElement = HTMLElement>(selector: string, a
 
 		nodes.set(item, node);
 
-		root.appendChild(node);
+		if (reverse && root.firstElementChild) {
+			root.insertBefore(node, root.firstElementChild);
+		}
+		else {
+			root.appendChild(node);
+		}
 	};
 
 	const remove = function (item: T) {

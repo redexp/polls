@@ -1,11 +1,26 @@
 import {Router} from 'express';
 import pluscode from 'pluscodes';
-import {polls} from './models/polls.js';
-import db from './db/index.js';
-import Statistic from './models/statistic.js';
 import ranges from './config/age-groups.js';
+import db from './db/index.js';
+import {polls} from './models/polls.js';
+import Statistic from './models/statistic.js';
+import BankID from './models/bankid.js';
 
 export const router = Router({mergeParams: true});
+
+router.use(function (req, res, next) {
+	BankID
+	.isAdmin(req.body.jwt)
+	.then(function (valid) {
+		if (!valid) {
+			res.sendStatus(401);
+			return;
+		}
+
+		next();
+	})
+	.catch(next);
+});
 
 router.post('/answers', async function (req, res) {
 	const {poll_id} = req.body;
@@ -113,7 +128,7 @@ router.post('/counts', async function (req, res) {
 
 router.post('/geo', async function (req, res) {
 	/** @type {Filter[]} */
-	const filters = req.body;
+	const filters = req.body.filters;
 
 	const list = await Promise.all(
 		filters.map((filter) => {

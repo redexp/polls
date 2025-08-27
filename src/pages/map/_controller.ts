@@ -1,7 +1,9 @@
 import ajax from '../../lib/ajax.js';
-import {getValues, qs, each} from '@lib/dom.ts';
+import {getValues, qs, each, qsAll} from '@lib/dom.ts';
 import {error} from '@lib/notify.ts';
 import {createMap, buildGeoJSON, updateMapData, toggleCityRegions} from '@lib/map.ts';
+import {getAuthParams, getJwt, hasAuth, isAdmin, retrieveJwt} from '@lib/auth.ts';
+import {showModal} from '@lib/modal.ts';
 
 const map = createMap('map');
 
@@ -58,11 +60,9 @@ const legend = each<Filter & {title?: string}>('#legend', function (item, q) {
 		item.active = inp.checked;
 		updateMap();
 	};
-});
+}, true);
 
 addCityRegions();
-
-await updateAnswers();
 
 qs('form').addEventListener('change', function () {
 	updateCounts()
@@ -82,7 +82,25 @@ qs('form').addEventListener('submit', function (e) {
 	updateMap();
 });
 
-await updateCounts();
+const {auth_token} = getAuthParams();
+
+if (auth_token) {
+	await retrieveJwt(auth_token);
+}
+
+if (await isAdmin()) {
+	for (const inp of qsAll<HTMLInputElement>('.btn.arrow input')) {
+		inp.checked = false;
+	}
+
+	await updateAnswers();
+	await updateCounts();
+}
+else {
+	const modal = showModal('login-form');
+
+	modal.node.classList.toggle('error', hasAuth());
+}
 
 function getFilter(): Filter {
 	const values = getValues('[name="value"]:checked');
@@ -98,7 +116,7 @@ function getFilter(): Filter {
 }
 
 async function updateAnswers() {
-	const list: Answer[] = await ajax('/api/map/answers', {poll_id});
+	const list: Answer[] = await api('/answers', {poll_id});
 
 	answers.reset(list);
 }
@@ -110,7 +128,7 @@ async function updateCounts() {
 		age: { [value: string]: number },
 	};
 
-	const counts: Counts = await ajax('/api/map/counts', getFilter());
+	const counts: Counts = await api('/counts', getFilter());
 
 	for (const name in counts) {
 		for (const [value, count] of Object.entries(counts[name])) {
@@ -143,7 +161,16 @@ function addCityRegions() {
 }
 
 async function updateMap() {
-	const list = await ajax('/api/map/geo', filters.filter(item => item.active));
+	const list = await api('/geo', {
+		filters: filters.filter(item => item.active),
+	});
 
 	updateMapData(map, buildGeoJSON([].concat(...list)));
+}
+
+async function api(url, data) {
+	return ajax('/api/map' + url, {
+		...data,
+		jwt: getJwt(),
+	});
 }

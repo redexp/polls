@@ -39,13 +39,17 @@ export function showModal(id: string, params?: ModalParams): Modal {
 		root.classList.add('show');
 	});
 
-	root.onclick = function (e) {
-		if (e.target === root) {
-			modal.close();
-		}
-	};
+	if (root.dataset.close !== 'false') {
+		root.onclick = function (e) {
+			if (e.target === root) {
+				modal.close();
+			}
+		};
+	}
 
 	for (const btn of root.querySelectorAll<HTMLButtonElement>('[data-close]')) {
+		if (btn.dataset.close === 'false') continue;
+
 		btn.onclick = modal.close;
 	}
 

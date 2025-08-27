@@ -4,6 +4,7 @@ interface Props {
 	title?: string,
 	size?: 'sm'|'lg'|'xl',
 	footerAlign?: 'left' | 'right',
+	closable?: boolean,
 }
 
 const {
@@ -11,6 +12,7 @@ const {
 	title,
 	size,
 	footerAlign = 'right',
+	closable = true,
 } = Astro.props;
 ---
 
@@ -18,7 +20,7 @@ const {
 	id={id}
 	class="modal fade"
 	tabindex="-1"
-	data-close
+	data-close={closable}
 >
     <div
 		class="modal-dialog modal-dialog-centered"
@@ -32,7 +34,9 @@ const {
 			{!!title &&
 			<div class="modal-header">
 				<h5 class="modal-title">{title}</h5>
-				<button type="button" class="btn-close" data-close aria-label="Close"></button>
+
+				{closable &&
+				<button type="button" class="btn-close" data-close aria-label="Close"></button>}
 			</div>}
 
             <div class="modal-body">

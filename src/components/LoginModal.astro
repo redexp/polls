@@ -1,0 +1,40 @@
+---
+import Modal from './Modal.astro';
+import LoginButton from './LoginButton.astro';
+---
+
+<Modal
+	id="login-form"
+	title="Ідентифікація"
+	closable={false}
+>
+    <div id="error-invalid" class="alert alert-danger">
+        У вас немає доступу до цієї сторінки
+    </div>
+
+    <p>
+        Для доступу до цієї сторінки Вам необхідно пройти ідентифікацію
+    </p>
+
+	<Fragment slot="footer">
+		<LoginButton
+			size="lg"
+		/>
+	</Fragment>
+</Modal>
+
+<style lang="less">
+	.alert {
+		display: none;
+	}
+
+	:global(#login-form.error) {
+		.alert {
+			display: block;
+		}
+
+		p {
+			display: none;
+		}
+	}
+</style>

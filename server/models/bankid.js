@@ -22,12 +22,19 @@ const cryptoApi = axios.create({
 	method: 'POST',
 });
 
+/** @type {string[]} */
+const admins = (
+	AUTH.admins
+	.map((inn) => createBankId({inn}))
+	.filter(id => !!id)
+);
+
 /**
  * @type {Map<string, {data: any, time: number}>}
  */
 const stateMap = new Map();
 
-export default {
+const BankID = {
 	getAuthUrl(state) {
 		const qs = new URLSearchParams({
 			response_type: 'code',
@@ -112,19 +119,7 @@ export default {
 			throw user;
 		}
 
-		const {inn, documents = []} = user;
-		const passport = (!inn || inn === 'n/a') && documents.find(item => item.type === 'passport');
-		const idPassport = !passport && documents.find(item => item.type === 'idpassport');
-
-		user.bank_id = (
-			inn && inn !== 'n/a' ?
-				createSHA3Hash(inn) :
-			passport ?
-				createSHA3Hash(passport.series + ':' + passport.number) :
-			idPassport ?
-				createSHA3Hash(idPassport.series + '|' + idPassport.number) :
-				null
-		);
+		user.bank_id = createBankId(user);
 
 		user.name = (
 			[user.lastName, user.firstName, user.middleName]
@@ -181,8 +176,19 @@ export default {
 		if (!jwt) return null;
 
 		return jwtDecode(jwt, JWT_KEY);
-	}
+	},
+
+	async isAdmin(jwt) {
+		const user = await BankID.fromJWT(jwt).catch(() => null);
+
+		return !!(
+			user?.bank_id &&
+			admins.includes(user.bank_id)
+		);
+	},
 };
+
+export default BankID;
 
 setInterval(() => {
 	const now = Date.now();
@@ -194,6 +200,26 @@ setInterval(() => {
 		}
 	}
 }, 60 * 1000);
+
+/**
+ * @param {import('./bankid').Client} user
+ * @returns {string|null}
+ */
+export function createBankId(user) {
+	const {inn, documents = []} = user;
+	const passport = (!inn || inn === 'n/a') && documents.find(item => item.type === 'passport');
+	const idPassport = !passport && documents.find(item => item.type === 'idpassport');
+
+	return (
+		inn && inn !== 'n/a' ?
+			createSHA3Hash(inn) :
+		passport ?
+			createSHA3Hash(passport.series + ':' + passport.number) :
+		idPassport ?
+			createSHA3Hash(idPassport.series + '|' + idPassport.number) :
+			null
+	);
+}
 
 /**
  * @param {string} data

@@ -55,7 +55,7 @@ const active = !poll.data.expire || poll.data.expire > new Date();
 <script>
 	import {qsAll} from '../lib/dom';
 	import answerConfirm, {sendAnswer, tryRestorePendingAnswer} from '../lib/answerConfirm';
-	import {retrieveJwt} from "../lib/auth";
+	import {getAuthParams, retrieveJwt} from "../lib/auth";
 	import {showInfoModal} from "../lib/modal";
 	import * as notify from '../lib/notify';
 
@@ -64,16 +64,7 @@ const active = !poll.data.expire || poll.data.expire > new Date();
 	}
 
 	(async () => {
-		const url = new URL(location.href);
-		const params = url.searchParams;
-		const auth_token = params.get('auth_token');
-		const state = params.get('state');
-
-		if (auth_token || state) {
-			params.delete('auth_token');
-			params.delete('state');
-			history.pushState({}, '', url);
-		}
+		const {auth_token, state} = getAuthParams();
 
 		if (auth_token) {
 			await retrieveJwt(auth_token);

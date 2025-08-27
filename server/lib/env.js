@@ -28,3 +28,13 @@ export function get(name) {
 				undefined
 	);
 }
+
+export function getJson(name, def) {
+	const json = get(name);
+
+	return (
+		json ?
+			JSON.parse(json) :
+			def
+	);
+}

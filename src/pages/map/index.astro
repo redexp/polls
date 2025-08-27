@@ -1,5 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
+import LoginModal from '../../components/LoginModal.astro';
 import ranges from '@server/config/age-groups.js';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './_style.less';
@@ -38,18 +39,19 @@ import './_style.less';
             </div>
         </form>
         <label class="btn btn-light btn-sm arrow up">
-            <input type="checkbox"/>
+            <input type="checkbox" checked/>
         </label>
     </div>
 
     <div class="legend m-3 z-3">
         <label class="btn btn-light btn-sm arrow right">
-            <input type="checkbox"/>
+            <input type="checkbox" checked/>
         </label>
         <ul id="legend" class="list-group">
             <li class="list-group-item">
                 <label class="d-flex align-items-center gap-3">
-                    <input type="checkbox" class="form-check-input mt-0" checked/> <span></span>
+                    <input type="checkbox" class="form-check-input mt-0" checked/>
+					<span class="flex-fill"></span>
                     <button type="button" class="btn btn-close btn-sm"></button>
                 </label>
             </li>
@@ -57,6 +59,8 @@ import './_style.less';
     </div>
 
     <div id="map"></div>
+
+	<LoginModal/>
 </Base>
 
 <style is:inline>

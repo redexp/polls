@@ -1,23 +1,21 @@
-import {get} from '../lib/env.js';
+import {getJson} from '../lib/env.js';
 
 const AUTH = {
-
-	/**
-	 * @type {import('./models/bankid').Address[]}
-	 */
+	/** @type {import('./models/bankid').Address[]} */
 	addresses: [],
+
+	/** @type {string[]} */
+	admins: [],
 };
 
-const json = get('AUTH_ADDRESSES');
+AUTH.addresses = getJson('AUTH_ADDRESSES', [{
+	state: 'Черкаська',
+	city: 'Черкаси',
+}]);
 
-AUTH.addresses = (
-	json ?
-		JSON.parse(json) :
-		[{
-			state: 'Черкаська',
-			city: 'Черкаси',
-		}]
-);
+AUTH.admins = getJson('AUTH_ADMINS', []);
+
+
 
 export default AUTH;
 

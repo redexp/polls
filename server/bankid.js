@@ -79,6 +79,10 @@ api.post('/jwt', function (req, res) {
 	jwtCache.delete(uuid);
 });
 
+api.post('/is-admin', async function (req, res) {
+	res.json(await BankID.isAdmin(req.body.jwt));
+});
+
 function redirect(res, url, qs) {
 	if (IS_DEV) {
 		url = ASTRO_URL + url;
