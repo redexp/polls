@@ -1,5 +1,5 @@
 import ajax from '../../lib/ajax.js';
-import {getValues, qs, each, qsAll, byId, setLinkParams} from '@lib/dom.ts';
+import {getValues, qs, each, qsAll, setLinkParams} from '@lib/dom.ts';
 import {error} from '@lib/notify.ts';
 import {createMap, buildGeoJSON, updateMapData, toggleCityRegions} from '@lib/map.ts';
 import {getAuthParams, getJwt, hasAuth, isAdmin, retrieveJwt} from '@lib/auth.ts';
