@@ -1,0 +1,62 @@
+.arrow {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+
+	input {
+		opacity: 0;
+		width: 1px;
+		height: 1px;
+	}
+}
+
+.filter-form {
+	position: fixed;
+	top: 0;
+	left: 0;
+
+	&:has(.arrow input:checked) {
+		form {
+			display: none;
+		}
+
+		.arrow::before {
+			transform: rotate(180deg);
+		}
+	}
+
+	form {
+		display: grid;
+		grid-template-columns: auto auto auto;
+		gap: 20px;
+
+		label {
+			display: block;
+			margin-bottom: 4px;
+			cursor: pointer;
+		}
+	}
+
+	.toolbar {
+		grid-column: span 3;
+	}
+}
+
+.legend {
+	position: fixed;
+	right: 0;
+	bottom: 0;
+
+	display: flex;
+	align-items: flex-end;
+
+	&:has(.arrow input:checked) {
+		ul {
+			display: none;
+		}
+
+		.arrow::before {
+			transform: rotate(180deg);
+		}
+	}
+}

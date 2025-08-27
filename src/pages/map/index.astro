@@ -1,0 +1,70 @@
+---
+import Base from '../../layouts/Base.astro';
+import ranges from '@server/config/age-groups.js';
+import 'mapbox-gl/dist/mapbox-gl.css';
+import './_style.less';
+---
+
+<Base>
+    <div class="filter-form m-3 z-1">
+        <form class="card shadow-soft p-3">
+            <div id="values">
+                <label>
+                    <input type="checkbox" class="form-check-input" name="value"/> <span></span> <strong
+                        class="badge text-bg-secondary"></strong>
+                </label>
+            </div>
+            <div>
+                <label>
+                    <input type="checkbox" class="form-check-input" name="sex" value="M"/> Чоловіки <strong
+                        class="badge text-bg-secondary">{Math.round(Math.random() * 100)}</strong>
+                </label>
+                <label>
+                    <input type="checkbox" class="form-check-input" name="sex" value="F"/> Жінки <strong
+                        class="badge text-bg-secondary">{Math.round(Math.random() * 100)}</strong>
+                </label>
+            </div>
+            <div>
+				{ranges.map((range) => (
+                        <label>
+                            <input type="checkbox" class="form-check-input" name="age"
+                                   value={range.join('-')}/> {range.join(' - ')}{range.length === 1 && '+'} <strong
+                                class="badge text-bg-secondary">{Math.round(Math.random() * 100)}</strong>
+                        </label>
+				))}
+            </div>
+            <div class="toolbar">
+                <button type="submit" class="btn btn-primary">Додати</button>
+            </div>
+        </form>
+        <label class="btn btn-light btn-sm arrow up">
+            <input type="checkbox"/>
+        </label>
+    </div>
+
+    <div class="legend m-3 z-3">
+        <label class="btn btn-light btn-sm arrow right">
+            <input type="checkbox"/>
+        </label>
+        <ul id="legend" class="list-group">
+            <li class="list-group-item">
+                <label class="d-flex align-items-center gap-3">
+                    <input type="checkbox" class="form-check-input mt-0" checked/> <span></span>
+                    <button type="button" class="btn btn-close btn-sm"></button>
+                </label>
+            </li>
+        </ul>
+    </div>
+
+    <div id="map"></div>
+</Base>
+
+<style is:inline>
+	html, body, #map {
+		height: 100%;
+	}
+</style>
+
+<script>
+	import './_controller.ts';
+</script>
