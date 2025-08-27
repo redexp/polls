@@ -19,7 +19,7 @@ if (!BANKID.url) {
 }
 
 if (!BANKID.crypto_url) {
-	BANKID.crypto_url = local + 8002;
+	BANKID.crypto_url = local + (BANKID.dev_port + 1);
 }
 
 export default BANKID;
