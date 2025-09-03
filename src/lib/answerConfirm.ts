@@ -8,8 +8,7 @@ const PENDING_KEY = 'pending_for_auth';
 
 export default function answerConfirm(form: HTMLFormElement): Promise<boolean> {
 	return new Promise((done) => {
-		if (createAnswerData(form).values.length === 0) {
-			showInfoModal('Ви не вибрали жодної відповіді');
+		if (!isValidAnswers(form)) {
 			done(false);
 			return;
 		}
@@ -82,6 +81,43 @@ export async function tryRestorePendingAnswer(pending_id: string): Promise<HTMLF
 	return form;
 }
 
+function isValidAnswers(form: HTMLFormElement): boolean {
+	const inputs = getInputs(form);
+	const groups = new Map<string, boolean>();
+
+	for (const input of inputs) {
+		const {group} = input.dataset;
+
+		if (!group || groups.get(group)) continue;
+
+		groups.set(group, input.checked);
+	}
+
+	let hasInvalid = false;
+
+	for (const input of inputs) {
+		const isInvalid = !groups.get(input.dataset.group!);
+
+		input.classList.toggle('is-invalid', isInvalid);
+
+		if (!hasInvalid && isInvalid) {
+			hasInvalid = isInvalid;
+			input.scrollIntoView({
+				behavior: 'smooth',
+				block: 'center',
+			});
+		}
+	}
+
+	if (hasInvalid) {
+		const count = Array.from(groups.values()).reduce((sum, v) => sum + (v ? 0 : 1), 0);
+		showInfoModal(`Ви не відповіли на ${count} ${count < 5 ? 'питання' : 'питань'}`);
+		return false;
+	}
+
+	return true;
+}
+
 export function createAnswerData(form: HTMLFormElement): AnswerData {
 	return {
 		poll_id: form.id,
@@ -119,7 +155,7 @@ function uniqId(): string {
 }
 
 function getInputs(form: HTMLFormElement): HTMLInputElement[] {
-	return Array.from(form.querySelectorAll<HTMLInputElement>('input'));
+	return Array.from(form.querySelectorAll<HTMLInputElement>('input[name][value]'));
 }
 
 export type AnswerData = {

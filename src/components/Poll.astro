@@ -61,6 +61,7 @@ const active = !poll.data.expire || poll.data.expire > new Date();
 
 	for (const form of qsAll<HTMLFormElement>('form')) {
 		form.addEventListener('submit', onSubmit);
+		form.addEventListener('change', onChange);
 	}
 
 	(async () => {
@@ -89,6 +90,16 @@ const active = !poll.data.expire || poll.data.expire > new Date();
 
 		if (confirmed) {
 			notify.success('Дякуємо за Вашу участь у опитуванні');
+		}
+	}
+
+	function onChange(e: Event) {
+		const input = e.target as HTMLInputElement;
+
+		if (input.checked && input.classList.contains('is-invalid')) {
+			for (const inp of qsAll(`input[data-group="${input.dataset.group}"]`)) {
+				inp.classList.remove('is-invalid');
+			}
 		}
 	}
 </script>

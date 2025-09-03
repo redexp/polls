@@ -60,7 +60,8 @@ function transformInput(root) {
 					type: type === '[' ? 'checkbox' : 'radio',
 					name,
 					value: match[2],
-					class: 'form-check-input'
+					class: 'form-check-input',
+					'data-group': group.id,
 				},
 			};
 

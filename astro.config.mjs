@@ -14,7 +14,7 @@ export default defineConfig({
 	},
 	markdown: {
 		remarkPlugins: [remarkBreaks],
-		rehypePlugins: [[transform, {}]],
+		rehypePlugins: [transform],
 	},
 	devToolbar: {
 		enabled: false,
