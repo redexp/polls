@@ -51,15 +51,17 @@ export default function answerConfirm(form: HTMLFormElement): Promise<boolean> {
 	});
 }
 
-export function getPollData(form: HTMLFormElement) {
+export function getPollData(form: HTMLFormElement): {public: boolean, expire?: Date, active: boolean} {
 	const json = form.querySelector('script[type="text/json"]')!.innerHTML;
-	const data = JSON.parse(json) as {public?: boolean, expire?: Date};
+	const data = JSON.parse(json);
 
 	data.public = !!data.public;
 
 	if (data.expire) {
 		data.expire = new Date(data.expire);
 	}
+
+	data.active = !data.expire || data.expire.valueOf() > Date.now();
 
 	return data;
 }

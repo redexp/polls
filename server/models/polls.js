@@ -142,6 +142,8 @@ export function isValidPollValues(poll_id, values) {
 
 	if (!poll) return "invalid_poll_id";
 
+	if (poll.expire && poll.expire > moment()) return "expired";
+
 	if (!includesAll(poll.values, values)) return "invalid_values";
 
 	for (const group of poll.groups) {

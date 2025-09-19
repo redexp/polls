@@ -7,6 +7,18 @@
 		}
 	}
 
+	&.disabled {
+		label {
+			pointer-events: none;
+			cursor: default;
+		}
+		input, button[type="submit"] {
+			opacity: 0.5;
+			pointer-events: none;
+			cursor: default;
+		}
+	}
+
 	> p > img {
 		@media (max-width: 768px) {
 			max-width: 480px;
@@ -20,9 +32,11 @@
 	label {
 		display: block;
 		margin-bottom: 8px;
+		cursor: pointer;
 
 		input {
 			margin-right: 5px;
+			cursor: pointer;
 		}
 	}
 

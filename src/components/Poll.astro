@@ -34,6 +34,7 @@ const json = {
 
 	<p class="d-flex gap-1">
 		<span
+			data-active-badge
 			class="badge"
 			class:list={{
 				"text-bg-success": active,
@@ -74,10 +75,15 @@ const json = {
 		form.addEventListener('submit', onSubmit);
 		form.addEventListener('change', onChange);
 
-		const data = getPollData(form);
+		const {active, public: pub} = getPollData(form);
 
-		form.classList.toggle('public', !!data.public);
-		form.classList.toggle('disabled', !!data.expire && data.expire.valueOf() < Date.now());
+		form.classList.toggle('public', pub);
+		form.classList.toggle('disabled', !active);
+
+		const badge = form.querySelector('[data-active-badge]')! as HTMLSpanElement;
+		badge.innerText = active ? 'Активне' : 'Завершилось';
+		badge.classList.toggle('text-bg-success', active);
+		badge.classList.toggle('text-bg-secondary', !active);
 	}
 
 	;(async () => {
