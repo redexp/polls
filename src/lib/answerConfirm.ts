@@ -1,5 +1,4 @@
 import {showModal, showInfoModal} from './modal.ts';
-import type {Modal} from './modal.ts';
 import {hasAuth, getJwt} from './auth.ts';
 import {byId, setLinkParams} from './dom.ts';
 import ajax from './ajax';
@@ -7,15 +6,13 @@ import ajax from './ajax';
 const PENDING_KEY = 'pending_for_auth';
 
 export default function answerConfirm(form: HTMLFormElement): Promise<boolean> {
-	return new Promise((done) => {
+	return new Promise((done, fail) => {
 		if (!isValidAnswers(form)) {
-			done(false);
+			fail();
 			return;
 		}
 
 		const modal = showModal('answer-confirm');
-
-		modal.node.querySelector('[data-name]')!.classList.toggle('d-none', !form.classList.contains('public'));
 
 		modal.onClose = () => {
 			const data = getPendingData();
@@ -49,11 +46,22 @@ export default function answerConfirm(form: HTMLFormElement): Promise<boolean> {
 				done(true);
 			});
 
-			p.catch(() => {
-				done(false);
-			});
+			p.catch(fail);
 		};
 	});
+}
+
+export function getPollData(form: HTMLFormElement) {
+	const json = form.querySelector('script[type="text/json"]')!.innerHTML;
+	const data = JSON.parse(json) as {public?: boolean, expire?: Date};
+
+	data.public = !!data.public;
+
+	if (data.expire) {
+		data.expire = new Date(data.expire);
+	}
+
+	return data;
 }
 
 export function sendAnswer(form: HTMLFormElement): Promise<void> {
@@ -140,6 +148,22 @@ export function storeAnswer(form: HTMLFormElement): string {
 	return data.id;
 }
 
+export function createSuccessText(form: HTMLFormElement) {
+	const {expire} = getPollData(form);
+
+	let msg = `Дякуємо за позицію та участь в опитуванні!`;
+
+	if (expire) {
+		const f = () => expire.toLocaleDateString('uk', {day: 'numeric', month: 'long'});
+
+		msg += `<br>Воно триватиме до <strong>${f()}</strong>.`
+		expire.setDate(expire.getDate() + 7);
+		msg += ` Ознайомитись із результатами можна буде <strong>${f()}</strong> тут або на наших сторінках у соцмережах.`
+	}
+
+	return msg;
+}
+
 function getPendingData(): PendingData|null {
 	const json = sessionStorage.getItem(PENDING_KEY);
 
@@ -166,5 +190,3 @@ export type AnswerData = {
 export type PendingData = AnswerData & {
 	id: string,
 };
-
-export type ConfirmModal = Modal & {};

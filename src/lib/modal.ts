@@ -1,4 +1,4 @@
-import {byId, loading} from './dom.ts';
+import {byId, clearHtml, loading} from './dom.ts';
 
 export function showModal(id: string, params?: ModalParams): Modal {
 	const root = byId<HTMLDivElement>(id);
@@ -72,7 +72,13 @@ export function showInfoModal(text: string, params?: ModalParams): Modal {
 	modal.loadingBtn = modal.node.querySelector<HTMLButtonElement>('.btn')!;
 
 	const body = modal.node.querySelector<HTMLDivElement>('.modal-body')!;
-	body.innerText = text;
+
+	if (params?.html) {
+		body.innerHTML = clearHtml(text);
+	}
+	else {
+		body.innerText = text;
+	}
 
 	return modal;
 }
@@ -87,4 +93,5 @@ export type Modal = {
 
 export type ModalParams = {
 	size?: 'sm'|'lg'|'default',
+	html?: boolean,
 };

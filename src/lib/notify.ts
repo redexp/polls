@@ -1,18 +1,26 @@
-import {each} from './dom.ts';
+import {clearHtml, each} from './dom.ts';
 
 const ctrl = each<Noti>('#notifications', function (item, q, node) {
 	node.classList.toggle('alert-success', item.type === 'success');
 	node.classList.toggle('alert-danger', item.type === 'error');
-	q('span').innerText = item.text;
+
+	if (item.html) {
+		q('span').innerHTML = clearHtml(item.text);
+	}
+	else {
+		q('span').innerText = item.text;
+	}
+
 	q<HTMLButtonElement>('.btn-close').onclick = () => ctrl.remove(item);
 });
 
 ctrl.root.style.display = '';
 
-export function success(text: string) {
+export function success(text: string, params?: Omit<Noti, 'type' | 'text'>) {
 	add({
 		type: 'success',
 		text,
+		...params,
 	});
 }
 
@@ -40,5 +48,6 @@ function add(item: Noti) {
 export type Noti = {
 	type: 'success' | 'error',
 	text: string,
+	html?: boolean,
 	timeout?: number,
 };

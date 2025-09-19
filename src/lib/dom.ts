@@ -28,6 +28,16 @@ export function setLinkParams(selector: string, params: {[name: string]: string}
 	link.href = url.toString();
 }
 
+export function clearHtml(html: string): string {
+	return html.replace(/<(\w+)/, function (x, tag) {
+		return (
+			tag === 'strong' || tag === 'br' ?
+				x :
+				''
+		);
+	});
+}
+
 export function each<T, E extends HTMLElement = HTMLElement>(selector: string, apply: (item: T, querySelector: typeof qs, tpl: E) => void, reverse?: boolean) {
 	const root = qs(selector);
 	const tpl = root.firstElementChild!.cloneNode(true);

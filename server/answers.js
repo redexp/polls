@@ -38,7 +38,7 @@ router.post('/', async function (req, res) {
 
 	if (items.some(isExpired)) {
 		res.status(403);
-		res.json({message: `Змінити свій голос можливо лише на протязі 10 хвилин`});
+		res.json({message: `Змінити свій голос можливо лише протягом 10 хвилин`});
 		return;
 	}
 
