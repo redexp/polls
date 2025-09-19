@@ -107,7 +107,6 @@ export default {
 					value
 				}))
 			)
-			.returning('id')
 		);
 	},
 
