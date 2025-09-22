@@ -2,10 +2,8 @@
 import Main from '../layouts/Main.astro';
 import LoginButton from '../components/LoginButton.astro';
 import Poll from '../components/Poll.astro';
-import {formatAddresses} from '@server/config/auth.js';
 import {getPolls} from '../lib/polls';
 
-const addr = formatAddresses();
 const active = getPolls();
 ---
 
