@@ -72,7 +72,11 @@ export default {
 			Statistic()
 			.insert(
 				values.map(value => ({
-					...data,
+					...pick(data, [
+						'age',
+						'sex',
+						'geo',
+					]),
 					user_id,
 					poll: poll_id,
 					value,

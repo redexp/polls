@@ -179,7 +179,11 @@ const BankID = {
 	async fromJWT(jwt) {
 		if (!jwt) return null;
 
-		return jwtDecode(jwt, JWT_KEY);
+		const user = await jwtDecode(jwt, JWT_KEY);
+
+		delete user.iat;
+
+		return user;
 	},
 
 	async isAdmin(jwt) {
