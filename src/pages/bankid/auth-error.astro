@@ -2,7 +2,6 @@
 import Base from '../../layouts/Base.astro';
 import CenterCol from '../../components/CenterCol.astro';
 import Footer from '../../components/Footer.astro';
-import {formatAddresses} from '@server/config/auth.js';
 ---
 
 <Base title="Помилка під час ідентифікації">
@@ -13,12 +12,8 @@ import {formatAddresses} from '@server/config/auth.js';
 
         <div id="invalid_address" class="alert alert-danger d-none">
             На цьому проєкті є обмеження по адресі реєстрації.
-            Брати участь у опитуваннях можуть лише громадяни з наступних регіонів:
-			<ul>
-				{formatAddresses().map(addr => (
-					<li>{addr}</li>
-				))}
-			</ul>
+            Брати участь у опитуваннях можуть лише громадяни зареєстровані у <strong>Черкаській громаді</strong> (м. Черкаси та с. Оршанець).<br>
+			<a href="/faq/#address">Чому потрібна саме адреса реєстрації</a>
 		</div>
 
 		<Footer/>
