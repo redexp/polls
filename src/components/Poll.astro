@@ -11,7 +11,10 @@ interface Props {
 
 const {poll, extractTitle} = Astro.props;
 const {Content, headings} = await render(poll);
+
+const pub = !!poll.data.public;
 const active = !poll.data.expire || poll.data.expire > new Date();
+
 const json = {
 	public: poll.data.public,
 	expire: poll.data.expire,
@@ -27,28 +30,32 @@ const json = {
 	class:list={{
 		titleless: extractTitle,
 		disabled: !active,
-		public: !!poll.data.public,
+		public: pub,
 	}}
 >
     <script type="text/json" set:html={JSON.stringify(json)}> </script>
 
 	<p class="d-flex gap-1">
-		<span
+		<a
 			data-active-badge
+			href="/faq/#types"
 			class="badge"
 			class:list={{
 				"text-bg-success": active,
 				"text-bg-secondary": !active,
 			}}
-		>{active ? 'Активне' : 'Завершилось'}</span>
+			title={active ? 'Ви можете прийняти в ньому участь' : ''}
+		>{active ? 'Активне' : 'Завершилось'}</a>
 
-		<span
+		<a
+            href="/faq/#types"
 			class="badge"
 			class:list={{
-				"text-bg-success": poll.data.public,
-				"text-bg-secondary": !poll.data.public,
+				"text-bg-success": pub,
+				"text-bg-secondary": !pub,
 			}}
-		>{poll.data.public ? 'Публічне' : 'Анонімне'}</span>
+			title={pub ? 'Ваше імʼя буде видно під цим опитуванням' : 'Вашого імені не буде видно під цим опитуванням'}
+		>{pub ? 'Публічне' : 'Анонімне'}</a>
 	</p>
 
     <Content/>
