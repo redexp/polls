@@ -36,8 +36,6 @@ router.get(config.callback_url, function (req, res) {
 		redirect(res, url, qs);
 	})
 	.catch(err => {
-		console.log('BankID callback', err);
-
 		const qs = new URLSearchParams();
 
 		if (err?.context === 'bankid' || err?.context === 'statistic') {
@@ -45,6 +43,9 @@ router.get(config.callback_url, function (req, res) {
 		}
 		else if (err?.code === 'invalid_must_key') {
 			qs.set('type', 'no_id');
+		}
+		else {
+			console.error('BankID callback', err?.message, err?.stack);
 		}
 
 		redirect(res, '/bankid/auth-error', qs);
