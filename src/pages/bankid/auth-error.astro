@@ -16,6 +16,11 @@ import Footer from '../../components/Footer.astro';
 			<a href="/faq/#address">Чому потрібна саме адреса реєстрації</a>
 		</div>
 
+        <div id="no_juridical_address" class="alert alert-danger d-none">
+            У вас немає адреси реєстрації, яка необхідна для встановлення чи зареєстровані Ви у <strong>Черкаській громаді</strong> (м. Черкаси та с. Оршанець).<br>
+			<a href="/faq/#address">Чому потрібна саме адреса реєстрації</a>
+		</div>
+
 		<Footer/>
     </CenterCol>
 
@@ -39,7 +44,6 @@ import Footer from '../../components/Footer.astro';
 			const map = new Map([
 				['no_id', `У вас немає документа, за яким можна було б вас ідентифікувати (РНОКП, паспорт або id картка)`],
 				['no_name', `Неможливо дізнатися ваше імʼя`],
-				['no_juridical_address', `У вас немає адреси реєстрації, яка необхідна для встановлення територіальної громади до якої ви відноситесь`],
 			]);
 
 			if (!map.has(type)) return;
