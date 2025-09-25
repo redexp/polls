@@ -64,10 +64,7 @@ import Main from '../layouts/Main.astro';
 
     <h2 id="bankid" class="display-6 mt-4">Звідки ми отримуємо дані</h2>
     <section class="card shadow-soft p-3">
-        <p>Ми використовуємо державний український сервіс <a href="https://bank.gov.ua/ua/bank-id-nbu">BankID НБУ</a>.</p>
-
-        <p>
-            BankID - це сервіс, який дозволяє підтвердити особу через свій банк. Коли Ви надаєте згоду, то BankID передає нам пакет даних з вашого профілю у банку. З отриманого набору ми залишаємо та перетворюємо лише поля <a href="#data">описані вище</a>.
+        <p>Ми використовуємо державну українську <a href="https://bank.gov.ua/ua/bank-id-nbu">Систему BankID НБУ</a>. Це сервіс, який дозволяє підтвердити особу через свій банк. Коли Ви надаєте згоду, то Система BankID НБУ передає нам пакет даних з вашого профілю у банку. З отриманого набору ми залишаємо та перетворюємо лише поля <a href="#data">описані вище</a>.
         </p>
         <ul class="data-list">
             <li><strong>ПІБ</strong> (тільки якщо опитування <a href="#types" class="badge text-bg-success">Публічне</a>)</li>
@@ -81,8 +78,8 @@ import Main from '../layouts/Main.astro';
 
         <strong>Важливо:</strong>
         <ul>
-            <li>BankID передає дані <strong>тільки за вашої згоди</strong>.</li>
-            <li>Ми не можемо обрати "тільки імʼя і адресу" - BankID передає один зі <a href="https://bank.gov.ua/admin_uploads/article/Perelik_stand_naboriv_danyh.pdf">стандартних наборів даних (pdf) ↗</a>. Нам, на жаль, підходить лише <strong>51 набір</strong> в якому є <strong>адреса реєстрації</strong>.</li>
+            <li>Система BankID НБУ передає дані <strong>тільки за вашої згоди</strong>.</li>
+            <li>Ми не можемо обрати "тільки імʼя і адресу" - Система BankID НБУ передає один зі <a href="https://bank.gov.ua/admin_uploads/article/Perelik_stand_naboriv_danyh.pdf">стандартних наборів даних (pdf) ↗</a>. Нам, на жаль, підходить лише <strong>51 набір</strong> в якому є <strong>адреса реєстрації</strong>.</li>
         </ul>
     </section>
 
