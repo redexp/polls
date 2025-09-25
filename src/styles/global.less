@@ -97,6 +97,16 @@ a.badge {
 	}
 }
 
+.data-list {
+	li::marker {
+		content: '❌ ';
+	}
+
+	li:has(strong)::marker {
+		content: '✅ ';
+	}
+}
+
 #notifications {
 	display: flex;
 	z-index: 2000;

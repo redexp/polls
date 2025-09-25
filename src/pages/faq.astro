@@ -10,14 +10,14 @@ import Main from '../layouts/Main.astro';
     <h2 id="types" class="display-6 mt-4">Типи опитувань</h2>
     <section class="card shadow-soft p-3">
         <p>
-            На головній сторінці ви побачите список усіх опитувань
+            На головній сторінці ви побачите список усіх опитувань зі статусами:
         </p>
-        <p>
-            Статус <span class="badge text-bg-success">Активне</span> означає, що Ви можете пройти опитування прямо зараз. Статус <span class="badge text-bg-secondary">Завершене</span> означає, що відповіді більше не приймаються і скоро мають бути доступні результати і статистичні висновки одразу під цим опитуванням.
-        </p>
-        <p>
-            Статус <span class="badge text-bg-success">Публічне</span> означає, що будь-хто зможе знайти <strong>Ваше повне імʼя</strong> під цим опитуванням. З таким статусом опитування більше буде схоже на <a title="Wikipedia" href="https://uk.wikipedia.org/wiki/%D0%9F%D0%B5%D1%82%D0%B8%D1%86%D1%96%D1%8F">петицію</a>, саме тому нам потрібне Ваше повне імʼя. Статус <span class="badge text-bg-secondary">Анонімне</span> з іншого боку означає, що Ваше імʼя не зберігається у нашій базі даних.
-        </p>
+        <ul style="list-style-type: none">
+            <li><span class="badge text-bg-success">Активне</span> означає, що Ви можете пройти опитування прямо зараз.</li>
+            <li><span class="badge text-bg-secondary">Завершене</span> означає, що відповіді більше не приймаються і скоро мають бути доступні результати і статистичні висновки одразу під цим опитуванням.</li>
+            <li><span class="badge text-bg-success">Публічне</span> означає, що будь-хто зможе знайти <strong>Ваше повне імʼя</strong> під цим опитуванням. З таким статусом опитування більше буде схоже на <a title="Wikipedia" href="https://uk.wikipedia.org/wiki/%D0%9F%D0%B5%D1%82%D0%B8%D1%86%D1%96%D1%8F">петицію</a>, саме тому нам потрібне Ваше повне імʼя.</li>
+            <li><span class="badge text-bg-secondary">Анонімне</span> з іншого боку означає, що Ваше імʼя не зберігається у нашій базі даних.</li>
+        </ul>
     </section>
 
     <h2 class="display-6 mt-4">Як виглядає опитування</h2>
@@ -26,8 +26,8 @@ import Main from '../layouts/Main.astro';
             Кожне опитування складається з груп запитань. Для відповідей використовуються:
         </p>
         <ul style="list-style-type: none">
-            <li><input type="checkbox" class="form-check-input"> (чекбокси) - можна обрати кілька варіантів</li>
-            <li><input type="radio" class="form-check-input"> (радіокнопки) - обрати лише один варіант</li>
+            <li><input type="checkbox" class="form-check-input mt-2"> (чекбокси) - можна обрати кілька варіантів</li>
+            <li><input type="radio" class="form-check-input mt-2"> (радіокнопки) - обрати лише один варіант</li>
         </ul>
         <p>
             Після вибору усіх відповідей, з якими ви погоджуєтесь - треба натиснути кнопку <a href="#data" class="btn btn-primary btn-sm">Надіслати відповіді</a> яке відкриє модальне вікно, про яке нижче.
@@ -67,14 +67,22 @@ import Main from '../layouts/Main.astro';
         <p>Ми використовуємо державний український сервіс <a href="https://bank.gov.ua/ua/bank-id-nbu">BankID НБУ</a>.</p>
 
         <p>
-            BankID - це сервіс, який дозволяє підтвердити особу через свій банк. Коли Ви надаєте згоду, то BankID передає нам пакет даних з вашого профілю у банку (імʼя, стать, дата народження, адреса реєстрації тощо).
+            BankID - це сервіс, який дозволяє підтвердити особу через свій банк. Коли Ви надаєте згоду, то BankID передає нам пакет даних з вашого профілю у банку. З отриманого набору ми залишаємо та перетворюємо лише поля <a href="#data">описані вище</a>.
         </p>
+        <ul class="data-list">
+            <li><strong>ПІБ</strong> (тільки якщо опитування <a href="#types" class="badge text-bg-success">Публічне</a>)</li>
+            <li>РНОКПП</li>
+            <li><strong>Дані щодо місця перебування або проживання</strong> (буде перетворено у <a href="#pluscode">Plus Code</a>)</li>
+            <li>Дані ідентифікаційного документу</li>
+            <li><strong>Дата народження</strong> (буде перетворено на кількіть повних років на момент участі)</li>
+            <li>Громадянство</li>
+            <li><strong>Стать</strong></li>
+        </ul>
 
         <strong>Важливо:</strong>
         <ul>
             <li>BankID передає дані <strong>тільки за вашої згоди</strong>.</li>
             <li>Ми не можемо обрати "тільки імʼя і адресу" - BankID передає один зі <a href="https://bank.gov.ua/admin_uploads/article/Perelik_stand_naboriv_danyh.pdf">стандартних наборів даних (pdf) ↗</a>. Нам, на жаль, підходить лише <strong>51 набір</strong> в якому є <strong>адреса реєстрації</strong>.</li>
-            <li>З отриманого набору ми залишаємо лише поля <a href="#data">описані вище</a>.</li>
         </ul>
     </section>
 
@@ -129,3 +137,9 @@ import Main from '../layouts/Main.astro';
         </ul>
     </section>
 </Main>
+
+<style lang="less">
+    section > * {
+        line-height: 2;
+    }
+</style>

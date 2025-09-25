@@ -8,16 +8,21 @@ import LoginButton from './LoginButton.astro';
 	title="Ідентифікація"
 >
 	<p>
-        Натискаючи кнопку «Погоджуюсь», Ви даєте згоду на обробку та зберігання даних про Вашу <strong>стать</strong>, <strong>вік</strong> і <strong>район Вашої реєстрації</strong>.
+        Натискаючи кнопку «Погоджуюсь», Ви даєте згоду на обробку та зберігання даних про Вашу <strong>стать</strong>, <strong>вік</strong> і <strong>район Вашої реєстрації</strong>. <a href="/faq/#data" target="_blank" title="Детальніше про обробку Ваших даних">ℹ️ Детальніше</a>
 	</p>
-
+	<p>Сервіс BankID НБУ передасть нам більше Ваших даних, але збережемо та <strong>перетворимо</strong> ми лише ті що зазначили вище.<br><a href="/faq/#bankid" target="_blank" title="Детальніше про BankID">ℹ️ Детальніше</a></p>
+    <ul class="data-list">
+        <li>ПІБ</li>
+        <li>РНОКПП</li>
+        <li><strong>Дані щодо місця перебування або проживання</strong> <a href="/faq/#address">ℹ️</a></li>
+        <li>Дані ідентифікаційного документу</li>
+        <li><strong>Дата народження</strong></li>
+        <li>Громадянство</li>
+        <li><strong>Стать</strong></li>
+    </ul>
     <p>
         Ця інформація не буде публічною.
 	</p>
-
-	<a href="/faq/#data" target="_blank">
-        Детальніше про зберігання та захист Ваших даних ↗
-    </a>
 
 	<Fragment slot="footer">
 		<LoginButton
