@@ -41,7 +41,6 @@ const BankID = {
 			state: 'state',
 			client_id,
 			dataset: BANKID.dataset,
-			originator_url: BANKID.callback_url,
 		});
 
 		if (data) {
