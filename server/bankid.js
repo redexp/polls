@@ -57,13 +57,14 @@ const api = Router({mergeParams: true});
 router.use('/api/bankid', api);
 
 api.get('/auth', function (req, res) {
-	const url = new URL(req.get('referer'));
+	const ref = req.get('referer') || '';
+	const url = ref && new URL(ref);
 
 	res.redirect(
 		BankID.getAuthUrl({
 			state: req.query?.state,
-			return: url.pathname,
-			dataset: req.query.d
+			return: url && url.pathname,
+			dataset: req.query.d,
 		})
 	);
 });
