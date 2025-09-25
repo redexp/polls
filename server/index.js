@@ -20,9 +20,9 @@ app.use('/api/answers', answers);
 app.use('/api/map', map);
 
 app.use(function (err, _req, res, _next) {
-	console.error(err);
-
 	res.sendStatus(500);
+
+	console.error('Unhandled', err?.message, err?.stack);
 });
 
 app.listen(SERVER.port, () => {
