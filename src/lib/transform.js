@@ -10,6 +10,8 @@ function transformInput(root) {
 		id: 0,
 		type: '',
 		inputId: 0,
+		min: 0,
+		max: 0,
 	};
 
 	for (const block of root.children) {
@@ -17,10 +19,17 @@ function transformInput(root) {
 			group.id++;
 			group.type = '';
 			group.inputId = 0;
+			group.min = group.max = 0;
 			continue;
 		}
 
 		if (block.tagName !== 'p') continue;
+
+		const range = getMinMaxNumOfAnswers(block);
+
+		if (range) {
+			Object.assign(group, range);
+		}
 
 		const {children} = block;
 
@@ -65,6 +74,10 @@ function transformInput(root) {
 				},
 			};
 
+			if (group.min || group.max) {
+				input.properties['data-range'] = group.min + '-' + group.max;
+			}
+
 			children.splice(children.indexOf(item), 0, input);
 
 			item.value = item.value.replace(match[0], '');
@@ -97,4 +110,35 @@ function transformInput(root) {
 
 		block.children = children.filter(item => !!item);
 	}
+}
+
+/**
+ * @param {import('hast').Element | import('hast').Text} node
+ * @return {{min: number, max: number} | null}
+ */
+function getMinMaxNumOfAnswers(node) {
+	switch (node.type) {
+	case 'element':
+		if (!node.children) break;
+
+		for (const child of node.children) {
+			const res = getMinMaxNumOfAnswers(child);
+
+			if (res) return res;
+		}
+
+		break;
+
+	case 'text':
+		const match = node.value.match(/від\s+(\d+)\s+до\s+(\d+)\s+варіантів/);
+
+		if (!match) break;
+
+		return {
+			min: Number(match[1]),
+			max: Number(match[2]),
+		};
+	}
+
+	return null;
 }

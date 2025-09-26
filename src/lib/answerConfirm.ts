@@ -92,35 +92,43 @@ export async function tryRestorePendingAnswer(pending_id: string): Promise<HTMLF
 }
 
 function isValidAnswers(form: HTMLFormElement): boolean {
-	const inputs = getInputs(form);
-	const groups = new Map<string, boolean>();
+	const groups = getInputsGroups(form);
+	const scrollTo = (node: HTMLInputElement) => {
+		node.scrollIntoView({
+			behavior: 'smooth',
+			block: 'center',
+		});
+	};
 
-	for (const input of inputs) {
-		const {group} = input.dataset;
+	for (const group of groups.values()) {
+		if (!group.max) continue;
 
-		if (!group || groups.get(group)) continue;
-
-		groups.set(group, input.checked);
+		if (group.checkedCount > group.max) {
+			scrollTo(group.inputs[0]);
+			showInfoModal(`Ви вибрали більше ${group.max} відповідей`);
+			return false;
+		}
 	}
 
 	let hasInvalid = false;
 
-	for (const input of inputs) {
-		const isInvalid = !groups.get(input.dataset.group!);
+	for (const group of groups.values()) {
+		const isInvalid = group.checkedCount === 0;
 
-		input.classList.toggle('is-invalid', isInvalid);
+		if (isInvalid) {
+			for (const inp of group.inputs) {
+				inp.classList.add('is-invalid');
+			}
+		}
 
 		if (!hasInvalid && isInvalid) {
 			hasInvalid = isInvalid;
-			input.scrollIntoView({
-				behavior: 'smooth',
-				block: 'center',
-			});
+			scrollTo(group.inputs[0]);
 		}
 	}
 
 	if (hasInvalid) {
-		const count = Array.from(groups.values()).reduce((sum, v) => sum + (v ? 0 : 1), 0);
+		const count = Array.from(groups.values()).reduce((sum, g) => sum + (g.checkedCount > 0 ? 0 : 1), 0);
 		showInfoModal(`Ви не відповіли на ${count} ${count < 5 ? 'питання' : 'питань'}`);
 		return false;
 	}
@@ -182,6 +190,49 @@ function uniqId(): string {
 
 function getInputs(form: HTMLFormElement): HTMLInputElement[] {
 	return Array.from(form.querySelectorAll<HTMLInputElement>('input[name][value]'));
+}
+
+type InputsGroup = {
+	inputs: HTMLInputElement[],
+	checkedCount: number,
+	min?: number,
+	max?: number,
+};
+
+export function getInputsGroups(form: HTMLFormElement): Map<string, InputsGroup> {
+	const inputs = getInputs(form);
+	const groups = new Map<string, InputsGroup>();
+
+	for (const input of inputs) {
+		const {group} = input.dataset;
+
+		if (!group) continue;
+
+		let g = groups.get(group);
+
+		if (!g) {
+			g = {
+				inputs: [],
+				checkedCount: 0,
+			};
+
+			if (input.dataset.range) {
+				const [min, max] = input.dataset.range.split('-').map(v => Number(v));
+				g.min = min;
+				g.max = max;
+			}
+
+			groups.set(group, g);
+		}
+
+		g.inputs.push(input);
+
+		if (input.checked) {
+			g.checkedCount++;
+		}
+	}
+
+	return groups;
 }
 
 export type AnswerData = {

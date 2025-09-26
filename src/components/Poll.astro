@@ -77,6 +77,7 @@ const json = {
 	import {getAuthParams, retrieveJwt} from "../lib/auth";
 	import {showInfoModal} from "../lib/modal";
 	import * as notify from '../lib/notify';
+	import {getInputsGroups} from "@lib/answerConfirm.ts";
 
 	for (const form of qsAll<HTMLFormElement>('form')) {
 		form.addEventListener('submit', onSubmit);
@@ -128,11 +129,29 @@ const json = {
 	}
 
 	function onChange(e: Event) {
+		const form = e.currentTarget as HTMLFormElement;
 		const input = e.target as HTMLInputElement;
+		const groups = getInputsGroups(form);
+		const group = groups.get(input.dataset.group)!;
+		const {max} = group;
+		const invalid = 'is-invalid';
 
-		if (input.checked && input.classList.contains('is-invalid')) {
-			for (const inp of qsAll(`input[data-group="${input.dataset.group}"]`)) {
-				inp.classList.remove('is-invalid');
+		if (group.checkedCount <= 1 && group.inputs[0].classList.contains(invalid)) {
+			for (const inp of group.inputs) {
+				inp.classList.remove(invalid);
+			}
+		}
+
+		if (max) {
+			const count = group.checkedCount;
+
+			if (input.checked) {
+				input.classList.toggle(invalid, count > max);
+			}
+			else if (count <= max) {
+				for (const inp of group.inputs) {
+					inp.classList.remove(invalid);
+				}
 			}
 		}
 	}
