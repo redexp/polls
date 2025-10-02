@@ -4,8 +4,8 @@ import {render} from 'astro:content';
 import Main from '../../layouts/Main.astro';
 import Header from '../../components/Header.astro';
 import PollComponent from '../../components/Poll.astro';
-import {polls} from '../../lib/polls';
-import type {Poll} from '../../lib/polls';
+import {polls} from '@lib/polls.ts';
+import type {Poll} from '@lib/polls.ts';
 
 export async function getStaticPaths() {
 	return (
