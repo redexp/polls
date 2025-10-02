@@ -44,7 +44,7 @@ export async function reloadPollsData() {
 		md = md.replace(/^---+\s*\r?\n(.*?)\r?\n---+\s*\r?\n/s, function (_, yaml) {
 			const data = parse(yaml);
 
-			poll.expire = data.expire && moment(data.expire);
+			poll.expire = data.expire && moment.utc(data.expire);
 			poll.public = !!data.public;
 
 			return '';
@@ -142,7 +142,7 @@ export function isValidPollValues(poll_id, values) {
 
 	if (!poll) return "invalid_poll_id";
 
-	if (poll.expire && poll.expire > moment()) return "expired";
+	if (poll.expire && poll.expire < moment()) return "expired";
 
 	if (!includesAll(poll.values, values)) return "invalid_values";
 
