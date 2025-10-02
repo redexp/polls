@@ -36,7 +36,6 @@ const config = {
 		access_token: '',
 		country: 'UA',
 		region: 'Cherkasy Oblast', // taken from mapbox playground
-		place: 'Черкаси',
 	},
 
 	docs: {

@@ -157,8 +157,8 @@ async function getLocation(addr) {
 		params: {
 			country: MAPS.country,
 			region: MAPS.region,
-			place: MAPS.place,
-			street: addr.street,
+			place: addr.city,
+			street: addr.street.replace(/\.\s*/g, '. '),
 			address_number: isNA(addr.houseNo) ? '' : addr.houseNo,
 			limit: 1,
 			access_token: MAPS.access_token,
