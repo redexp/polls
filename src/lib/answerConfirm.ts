@@ -55,8 +55,6 @@ export default function answerConfirm(form: HTMLFormElement): Promise<boolean> {
 					done(true);
 				}, 2000);
 			});
-
-			p.catch(fail);
 		};
 	});
 }
