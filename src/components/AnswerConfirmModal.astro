@@ -40,6 +40,7 @@ import LoginButton from './LoginButton.astro';
         >
             <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
             <span class="text">Погоджуюсь</span>
+            <span class="text">👌 Збережено</span>
 		</button>
 
         <button
@@ -64,6 +65,22 @@ import LoginButton from './LoginButton.astro';
 
 		&:has(input:checked) + div {
 			display: block;
+		}
+	}
+
+	#confirm-btn {
+		.text:last-child {
+			display: none;
+		}
+
+		&.btn-success {
+			.text {
+				display: none;
+			}
+
+			.text:last-child {
+				display: inline;
+			}
 		}
 	}
 </style>

@@ -42,8 +42,18 @@ export default function answerConfirm(form: HTMLFormElement): Promise<boolean> {
 
 			p.then(() => {
 				delete modal.onClose;
-				modal.close();
-				done(true);
+
+				confirmBtn.classList.add('btn-success');
+				confirmBtn.classList.remove('btn-primary');
+
+				setTimeout(() => {
+					modal.close();
+
+					confirmBtn.classList.remove('btn-success');
+					confirmBtn.classList.add('btn-primary');
+
+					done(true);
+				}, 2000);
 			});
 
 			p.catch(fail);

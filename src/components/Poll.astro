@@ -16,7 +16,7 @@ const pub = !!poll.data.public;
 const active = !poll.data.expire || poll.data.expire > new Date();
 
 const json = {
-	public: poll.data.public,
+	public: pub,
 	expire: poll.data.expire,
 };
 ---
@@ -63,6 +63,8 @@ const json = {
 	{active &&
 	<div class="toolbar">
         <button type="submit" class="btn btn-primary">Надіслати відповіді</button>
+
+        <div data-success-notify class="alert alert-success mb-0 mt-3 d-none"></div>
     </div>}
 </form>
 
@@ -76,7 +78,6 @@ const json = {
 	} from '../lib/answerConfirm';
 	import {getAuthParams, retrieveJwt} from "../lib/auth";
 	import {showInfoModal} from "../lib/modal";
-	import * as notify from '../lib/notify';
 	import {getInputsGroups} from "@lib/answerConfirm.ts";
 
 	for (const form of qsAll<HTMLFormElement>('form')) {
@@ -119,13 +120,20 @@ const json = {
 		const form = e.target as HTMLFormElement;
 
 		const confirmed = await answerConfirm(form);
+		const noty = form.querySelector<HTMLDivElement>('[data-success-notify]')!;
 
 		if (confirmed) {
-			notify.success(createSuccessText(form), {html: true, timeout: 10_000});
+			noty.innerHTML = createSuccessText(form);
 		}
 		else {
-			notify.success('Дякуємо за увагу! Сподіваємося, Вас зацікавлять наступні опитування!');
+			noty.innerText = 'Дякуємо за увагу! Сподіваємося, Вас зацікавлять наступні опитування!';
 		}
+
+		noty.classList.remove('d-none');
+		noty.scrollIntoView({
+			behavior: 'smooth',
+			block: 'center',
+		});
 	}
 
 	function onChange(e: Event) {
