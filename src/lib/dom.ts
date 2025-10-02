@@ -19,7 +19,7 @@ export function getValues(selector: string): string[] {
 	return qsAll<HTMLInputElement>(selector).map(inp => inp.value);
 }
 
-export function setLinkParams(selector: string, params: {[name: string]: string}) {
+export function setLinkParams(selector: string, params: {[name: string]: any}) {
 	const link = qs<HTMLAnchorElement>(selector);
 	const url = new URL(link.href);
 	for (const [name, value] of Object.entries(params)) {
