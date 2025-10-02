@@ -177,7 +177,7 @@ export function createSuccessText(form: HTMLFormElement) {
 		const f = () => expire.toLocaleDateString('uk', {day: 'numeric', month: 'long'});
 
 		msg += `<br>Воно триватиме до <strong>${f()}</strong>.`
-		expire.setDate(expire.getDate() + 7);
+		expire.setDate(expire.getDate() + 2);
 		msg += ` Ознайомитись із результатами можна буде <strong>${f()}</strong> тут або на наших сторінках у соцмережах.`
 	}
 
