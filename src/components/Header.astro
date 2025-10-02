@@ -1,0 +1,19 @@
+---
+import LoginButton from "./LoginButton.astro";
+---
+
+<section class="card shadow-soft mt-4 mb-5 pb-3" aria-labelledby="eligibility-title">
+    <div class="card-body">
+        <h2 id="eligibility-title" class="h6 mb-2">Важливо перед початком:</h2>
+        <ol class="mb-2">
+            <li>Участь в опитуванні можуть взяти лише жителі <strong>Черкаської громади (Черкас і Оршанця)</strong></li>
+            <li>Щоб ваші відповіді були зараховані, потрібно пройти безкоштовну ідентифікацію через <strong>Систему BankID НБУ</strong></li>
+        </ol>
+    </div>
+
+    <div class="text-center gap">
+        <LoginButton size="lg"/>
+
+        <a class="btn btn-light ms-2" href="/faq/">Детальніше про проєкт</a>
+    </div>
+</section>

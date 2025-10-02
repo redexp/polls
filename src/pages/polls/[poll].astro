@@ -2,6 +2,7 @@
 import {basename} from 'node:path';
 import {render} from 'astro:content';
 import Main from '../../layouts/Main.astro';
+import Header from '../../components/Header.astro';
 import PollComponent from '../../components/Poll.astro';
 import {polls} from '../../lib/polls';
 import type {Poll} from '../../lib/polls';
@@ -29,8 +30,9 @@ const {headings} = await render(poll);
 ---
 
 <Main title={headings[0]?.text}>
+	<Header/>
+
     <PollComponent
 		poll={poll}
-		extractTitle
 	/>
 </Main>
