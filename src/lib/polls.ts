@@ -1,5 +1,4 @@
-import {getCollection} from 'astro:content';
-import type {CollectionEntry} from 'astro:content';
+import {getCollection, type CollectionEntry} from 'astro:content';
 
 export const polls = await getCollection('polls');
 
