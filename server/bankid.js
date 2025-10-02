@@ -64,7 +64,6 @@ api.get('/auth', function (req, res) {
 		BankID.getAuthUrl({
 			state: req.query?.state,
 			return: url && url.pathname,
-			dataset: req.query.d,
 		})
 	);
 });
