@@ -1,3 +1,8 @@
+---
+import FbIcon from '../img/facebook.svg';
+import IgIcon from '../img/instagram.svg';
+---
+
 <footer class="lead card shadow-soft p-3 mt-5">
     <h2><a href="/" class="link-dark link-underline-opacity-0"><img src="/logo/logo-50x37.png" alt="Logo"/> {import.meta.env.TITLE}</a></h2>
 
@@ -16,4 +21,30 @@
     <p>
         Проєкт з відкритим початковим кодом <a href="//github.com/redexp/polls" class="ms-1"><img src="/github-mark.svg" height="23" alt="GitHub"/></a>
     </p>
+
+    <div class="links p-3">
+        <div>
+            <a href="https://cherkasyurban.institute"><img src="/logo/logo-50x37.png" height={23} alt="Logo"/> Черкаський Інститут Міста</a>
+            <span>© {new Date().getFullYear()} Усі права захищено</span>
+        </div>
+        <div>
+            <a href="https://facebook.com/cherkasyurban.institute"><FbIcon/> Facebook</a>
+            <a href="https://instagram.com/cherkasyurban.institute/"><IgIcon/> Instagram</a>
+        </div>
+    </div>
 </footer>
+
+<style lang="less">
+    .links {
+        margin: 0 -1rem;
+        border-top: 1px solid var(--border);
+
+        display: flex;
+        justify-content: space-between;
+
+        a {
+            display: block;
+            text-decoration: none;
+        }
+    }
+</style>
