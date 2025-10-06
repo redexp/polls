@@ -111,6 +111,8 @@ const json = {
 		const info = showInfoModal(createSuccessText(form), {size: 'default', html: true});
 
 		info.loading(sendAnswer(form));
+
+		setAnswered(form);
 	})()
 	.catch(err => console.error(err));
 
@@ -122,14 +124,16 @@ const json = {
 		const confirmed = await answerConfirm(form);
 		const noty = form.querySelector<HTMLDivElement>('[data-success-notify]')!;
 
+		noty.classList.remove('d-none');
+
 		if (confirmed) {
 			noty.innerHTML = createSuccessText(form);
+			setAnswered(form);
 		}
 		else {
 			noty.innerText = 'Дякуємо за увагу! Сподіваємося, Вас зацікавлять наступні опитування!';
 		}
 
-		noty.classList.remove('d-none');
 		noty.scrollIntoView({
 			behavior: 'smooth',
 			block: 'center',
@@ -140,7 +144,7 @@ const json = {
 		const form = e.currentTarget as HTMLFormElement;
 		const input = e.target as HTMLInputElement;
 		const groups = getInputsGroups(form);
-		const group = groups.get(input.dataset.group)!;
+		const group = groups.get(input.dataset.group!)!;
 		const {max} = group;
 		const invalid = 'is-invalid';
 
@@ -161,6 +165,14 @@ const json = {
 					inp.classList.remove(invalid);
 				}
 			}
+		}
+	}
+
+	function setAnswered(form: HTMLFormElement) {
+		const btn = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+
+		if (btn) {
+			btn.innerText = 'Змінити відповіді';
 		}
 	}
 </script>
