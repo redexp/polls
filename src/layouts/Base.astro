@@ -1,5 +1,6 @@
 ---
 import Notifications from '../components/Notifications.astro';
+import Meta from '../components/Meta.astro';
 import 'bootstrap/dist/css/bootstrap.css';
 import '../styles/global.less';
 
@@ -26,6 +27,11 @@ if (!title) {
     <link rel="manifest" href="/site.webmanifest"/>
     <meta name="msapplication-TileColor" content="#da532c"/>
     <meta name="theme-color" content="#ffffff"/>
+
+    <Meta
+        title={title!}
+        image="/logo/android-chrome-512x512.png"
+    />
 </head>
 <body>
 
