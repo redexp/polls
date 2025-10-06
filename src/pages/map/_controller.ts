@@ -8,7 +8,7 @@ import {showModal} from '@lib/modal.ts';
 const map = createMap('map');
 
 const params = new URLSearchParams(location.search);
-const poll_id = params.get('poll') || params.get('state');
+const poll_id = params.get('poll') || location.pathname.replace('/map/', '').replace('/', '');
 
 type Answer = {
 	value: string,
