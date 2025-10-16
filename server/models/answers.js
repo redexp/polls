@@ -2,7 +2,7 @@ import moment from "moment";
 import db from '../db/index.js';
 import cap from '../lib/cap.js';
 
-export const ANSWER_UPDATE_TIMEOUT = 60 * 10 * 1000; // 10 min
+export const ANSWER_UPDATE_TIMEOUT_MIN = 10; // 10 min
 
 /**
  * @returns {import('./answer').AnswersBuilder}
@@ -234,5 +234,5 @@ export default {
  * @returns {boolean}
  */
 export function isExpired({created_at}) {
-	return moment.utc() - moment.utc(created_at) > ANSWER_UPDATE_TIMEOUT;
+	return moment.utc() - moment.utc(created_at) > ANSWER_UPDATE_TIMEOUT_MIN * 60 * 1000;
 }

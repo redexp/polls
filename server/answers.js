@@ -1,6 +1,6 @@
 import {Router} from "express";
 import db from './db/index.js';
-import Answers, {isExpired} from './models/answers.js';
+import Answers, {isExpired, ANSWER_UPDATE_TIMEOUT_MIN} from './models/answers.js';
 import Statistic from './models/statistic.js';
 import {isPublicPoll, isValidPollValues} from './models/polls.js';
 import BankID from './models/bankid.js';
@@ -38,7 +38,7 @@ router.post('/', async function (req, res) {
 
 	if (items.some(isExpired)) {
 		res.status(403);
-		res.json({message: `Змінити свій голос можливо лише протягом 10 хвилин`});
+		res.json({message: `Змінити свій голос можливо лише протягом ${ANSWER_UPDATE_TIMEOUT_MIN} хвилин`});
 		return;
 	}
 
