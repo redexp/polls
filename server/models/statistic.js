@@ -120,7 +120,6 @@ export default {
 			Statistic()
 			.where({
 				user_id,
-				poll: poll_id,
 			})
 			.del()
 		);
