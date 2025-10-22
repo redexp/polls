@@ -1,6 +1,7 @@
 .idea
 
 server/keys/*.json
+src/polls
 
 *.sh
 
