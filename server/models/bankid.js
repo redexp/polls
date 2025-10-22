@@ -6,6 +6,7 @@ import cap from '../lib/cap.js';
 import BANKID from '../config/bankid.js';
 import AUTH from '../config/auth.js';
 import {BANKID_CERT, JWT_KEY} from '../keys/index.js';
+import authAddress from "../lib/authAddress.js";
 
 const jwtEncode = promisify(JWT.sign);
 const jwtDecode = promisify(JWT.verify);
@@ -147,22 +148,7 @@ const BankID = {
 
 		if (Number(dataset) < 51) return;
 
-		const addr = user.addresses?.find(a => a.type === 'juridical');
-
-		if (!addr && AUTH.addresses.length > 0) {
-			throw {type: 'no_juridical_address', context: 'bankid'};
-		}
-
-		if (
-			AUTH.addresses.length > 0 &&
-			!AUTH.addresses.some(props => {
-				for (const prop in props) {
-					if (props[prop].toLowerCase() !== addr[prop].toLowerCase()) return false;
-				}
-
-				return true;
-			})
-		) {
+		if (!authAddress(user.addresses)) {
 			throw {type: 'invalid_address', context: 'bankid'};
 		}
 	},

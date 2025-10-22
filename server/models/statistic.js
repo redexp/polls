@@ -6,6 +6,7 @@ import pc from "pluscodes";
 import {createPublicKey, publicEncrypt, createHash} from 'crypto';
 import {MAPS} from '../config/index.js';
 import {STATISTIC_PUBLIC_KEY} from '../keys/index.js';
+import authAddress from "../lib/authAddress.js";
 
 export const NO_LOC = 'no_loc';
 
@@ -51,7 +52,7 @@ export default {
 				0
 		);
 
-		const addr = client.addresses?.find(a => a.type === 'juridical');
+		const addr = authAddress(client.addresses);
 
 		user.geo = await getGeoPlusCode(addr);
 

@@ -10,9 +10,11 @@ const AUTH = {
 
 AUTH.addresses = getJson('AUTH_ADDRESSES', [
 	{
+		type: "factual",
 		state: 'Черкаська',
 		city: 'Черкаси',
 	}, {
+		type: "factual",
 		state: 'Черкаська',
 		city: 'Оршанець',
 	}
