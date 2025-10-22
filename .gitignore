@@ -1,5 +1,6 @@
 .idea
 
+crypto-service
 server/keys/*.json
 src/polls
 
