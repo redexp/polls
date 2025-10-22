@@ -25,7 +25,7 @@ import Footer from '../../components/Footer.astro';
     </CenterCol>
 
     <script>
-		import {byId} from '../../lib/dom';
+		import {byId} from '@lib/dom';
 		const qs = new URLSearchParams(location.search);
 		const type = qs.get('type');
 
