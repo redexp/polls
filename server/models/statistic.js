@@ -62,9 +62,10 @@ export default {
 	 * @param {import('./statistic').UserData} user
 	 * @param {string} poll_id
 	 * @param {Array<string>} values
+	 * @param {Object<string, string>} [texts]
 	 * @return {Promise<void>}
 	 */
-	create(user, poll_id, values) {
+	create(user, poll_id, values, texts = {}) {
 		const {bank_id, ...data} = user;
 		const user_id = hashUserId(bank_id, poll_id);
 
@@ -80,6 +81,7 @@ export default {
 					user_id,
 					poll: poll_id,
 					value,
+					text: texts?.hasOwnProperty(value) ? texts[value] : null
 				}))
 			)
 		);

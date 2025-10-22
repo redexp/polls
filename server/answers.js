@@ -10,7 +10,7 @@ export const router = Router({mergeParams: true});
 router.post('/', async function (req, res) {
 	/** @type {AnswerData & {jwt: string}} */
 	const data = req.body;
-	const {jwt, poll_id, values} = data;
+	const {jwt, poll_id, values, texts} = data;
 
 	const user = await BankID.fromJWT(jwt).catch(() => null);
 
@@ -55,7 +55,7 @@ router.post('/', async function (req, res) {
 
 	await db.trx([
 		Answers.create(user, poll_id, values),
-		Statistic.create(user, poll_id, values),
+		Statistic.create(user, poll_id, values, texts),
 	]);
 
 	res.json(true);

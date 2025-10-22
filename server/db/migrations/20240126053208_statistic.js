@@ -9,6 +9,7 @@ export function up(knex) {
 		t.integer('age');
 		t.string('sex', 1); // F|M
 		t.string('geo', 9); //no_loc|8GXJC3V5+
+		t.string('text');
 
 		t.index(['poll']);
 		t.index(['poll', 'value']);

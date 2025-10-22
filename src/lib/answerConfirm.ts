@@ -94,6 +94,10 @@ export async function tryRestorePendingAnswer(pending_id: string): Promise<HTMLF
 		input.checked = data.values.includes(input.value);
 	}
 
+	for (const textArea of getTextAreas(form)) {
+		textArea.value = data.texts?.hasOwnProperty(textArea.name) ? data.texts[textArea.name] : '';
+	}
+
 	removePendingData();
 
 	return form;
@@ -145,13 +149,25 @@ function isValidAnswers(form: HTMLFormElement): boolean {
 }
 
 export function createAnswerData(form: HTMLFormElement): AnswerData {
+	const values = (
+		getInputs(form)
+		.filter(input => input.checked)
+		.map(input => input.value)
+	);
+
+	const texts = (
+		getTextAreas(form)
+		.filter(el => values.includes(el.name))
+		.reduce((sum, el) => {
+			sum[el.name] = el.value;
+			return sum;
+		}, {})
+	);
+
 	return {
 		poll_id: form.id,
-		values: (
-			getInputs(form)
-			.filter(input => input.checked)
-			.map(input => input.value)
-		),
+		values,
+		texts,
 	};
 }
 
@@ -201,6 +217,10 @@ function getInputs(form: HTMLFormElement): HTMLInputElement[] {
 	return Array.from(form.querySelectorAll<HTMLInputElement>('input[name][value]'));
 }
 
+function getTextAreas(form: HTMLFormElement): HTMLTextAreaElement[] {
+	return Array.from(form.querySelectorAll<HTMLTextAreaElement>('textarea[name]'));
+}
+
 type InputsGroup = {
 	inputs: HTMLInputElement[],
 	checkedCount: number,
@@ -247,6 +267,7 @@ export function getInputsGroups(form: HTMLFormElement): Map<string, InputsGroup>
 export type AnswerData = {
 	poll_id: string,
 	values: string[],
+	texts?: {[value: string]: string},
 };
 
 export type PendingData = AnswerData & {

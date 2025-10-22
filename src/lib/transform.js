@@ -98,6 +98,24 @@ function transformInput(root) {
 					properties: {},
 					children: [item],
 				};
+
+				if (item.properties?.value?.endsWith('-інше')) {
+					const textarea = {
+						type: 'element',
+						tagName: 'textarea',
+						properties: {
+							class: 'form-control',
+							name: item.properties.value,
+							rows: 3,
+						},
+						children: [],
+					};
+
+					children.splice(i + 1, 0, textarea);
+
+					i++;
+				}
+
 				continue;
 			}
 
