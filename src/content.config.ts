@@ -9,6 +9,7 @@ const polls = defineCollection({
 	schema: () => z.object({
 		expire: z.date().optional(),
 		public: z.boolean().optional(),
+		optional: z.array(z.string()).optional(),
 	}),
 });
 

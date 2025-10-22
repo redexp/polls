@@ -31,10 +31,21 @@ function transformInput(root) {
 			Object.assign(group, range);
 		}
 
-		const {children} = block;
+		/** @type {import('hast').Element[]} */
+		const children = block.children;
 
-		for (const item of children) {
+		for (let i = 0; i < children.length; i++) {
+			const item = children[i];
+
 			if (item.type !== 'text') continue;
+
+			if (i > 0) {
+				const prev = children[i - 1];
+
+				if (prev.tagName !== 'br' && prev.value !== '\n') {
+					continue;
+				}
+			}
 
 			const match = (
 				item.value.match(/^\s*(\[)([^\]"]+)\]/) ||
@@ -52,7 +63,7 @@ function transformInput(root) {
 			}
 
 			if (type !== group.type) {
-				throw new Error(`Mix of input types in one group`);
+				throw new Error(`Mix of input types in one group: ${JSON.stringify(match[0])}`);
 			}
 
 			const name = (
@@ -78,9 +89,9 @@ function transformInput(root) {
 				input.properties['data-range'] = group.min + '-' + group.max;
 			}
 
-			children.splice(children.indexOf(item), 0, input);
-
 			item.value = item.value.replace(match[0], '');
+			children.splice(i, 0, input);
+			i++;
 		}
 
 		if (group.type === '') continue;
@@ -148,14 +159,25 @@ function getMinMaxNumOfAnswers(node) {
 		break;
 
 	case 'text':
-		const match = node.value.match(/від\s+(\d+)\s+до\s+(\d+)\s+варіантів/);
+		const fromTo = node.value.match(/від\s+(\d+)\s+до\s+(\d+)\s+варіантів/);
 
-		if (!match) break;
+		if (fromTo) {
+			return {
+				min: Number(fromTo[1]),
+				max: Number(fromTo[2]),
+			};
+		}
 
-		return {
-			min: Number(match[1]),
-			max: Number(match[2]),
-		};
+		const max = node.value.match(/Оберіть\s+(\d+)/);
+
+		if (max) {
+			return {
+				min: 1,
+				max: Number(max[1]),
+			};
+		}
+
+		break;
 	}
 
 	return null;

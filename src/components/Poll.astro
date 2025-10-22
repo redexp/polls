@@ -18,6 +18,7 @@ const active = !poll.data.expire || poll.data.expire > new Date();
 const json = {
 	public: pub,
 	expire: poll.data.expire,
+	optional: poll.data.optional,
 };
 ---
 
@@ -69,15 +70,15 @@ const json = {
 </form>
 
 <script>
-	import {qsAll} from '../lib/dom';
+	import {qsAll} from '@lib/dom.ts';
 	import answerConfirm, {
 		createSuccessText,
 		getPollData,
 		sendAnswer,
 		tryRestorePendingAnswer
-	} from '../lib/answerConfirm';
-	import {getAuthParams, retrieveJwt} from "../lib/auth";
-	import {showInfoModal} from "../lib/modal";
+	} from '@lib/answerConfirm.ts';
+	import {getAuthParams, retrieveJwt} from "@lib/auth.ts";
+	import {showInfoModal} from "@lib/modal.ts";
 	import {getInputsGroups} from "@lib/answerConfirm.ts";
 
 	for (const form of qsAll<HTMLFormElement>('form')) {

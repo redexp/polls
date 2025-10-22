@@ -59,7 +59,7 @@ export default function answerConfirm(form: HTMLFormElement): Promise<boolean> {
 	});
 }
 
-export function getPollData(form: HTMLFormElement): {public: boolean, expire?: Date, active: boolean} {
+export function getPollData(form: HTMLFormElement): {public: boolean, expire?: Date, active: boolean, optional?: string[]} {
 	const json = form.querySelector('script[type="text/json"]')!.innerHTML;
 	const data = JSON.parse(json);
 
@@ -125,6 +125,8 @@ function isValidAnswers(form: HTMLFormElement): boolean {
 	let hasInvalid = false;
 
 	for (const group of groups.values()) {
+		if (group.optional) continue;
+
 		const isInvalid = group.checkedCount === 0;
 
 		if (isInvalid) {
@@ -192,7 +194,7 @@ export function createSuccessText(form: HTMLFormElement) {
 
 		expire.setDate(expire.getDate() - 1);
 		msg += `<br>Воно триватиме до <strong>${f()}</strong> включно.`
-		expire.setDate(expire.getDate() + 2);
+		expire.setDate(expire.getDate() + 3);
 		msg += ` Ознайомитись із результатами можна буде <strong>${f()}</strong> тут або на наших сторінках у соцмережах.`
 	}
 
@@ -224,12 +226,14 @@ function getTextAreas(form: HTMLFormElement): HTMLTextAreaElement[] {
 type InputsGroup = {
 	inputs: HTMLInputElement[],
 	checkedCount: number,
+	optional: boolean,
 	min?: number,
 	max?: number,
 };
 
 export function getInputsGroups(form: HTMLFormElement): Map<string, InputsGroup> {
 	const inputs = getInputs(form);
+	const data = getPollData(form);
 	const groups = new Map<string, InputsGroup>();
 
 	for (const input of inputs) {
@@ -243,6 +247,7 @@ export function getInputsGroups(form: HTMLFormElement): Map<string, InputsGroup>
 			g = {
 				inputs: [],
 				checkedCount: 0,
+				optional: false,
 			};
 
 			if (input.dataset.range) {
@@ -258,6 +263,10 @@ export function getInputsGroups(form: HTMLFormElement): Map<string, InputsGroup>
 
 		if (input.checked) {
 			g.checkedCount++;
+		}
+
+		if (!g.optional && data.optional && input.value) {
+			g.optional = data.optional.some(value => input.value.startsWith(value));
 		}
 	}
 
