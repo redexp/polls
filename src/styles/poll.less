@@ -19,9 +19,22 @@
 		}
 	}
 
-	> p > img {
+	p > img {
+		margin: 15px 0;
+
 		@media (max-width: 768px) {
 			max-width: 480px;
+			height: auto;
+		}
+
+		@media (max-width: 576px) {
+			max-width: 100%;
+		}
+	}
+
+	ol p > img {
+		@media (max-width: 768px) {
+			max-width: 450px;
 		}
 
 		@media (max-width: 576px) {
@@ -37,6 +50,14 @@
 		input {
 			margin-right: 5px;
 			cursor: pointer;
+		}
+
+		+ textarea {
+			display: none;
+		}
+
+		&:has(input:checked) + textarea {
+			display: block;
 		}
 	}
 

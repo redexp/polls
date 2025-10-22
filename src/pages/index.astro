@@ -2,9 +2,9 @@
 import Main from '../layouts/Main.astro';
 import Header from '../components/Header.astro';
 import Poll from '../components/Poll.astro';
-import {getPolls} from '../lib/polls';
+import {getActivePastPolls} from '../lib/polls';
 
-const active = getPolls();
+const [active, past] = getActivePastPolls();
 ---
 
 <Main>
@@ -14,9 +14,18 @@ const active = getPolls();
 
     {active.length > 0 &&
     <section>
-        <h2 class="display-5 text-center mb-5">Поточні опитування</h2>
+        <h2 class="display-5 text-center mb-5 mt-5">Поточні опитування</h2>
 
         {active.map((poll) => (
+			<Poll poll={poll}/>
+		))}
+    </section>}
+
+    {past.length > 0 &&
+    <section>
+        <h2 class="display-5 text-center mb-5 mt-5">Минулі опитування</h2>
+
+        {past.map((poll) => (
 			<Poll poll={poll}/>
 		))}
     </section>}
