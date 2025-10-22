@@ -11,6 +11,7 @@ export function up(knex) {
 		t.string('geo', 9); //no_loc|8GXJC3V5+
 		t.string('text');
 
+		t.index(['user_id']);
 		t.index(['poll']);
 		t.index(['poll', 'value']);
 	});
