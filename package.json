@@ -29,11 +29,12 @@
     "yaml": "^2.8.1"
   },
   "devDependencies": {
+    "@astrojs/markdown-remark": "^7.3.0",
     "@types/bootstrap": "^5.2.10",
     "@types/express": "^5.0.3",
     "@types/hast": "^3.0.4",
     "@types/jsonwebtoken": "^9.0.10",
-    "astro": "^5.13.3",
+    "astro": "^7.3.2",
     "bootstrap": "^5.3.7",
     "less": "^4.4.1",
     "mapbox-gl": "^3.14.0",

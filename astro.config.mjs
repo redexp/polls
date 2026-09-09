@@ -1,4 +1,5 @@
 import {defineConfig, envField} from 'astro/config';
+import {unified} from '@astrojs/markdown-remark';
 import remarkBreaks from 'remark-breaks';
 import {SERVER} from './server/config';
 import transform from './src/lib/transform.js';
@@ -13,8 +14,10 @@ export default defineConfig({
 		}
 	},
 	markdown: {
-		remarkPlugins: [remarkBreaks],
-		rehypePlugins: [transform],
+		processor: unified({
+			remarkPlugins: [remarkBreaks],
+			rehypePlugins: [transform],
+		}),
 	},
 	devToolbar: {
 		enabled: false,

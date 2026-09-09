@@ -1,4 +1,5 @@
-import {defineCollection, z} from 'astro:content';
+import {defineCollection} from 'astro:content';
+import {z} from 'astro/zod';
 import {glob} from 'astro/loaders';
 
 const polls = defineCollection({
@@ -6,7 +7,7 @@ const polls = defineCollection({
 		pattern: ['**/*.md'],
 		base: 'src/polls',
 	}),
-	schema: () => z.object({
+	schema: z.object({
 		expire: z.date().optional(),
 		public: z.boolean().optional(),
 		optional: z.array(z.string()).optional(),
