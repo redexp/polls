@@ -1,10 +1,13 @@
 import {generateKeyPairSync, randomBytes} from 'crypto';
-import {writeFileSync} from 'fs';
+import {mkdirSync, writeFileSync} from 'fs';
 import {resolve} from 'path';
 
 const cwd = process.cwd();
+const keysDir = resolve(cwd, 'server', 'keys');
 
-const jwtKeyPath = resolve(cwd, 'server', 'jwt.key');
+mkdirSync(keysDir, {recursive: true});
+
+const jwtKeyPath = resolve(keysDir, 'jwt.key');
 
 writeFileSync(jwtKeyPath, randomBytes(32).toString('hex'));
 console.log('Ключ для шифрування jwt:', jwtKeyPath);
@@ -13,7 +16,7 @@ const {publicKey, privateKey} = generateKeyPairSync('rsa', {
 	modulusLength: 2048,
 });
 
-const pubPath = resolve(cwd, 'server', 'statistic_public_key.pem');
+const pubPath = resolve(keysDir, 'statistic_public_key.pem');
 
 writeFileSync(pubPath, publicKey.export({type: 'pkcs1', format: 'pem'}));
 console.log('Публічний ключ для шифрування статистики:', pubPath);
