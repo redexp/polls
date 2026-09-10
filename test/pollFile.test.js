@@ -184,6 +184,21 @@ test('обмеження прозою більше не впливає на гр
 	assert.equal(parsePoll('Оберіть 2 варіанти\n\n[a] A\n[b] B\n[c] C\n').groups[0].max, 3);
 });
 
+test('explicitRange відрізняє задане обмеження від дефолтного', function () {
+	// конструктор по цьому виставляє галочку «Обмежити кількість відповідей»
+	const withDirective = toStructure('## T\n\n{1-2}\n[a] A\n[b] B\n[c] C\n');
+
+	assert.equal(withDirective.groups[0].explicitRange, true);
+	assert.equal(withDirective.groups[0].min, 1);
+	assert.equal(withDirective.groups[0].max, 2);
+
+	const plain = toStructure('## T\n\n[a] A\n[b] B\n[c] C\n');
+
+	assert.equal(plain.groups[0].explicitRange, false);
+	assert.equal(plain.groups[0].min, 1, 'дефолти все одно обчислені');
+	assert.equal(plain.groups[0].max, 3);
+});
+
 test('retypeBody: перемикання типу відповіді переписує дужки', function () {
 	const checkbox = 'Проза лишається\n[перша] Відповідь 1\n[інше]+ Свій варіант\n';
 

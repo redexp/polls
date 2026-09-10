@@ -238,7 +238,7 @@ export function retypeBody(body, type) {
  *
  * @param {string[]} lines
  * @param {{file?: string, seen?: string[]}} [ctx]
- * @returns {{type: 'checkbox'|'radio', values: string[], texts: string[], min: number, max: number, bodyLines: string[]}|null}
+ * @returns {{type: 'checkbox'|'radio', values: string[], texts: string[], min: number, max: number, explicitRange: boolean, bodyLines: string[]}|null}
  */
 export function parseSegment(lines, ctx = {}) {
 	const file = ctx.file;
@@ -297,6 +297,10 @@ export function parseSegment(lines, ctx = {}) {
 	}
 
 	if (!group.type) return null;
+
+	// чи обмеження стояло у файлі явно — конструктор по цьому виставляє галочку
+	// «Обмежити кількість відповідей»; після applyRangeDefaults вже не відрізнити
+	group.explicitRange = group.min !== null;
 
 	applyRangeDefaults(group, file);
 
@@ -375,7 +379,7 @@ export function parsePoll(md, file) {
  *
  * @param {string} md
  * @param {string} [file]
- * @returns {{title: string, intro: string, groups: Array<{body: string, min: number, max: number, type: string}>, expire: string|null, public: boolean, draft: boolean}}
+ * @returns {{title: string, intro: string, groups: Array<{body: string, min: number, max: number, explicitRange: boolean, type: string}>, expire: string|null, public: boolean, draft: boolean}}
  */
 export function toStructure(md, file) {
 	const {data, body} = stripFrontmatter(md);
@@ -414,6 +418,7 @@ export function toStructure(md, file) {
 			body: trimBlankLines(group.bodyLines).join('\n'),
 			min: group.min,
 			max: group.max,
+			explicitRange: group.explicitRange,
 		});
 	});
 

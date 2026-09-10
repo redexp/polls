@@ -11,6 +11,7 @@ type GroupData = {
 	min: number,
 	max: number|null,
 	type?: string,
+	explicitRange?: boolean,
 };
 
 type PollStruct = {
@@ -53,9 +54,8 @@ const savePublishBtn = byId<HTMLButtonElement>('save-publish');
 const previewBtn = byId<HTMLButtonElement>('preview-btn');
 const log = byId<HTMLPreElement>('log');
 
-const formCol = byId('form-col');
+const editorRoot = document.querySelector<HTMLElement>('main.admin-edit')!;
 const previewCol = byId('preview-col');
-const previewPane = byId('preview-pane');
 const previewBox = byId('preview');
 
 /** порядок питань на момент останнього рендеру прев'ю, за їх gid */
@@ -90,6 +90,11 @@ byId<HTMLButtonElement>('add-group').onclick = function () {
 };
 
 previewBtn.onclick = function () {
+	if (isPreviewOpen()) {
+		closePreview();
+		return;
+	}
+
 	openPreview().catch(showError);
 };
 
@@ -212,16 +217,20 @@ function addGroup(group: GroupData): HTMLElement {
 	const min = qs<HTMLInputElement>('[data-min]', node);
 	const max = qs<HTMLInputElement>('[data-max]', node);
 	const optional = qs<HTMLInputElement>('[data-optional]', node);
+	const limit = qs<HTMLInputElement>('[data-limit]', node);
 
 	body.value = group.body || '';
 	min.value = String(group.min ?? 1);
 	max.value = group.max === null || group.max === undefined ? '' : String(group.max);
 	optional.checked = Number(group.min) === 0;
+	// для одного варіанта {0-1} означає лише «можна пропустити», а не обмеження
+	limit.checked = !!group.explicitRange && group.type !== 'radio';
 
 	applyType(node, group.type);
 	applyOptional(node);
 
 	optional.onchange = () => applyOptional(node);
+	limit.onchange = () => applyLimit(node);
 
 	for (const btn of Array.from(node.querySelectorAll<HTMLButtonElement>('[data-type]'))) {
 		btn.onclick = function () {
@@ -301,9 +310,21 @@ function applyOptional(node: HTMLElement) {
 }
 
 /**
+ * Поля «Від» і «До» показуються лише за галочкою «Обмежити кількість
+ * відповідей» — без неї діють дефолти, і два порожніх поля були б шумом.
+ */
+function applyLimit(node: HTMLElement) {
+	const single = node.dataset.type === 'radio';
+	const on = qs<HTMLInputElement>('[data-limit]', node).checked && !single;
+
+	qs('[data-min-col]', node).classList.toggle('d-none', !on);
+	qs('[data-max-col]', node).classList.toggle('d-none', !on);
+}
+
+/**
  * Тип або задає перемикач, або приносить сервер при завантаженні і прев'ю.
- * Для «Тільки одна відповідь» полів «Від» і «До» немає: вибрати можна лише
- * один варіант, а «можна пропустити» задається галочкою.
+ * Для «Тільки одна відповідь» обмежувати кількість нічим: вибрати можна лише
+ * один варіант, а «можна пропустити» задається галочкою «необов'язкова».
  */
 function applyType(node: HTMLElement, type?: string) {
 	const resolved: AnswerType = type === 'radio' ? 'radio' : 'checkbox';
@@ -317,10 +338,9 @@ function applyType(node: HTMLElement, type?: string) {
 		btn.setAttribute('aria-pressed', String(active));
 	}
 
-	const single = resolved === 'radio';
+	qs('[data-limit-col]', node).classList.toggle('d-none', resolved === 'radio');
 
-	qs('[data-min-col]', node).classList.toggle('d-none', single);
-	qs('[data-max-col]', node).classList.toggle('d-none', single);
+	applyLimit(node);
 }
 
 function collect(): PollStruct {
@@ -328,14 +348,16 @@ function collect(): PollStruct {
 		const el = node as HTMLElement;
 		const single = el.dataset.type === 'radio';
 		const optional = qs<HTMLInputElement>('[data-optional]', el).checked;
+		const limited = !single && qs<HTMLInputElement>('[data-limit]', el).checked;
 		const minRaw = qs<HTMLInputElement>('[data-min]', el).value.trim();
 		const maxRaw = qs<HTMLInputElement>('[data-max]', el).value.trim();
 
 		return {
 			body: qs<HTMLTextAreaElement>('[data-body]', el).value,
-			min: optional ? 0 : (single ? 1 : Number(minRaw || 1)),
-			// для одного варіанта максимум завжди 1 — його підставить сервер
-			max: single || maxRaw === '' ? null : Number(maxRaw),
+			min: optional ? 0 : (limited ? Number(minRaw || 1) : 1),
+			// null — хай сервер підставить дефолт: для одного варіанта 1,
+			// для кількох — усі варіанти питання
+			max: limited && maxRaw !== '' ? Number(maxRaw) : null,
 		};
 	});
 
@@ -355,7 +377,9 @@ function isPreviewOpen(): boolean {
 
 async function openPreview() {
 	previewCol.classList.remove('d-none');
-	formCol.className = 'col-lg-7';
+	// розширюємо контейнер, а не звужуємо форму — форма лишається тієї ж ширини
+	editorRoot.classList.add('with-preview');
+	previewBtn.innerText = 'Сховати прев\'ю';
 
 	await renderPreview();
 
@@ -370,7 +394,8 @@ async function openPreview() {
 
 function closePreview() {
 	previewCol.classList.add('d-none');
-	formCol.className = 'col-12';
+	editorRoot.classList.remove('with-preview');
+	previewBtn.innerText = 'Прев\'ю';
 }
 
 async function renderPreview() {
@@ -430,22 +455,22 @@ function scrollPreviewTo(target: Element|null) {
 	if (!isPreviewOpen()) return;
 
 	if (!target) {
-		previewPane.scrollTop = 0;
+		previewBox.scrollTop = 0;
 		return;
 	}
 
 	const gap = 12;
-	const pane = previewPane.getBoundingClientRect();
+	const pane = previewBox.getBoundingClientRect();
 	const el = target.getBoundingClientRect();
 
 	const above = el.top - pane.top - gap;
 	const below = el.bottom - pane.bottom + gap;
 
 	if (above < 0) {
-		previewPane.scrollTop += above;
+		previewBox.scrollTop += above;
 	}
 	else if (below > 0) {
-		previewPane.scrollTop += below;
+		previewBox.scrollTop += below;
 	}
 }
 

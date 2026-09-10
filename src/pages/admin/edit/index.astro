@@ -20,8 +20,8 @@ import '../../../styles/poll.less';
             перейменувати чи перенести в питання іншого типу. Додавати нові варіанти можна.
         </div>
 
-        <div class="row g-4">
-            <div id="form-col" class="col-12">
+        <div class="editor-row">
+            <div id="form-col">
                 <form id="poll-form" class="card p-3 mb-4">
                     <div class="mb-3">
                         <label class="form-label" for="title">Заголовок</label>
@@ -29,13 +29,13 @@ import '../../../styles/poll.less';
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label" for="slug">
+                        <label class="form-label form-label-sm text-secondary mb-1" for="slug">
                             Посилання на опитування
                             <button type="button" class="btn-help" data-help="help-slug"
                                     aria-label="Пояснення про посилання">?</button>
                         </label>
 
-                        <div class="input-group slug-group">
+                        <div class="input-group input-group-sm slug-group">
                             <span id="slug-prefix" class="input-group-text"></span>
                             <input id="slug" name="slug" type="text" class="form-control font-monospace"
                                    pattern="[a-z0-9-]+" required/>
@@ -56,7 +56,7 @@ import '../../../styles/poll.less';
                         </div>
 
                         <div class="col-sm-8 d-flex align-items-center flex-wrap gap-4 pt-sm-4">
-                            <span class="d-flex align-items-center gap-2">
+                            <span class="d-flex align-items-center">
                                 <label class="form-check mb-0">
                                     <input id="public" type="checkbox" class="form-check-input"/>
                                     <span class="form-check-label">Публічне</span>
@@ -66,7 +66,7 @@ import '../../../styles/poll.less';
                                         aria-label="Пояснення про публічне опитування">?</button>
                             </span>
 
-                            <span class="d-flex align-items-center gap-2">
+                            <span class="d-flex align-items-center">
                                 <label class="form-check mb-0">
                                     <input id="draft" type="checkbox" class="form-check-input"/>
                                     <span class="form-check-label">Чернетка</span>
@@ -88,7 +88,7 @@ import '../../../styles/poll.less';
                     </div>
                 </form>
 
-                <h2 class="h5 d-flex align-items-center gap-2">
+                <h2 class="h5 d-flex align-items-center">
                     Питання з варіантами відповідей
 
                     <button type="button" class="btn-help" data-help="help-syntax"
@@ -116,15 +116,24 @@ import '../../../styles/poll.less';
                         <textarea data-body class="form-control"></textarea>
 
                         <div class="row g-3 mt-2 align-items-end">
-                            <div class="col-auto" data-min-col>
+                            <div class="col-auto d-flex align-items-center" data-limit-col>
+                                <label class="form-check mb-0">
+                                    <input data-limit type="checkbox" class="form-check-input"/>
+                                    <span class="form-check-label">Обмежити кількість відповідей</span>
+                                </label>
+
+                                <button type="button" class="btn-help" data-help="help-limit"
+                                        aria-label="Пояснення про обмеження кількості відповідей">?</button>
+                            </div>
+                            <div class="col-auto d-none" data-min-col>
                                 <label class="form-label mb-1">Від</label>
                                 <input data-min type="number" min="0" step="1" class="form-control range-input"/>
                             </div>
-                            <div class="col-auto" data-max-col>
+                            <div class="col-auto d-none" data-max-col>
                                 <label class="form-label mb-1">До</label>
                                 <input data-max type="number" min="1" step="1" class="form-control range-input"/>
                             </div>
-                            <div class="col-auto d-flex align-items-center gap-2">
+                            <div class="col-auto d-flex align-items-center">
                                 <label class="form-check mb-0">
                                     <input data-optional type="checkbox" class="form-check-input"/>
                                     <span class="form-check-label">Відповідь необов'язкова</span>
@@ -147,10 +156,10 @@ import '../../../styles/poll.less';
                 <pre id="log" class="bg-body-secondary p-3 small mb-4 d-none"></pre>
             </div>
 
-            <div id="preview-col" class="col-lg-5 d-none">
-                <div id="preview-pane" class="preview-pane card p-3">
-                    <div class="d-flex align-items-center justify-content-between gap-3 mb-2">
-                        <h2 class="h5 m-0 d-flex align-items-center gap-2">
+            <div id="preview-col" class="d-none">
+                <div id="preview-pane" class="preview-pane">
+                    <div class="preview-toolbar d-flex align-items-center justify-content-between gap-3 mb-2">
+                        <h2 class="h6 m-0 d-flex align-items-center text-secondary">
                             Прев'ю
 
                             <button type="button" class="btn-help" data-help="help-preview"
@@ -163,7 +172,7 @@ import '../../../styles/poll.less';
                         </span>
                     </div>
 
-                    <div id="preview" class="poll"></div>
+                    <div id="preview" class="poll card p-3"></div>
                 </div>
             </div>
         </div>
@@ -227,6 +236,18 @@ import '../../../styles/poll.less';
         <p class="mb-0">
             <code>+</code> одразу після дужки додає під варіантом поле, у яке людина
             впише свій текст.
+        </p>
+    </template>
+
+    <template id="help-limit">
+        <p>
+            Без цієї галочки людина може вибрати будь-яку кількість варіантів — від одного
+            до всіх.
+        </p>
+        <p class="mb-0">
+            З нею зʼявляються поля «Від» і «До»: наприклад «Від 1 До 3» означає, що треба
+            вибрати щонайменше один варіант і не більше трьох. Обмеження перевіряється не
+            лише в браузері, а й на сервері.
         </p>
     </template>
 

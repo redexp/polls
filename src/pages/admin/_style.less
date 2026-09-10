@@ -22,11 +22,40 @@
 	}
 }
 
-// форма з прев'ю праворуч потребує більше місця, ніж список, але не всієї
-// ширини вікна: довгі рядки читати важко
+@editor-width: 1140px;
+@preview-width: 480px;
+@editor-gap: 24px; // = 1.5rem, стільки ж у gap нижче
+@container-padding: 24px; // --bs-gutter-x контейнера, по 12px з боків
+
+// форма лишається однакової ширини і без прев'ю, і з ним: коли прев'ю
+// відкривається, розширюється контейнер рівно на прев'ю з проміжком, а не
+// звужується форма
 .admin-edit {
-	max-width: 1140px;
+	max-width: @editor-width;
 	margin: 0 auto;
+
+	&.with-preview {
+		max-width: @editor-width + @preview-width + @editor-gap;
+	}
+}
+
+.editor-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: @editor-gap;
+
+	#form-col {
+		// стискається лише коли місця справді не вистачає
+		flex: 1 1 640px;
+		min-width: 0;
+		max-width: @editor-width - @container-padding;
+	}
+
+	#preview-col {
+		flex: 0 1 @preview-width;
+		min-width: 320px;
+	}
 }
 
 // кругла кнопка «?»: усі пояснення живуть у попапах, а не в тексті сторінки
@@ -37,6 +66,7 @@
 	flex: 0 0 auto;
 	width: 1.25rem;
 	height: 1.25rem;
+	margin-left: .4rem;
 	padding: 0;
 	border: 1px solid var(--bs-border-color);
 	border-radius: 50%;
@@ -45,6 +75,7 @@
 	font-size: .75rem;
 	font-weight: 600;
 	line-height: 1;
+	vertical-align: middle;
 
 	&:hover, &:focus-visible {
 		border-color: var(--bs-primary);
@@ -86,22 +117,33 @@
 
 	#slug {
 		flex: 0 0 auto;
-		width: 12rem;
+		width: 11rem;
 		min-width: 5rem;
 	}
 }
 
-// прев'ю лишається на місці, поки гортаєш форму, і має власний скрол —
-// саме його рухає фокус у питаннях
+// прев'ю лишається на місці, поки гортаєш форму. Контроли — поза карткою, щоб
+// було видно, де форма, а де згенерований html; скролиться сама картка
 .preview-pane {
 	position: sticky;
 	top: 1rem;
+	display: flex;
+	flex-direction: column;
 	max-height: calc(100vh - 2rem);
-	overflow-y: auto;
 
-	#preview:empty::after {
-		content: 'Порожньо — натисніть «Оновити».';
-		color: var(--bs-secondary-color);
-		font-size: .8125rem;
+	.preview-toolbar {
+		flex: 0 0 auto;
+	}
+
+	#preview {
+		flex: 1 1 auto;
+		min-height: 6rem;
+		overflow-y: auto;
+
+		&:empty::after {
+			content: 'Порожньо — натисніть «Оновити».';
+			color: var(--bs-secondary-color);
+			font-size: .8125rem;
+		}
 	}
 }
