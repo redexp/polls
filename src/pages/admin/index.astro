@@ -6,7 +6,7 @@ import './_style.less';
 
 <Base title="Опитування — адмінка">
     <main class="container py-4 admin">
-        <div class="d-flex align-items-center justify-content-between mb-4">
+        <div class="d-flex align-items-center justify-content-between gap-3 mb-4">
             <h1 class="h3 m-0">Опитування</h1>
 
             <a href="/admin/edit/" class="btn btn-primary">Створити опитування</a>
@@ -34,15 +34,21 @@ import './_style.less';
                             <div data-error class="text-danger small"></div>
                         </td>
                         <td><code data-slug></code></td>
-                        <td class="text-nowrap">
-                            <span data-draft class="badge text-bg-warning">Чернетка</span>
-                            <span data-active class="badge"></span>
-                            <span data-public class="badge"></span>
+                        <td>
+                            <span class="d-flex flex-wrap gap-1">
+                                <span data-draft class="badge text-bg-warning">Чернетка</span>
+                                <span data-active class="badge"></span>
+                                <span data-public class="badge"></span>
+                            </span>
                         </td>
                         <td class="text-end"><strong data-votes></strong></td>
-                        <td class="text-end text-nowrap">
-                            <a data-edit href="#" class="btn btn-sm btn-outline-secondary">Редагувати</a>
-                            <button data-delete type="button" class="btn btn-sm btn-outline-danger">Видалити</button>
+                        <td>
+                            <span class="d-flex flex-wrap justify-content-end gap-2">
+                                <a data-edit href="#" class="btn btn-sm btn-outline-secondary">Редагувати</a>
+                                <button data-copy type="button" class="btn btn-sm btn-outline-secondary"
+                                        title="Скопіювати посилання на опитування">Посилання</button>
+                                <button data-delete type="button" class="btn btn-sm btn-outline-danger">Видалити</button>
+                            </span>
                         </td>
                     </tr>
                 </tbody>
@@ -50,7 +56,7 @@ import './_style.less';
         </div>
 
         <section class="card p-3 mt-4">
-            <div class="d-flex align-items-center justify-content-between mb-3">
+            <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
                 <h2 class="h5 m-0">Публікація</h2>
 
                 <button id="publish" type="button" class="btn btn-success">Опублікувати сайт</button>
@@ -65,7 +71,7 @@ import './_style.less';
             <h3 class="h6">Збірки</h3>
 
             <ul id="builds" class="list-group list-group-flush">
-                <li class="list-group-item d-flex align-items-center justify-content-between px-0">
+                <li class="list-group-item d-flex flex-wrap align-items-center justify-content-between gap-2 px-0">
                     <code data-name></code>
                     <span class="d-flex align-items-center gap-2">
                         <span data-current class="badge text-bg-success">Активна</span>

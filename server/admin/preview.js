@@ -1,6 +1,6 @@
 import {Router} from 'express';
 import {processor} from '../../src/lib/processor.js';
-import {fromStructure, stripFrontmatter, hasProseRange, parsePoll} from '../models/pollFile.js';
+import {fromStructure, stripFrontmatter, parsePoll, parseSegment} from '../models/pollFile.js';
 import {handler} from './errors.js';
 
 export const router = Router({mergeParams: true});
@@ -25,22 +25,27 @@ router.post('/preview', handler(async function (req, res) {
 
 	const md = fromStructure({title, intro, groups, expire, public: pub, draft});
 	const {body} = stripFrontmatter(md);
-	const parsed = parsePoll(md);
+
+	// валідація цілого файлу — щоб прев'ю не показувало те, що не збережеться
+	parsePoll(md);
 
 	const {code} = await (await getRenderer()).render(body);
 
 	res.json({
 		html: code,
 		md,
-		// типи груп повертає сервер, щоб конструктор не тримав власної копії
-		// знань про синтаксис
-		groups: parsed.groups.map(group => ({
-			type: group.type,
-			count: group.values.length,
-			min: group.min,
-			max: group.max,
-		})),
-		// парсинг прози скасований, тому такий текст більше нічого не робить
-		proseRange: hasProseRange(body),
+		// розбір кожної групи окремо, рівно в тому ж порядку, що прийшов від
+		// конструктора: так індекси збігаються навіть якщо група порожня.
+		// Конструктор через це не тримає власної копії знань про синтаксис
+		groups: (groups || []).map(function (group) {
+			const parsed = parseSegment(String(group?.body || '').split(/\r?\n/));
+
+			if (!parsed) return null;
+
+			return {
+				type: parsed.type,
+				values: parsed.values,
+			};
+		}),
 	});
 }));

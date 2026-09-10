@@ -1,5 +1,5 @@
 import ajax from '@lib/ajax.js';
-import {qs, byId, loading} from '@lib/dom.ts';
+import {qs, byId, loading, copyText} from '@lib/dom.ts';
 import {error, success} from '@lib/notify.ts';
 import {getAuthParams, getJwt, hasAuth, isAdmin, retrieveJwt} from '@lib/auth.ts';
 import {showModal} from '@lib/modal.ts';
@@ -21,8 +21,12 @@ type PollStruct = {
 	draft: boolean,
 	votes?: number,
 	slugLocked?: boolean,
-	proseRange?: boolean,
 };
+
+/** розбір груп, який повертає прев'ю; null — група без варіантів */
+type PreviewGroup = {type: string, values: string[]} | null;
+
+const POLLS_PATH = '/polls/';
 
 const params = new URLSearchParams(location.search);
 
@@ -47,14 +51,41 @@ const savePublishBtn = byId<HTMLButtonElement>('save-publish');
 const previewBtn = byId<HTMLButtonElement>('preview-btn');
 const log = byId<HTMLPreElement>('log');
 
+const formCol = byId('form-col');
+const previewCol = byId('preview-col');
+const previewPane = byId('preview-pane');
+const previewBox = byId('preview');
+
+/** порядок груп на момент останнього рендеру прев'ю, за їх gid */
+let renderedGids: string[] = [];
+/** розбір груп з останнього рендеру, у тому ж порядку */
+let renderedGroups: PreviewGroup[] = [];
+
+let gidSeq = 0;
+
+byId('slug-prefix').innerText = location.origin + POLLS_PATH;
+
+byId<HTMLButtonElement>('slug-copy').onclick = function () {
+	copyPollUrl().catch(showError);
+};
+
 byId<HTMLButtonElement>('add-group').onclick = function () {
-	addGroup({body: '', min: 1, max: null});
+	const node = addGroup({body: '', min: 1, max: null});
+
 	relabel();
+
+	qs<HTMLTextAreaElement>('[data-body]', node).focus();
 };
 
 previewBtn.onclick = function () {
+	openPreview().catch(showError);
+};
+
+byId<HTMLButtonElement>('preview-refresh').onclick = function () {
 	renderPreview().catch(showError);
 };
+
+byId<HTMLButtonElement>('preview-close').onclick = closePreview;
 
 saveBtn.onclick = function () {
 	save().then(() => success('Збережено')).catch(showError);
@@ -67,6 +98,10 @@ savePublishBtn.onclick = function () {
 slugInput.oninput = function () {
 	slugTouched = true;
 };
+
+// заголовок і вступ — початок сторінки, тому прев'ю гортаємо на самий верх
+titleInput.addEventListener('focusin', () => scrollPreviewTo(null));
+introInput.addEventListener('focusin', () => scrollPreviewTo(null));
 
 let slugTimer = 0;
 
@@ -135,12 +170,36 @@ async function load(slug: string) {
 	if (data.slugLocked) {
 		slugInput.readOnly = true;
 	}
-
-	byId('prose-warning').classList.toggle('d-none', !data.proseRange);
 }
 
-function addGroup(group: GroupData) {
+function pollUrl(): string {
+	return location.origin + POLLS_PATH + slugInput.value.trim() + '/';
+}
+
+async function copyPollUrl() {
+	const slug = slugInput.value.trim();
+
+	if (!slug) {
+		error('Спершу заповніть посилання');
+		return;
+	}
+
+	if (await copyText(pollUrl())) {
+		success(
+			draftInput.checked ?
+				'Посилання скопійовано. Опитування — чернетка, тому сторінка ще не опублікована.' :
+				'Посилання скопійовано'
+		);
+	}
+	else {
+		error('Не вдалося скопіювати');
+	}
+}
+
+function addGroup(group: GroupData): HTMLElement {
 	const node = tpl.content.firstElementChild!.cloneNode(true) as HTMLElement;
+
+	node.dataset.gid = String(++gidSeq);
 
 	const body = qs<HTMLTextAreaElement>('[data-body]', node);
 	const min = qs<HTMLInputElement>('[data-min]', node);
@@ -156,6 +215,9 @@ function addGroup(group: GroupData) {
 	applyOptional(node);
 
 	optional.onchange = () => applyOptional(node);
+
+	// фокус у будь-якому полі групи гортає прев'ю до цієї ж групи
+	node.addEventListener('focusin', () => scrollPreviewToGroup(node));
 
 	qs<HTMLButtonElement>('[data-remove]', node).onclick = function () {
 		if (groupsRoot.children.length === 1) {
@@ -184,10 +246,12 @@ function addGroup(group: GroupData) {
 	};
 
 	groupsRoot.appendChild(node);
+
+	return node;
 }
 
 /**
- * «Необов'язкова» — це рівно min = 0, окремого поля в файлі немає.
+ * «Необов'язкова» — це рівно min = 0, окремого поля у файлі немає.
  */
 function applyOptional(node: HTMLElement) {
 	const min = qs<HTMLInputElement>('[data-min]', node);
@@ -258,21 +322,100 @@ function collect(): PollStruct {
 	};
 }
 
+function isPreviewOpen(): boolean {
+	return !previewCol.classList.contains('d-none');
+}
+
+async function openPreview() {
+	previewCol.classList.remove('d-none');
+	formCol.className = 'col-lg-7';
+
+	await renderPreview();
+
+	// якщо курсор уже стоїть у якійсь групі — показати саме її
+	const active = document.activeElement as HTMLElement|null;
+	const group = active?.closest?.('.group') as HTMLElement|null;
+
+	if (group) {
+		scrollPreviewToGroup(group);
+	}
+}
+
+function closePreview() {
+	previewCol.classList.add('d-none');
+	formCol.className = 'col-12';
+}
+
 async function renderPreview() {
 	loading(previewBtn, true);
 
 	try {
 		const data = await ajax('/api/admin/preview', {jwt: getJwt(), ...collect()});
 
-		byId('preview').innerHTML = data.html;
-		byId('prose-warning').classList.toggle('d-none', !data.proseRange);
+		previewBox.innerHTML = data.html;
+
+		renderedGroups = data.groups || [];
+		renderedGids = Array.from(groupsRoot.children).map(node => (node as HTMLElement).dataset.gid!);
 
 		Array.from(groupsRoot.children).forEach(function (node, i) {
-			applyType(node as HTMLElement, data.groups[i]?.type);
+			applyType(node as HTMLElement, renderedGroups[i]?.type);
 		});
 	}
 	finally {
 		loading(previewBtn, false);
+	}
+}
+
+/**
+ * Гортає прев'ю до групи, що зараз у фокусі.
+ *
+ * Прив'язка йде через значення першого варіанта, а не через порядковий номер:
+ * `data-group` у розмітці нумерується розділювачами, тож порожня група збила б
+ * нумерацію. Якщо групу додали після рендеру — не гортаємо нікуди, бо в прев'ю
+ * її ще немає.
+ */
+function scrollPreviewToGroup(node: HTMLElement) {
+	if (!isPreviewOpen()) return;
+
+	const index = renderedGids.indexOf(node.dataset.gid!);
+
+	if (index < 0) return;
+
+	const value = renderedGroups[index]?.values?.[0];
+
+	if (!value) return;
+
+	const input = previewBox.querySelector<HTMLInputElement>(`[value="${CSS.escape(value)}"]`);
+
+	scrollPreviewTo(input?.closest('label') || input);
+}
+
+/**
+ * Гортає мінімально: якщо цільове місце вже видно, не рухаємо нічого — інакше
+ * прев'ю смикалось би при кожному переході фокусу між сусідніми групами.
+ *
+ * @param target null — на початок прев'ю
+ */
+function scrollPreviewTo(target: Element|null) {
+	if (!isPreviewOpen()) return;
+
+	if (!target) {
+		previewPane.scrollTop = 0;
+		return;
+	}
+
+	const gap = 12;
+	const pane = previewPane.getBoundingClientRect();
+	const el = target.getBoundingClientRect();
+
+	const above = el.top - pane.top - gap;
+	const below = el.bottom - pane.bottom + gap;
+
+	if (above < 0) {
+		previewPane.scrollTop += above;
+	}
+	else if (below > 0) {
+		previewPane.scrollTop += below;
 	}
 }
 

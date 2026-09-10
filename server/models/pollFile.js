@@ -337,7 +337,7 @@ export function parsePoll(md, file) {
  *
  * @param {string} md
  * @param {string} [file]
- * @returns {{title: string, intro: string, groups: Array<{body: string, min: number, max: number, type: string}>, expire: string|null, public: boolean, draft: boolean, proseRange: boolean}}
+ * @returns {{title: string, intro: string, groups: Array<{body: string, min: number, max: number, type: string}>, expire: string|null, public: boolean, draft: boolean}}
  */
 export function toStructure(md, file) {
 	const {data, body} = stripFrontmatter(md);
@@ -350,7 +350,6 @@ export function toStructure(md, file) {
 		expire: data.expire ? formatDate(data.expire) : null,
 		public: !!data.public,
 		draft: !!data.draft,
-		proseRange: hasProseRange(body),
 	};
 
 	const seen = [];
@@ -482,20 +481,6 @@ export function fromStructure(struct) {
 	});
 
 	return lines.join('\n') + head.join('\n') + groups.join(GROUP_SEPARATOR) + '\n';
-}
-
-/**
- * Чи в тілі є обмеження, записане прозою. Парсинг прози прибрано, тому такий
- * текст більше нічого не робить — але автор мав би про це дізнатись.
- *
- * @param {string} body
- * @returns {boolean}
- */
-export function hasProseRange(body) {
-	return (
-		/від\s+\d+\s+до\s+\d+\s+варіантів/.test(body) ||
-		/Оберіть\s+\d+/.test(body)
-	);
 }
 
 /**

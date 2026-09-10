@@ -10,8 +10,8 @@
 		background: var(--bs-body-bg);
 	}
 
-	.group-actions {
-		white-space: nowrap;
+	.range-input {
+		width: 6rem;
 	}
 
 	#log {
@@ -20,17 +20,54 @@
 		white-space: pre-wrap;
 	}
 
-	#preview {
-		.poll {
-			margin-top: 0;
-		}
+	.hint {
+		font-size: .8125rem;
+	}
+}
 
-		label {
-			display: block;
-		}
+// дві колонки з прев'ю праворуч потребують більше місця, ніж решта адмінки
+.admin-edit {
+	max-width: 1600px;
+	margin: 0 auto;
+}
+
+// поле slug — найвужчий елемент рядка, решта показує, як складається адреса
+.slug-group {
+	display: inline-flex;
+	flex-wrap: nowrap;
+	width: auto;
+	max-width: 100%;
+
+	#slug-prefix {
+		min-width: 0;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		padding-right: 0;
+		border-right: 0;
+		background: transparent;
+		color: var(--bs-secondary-color);
+		font-family: var(--bs-font-monospace);
 	}
 
-	.hint {
+	#slug {
+		flex: 0 0 auto;
+		width: 12rem;
+		min-width: 5rem;
+	}
+}
+
+// прев'ю лишається на місці, поки гортаєш форму, і має власний скрол —
+// саме його рухає фокус у групах
+.preview-pane {
+	position: sticky;
+	top: 1rem;
+	max-height: calc(100vh - 2rem);
+	overflow-y: auto;
+
+	#preview:empty::after {
+		content: 'Порожньо — натисніть «Оновити».';
+		color: var(--bs-secondary-color);
 		font-size: .8125rem;
 	}
 }

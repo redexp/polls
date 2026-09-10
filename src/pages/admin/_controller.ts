@@ -1,5 +1,5 @@
 import ajax from '@lib/ajax.js';
-import {qs, each, loading} from '@lib/dom.ts';
+import {qs, each, loading, copyText} from '@lib/dom.ts';
 import {error, success} from '@lib/notify.ts';
 import {getAuthParams, getJwt, hasAuth, isAdmin, retrieveJwt} from '@lib/auth.ts';
 import {showModal} from '@lib/modal.ts';
@@ -43,6 +43,10 @@ const list = each<PollItem>('#polls', function (item, q) {
 	pubBadge.classList.add(item.public ? 'text-bg-info' : 'text-bg-light');
 
 	q<HTMLAnchorElement>('[data-edit]').href = link.href;
+
+	q<HTMLButtonElement>('[data-copy]').onclick = function () {
+		copyPollUrl(item).catch(showError);
+	};
 
 	q<HTMLButtonElement>('[data-delete]').onclick = function () {
 		removePoll(item).catch(showError);
@@ -102,6 +106,21 @@ async function reload() {
 	builds.reset(buildsData.builds);
 
 	qs('#empty').classList.toggle('d-none', pollsData.polls.length > 0);
+}
+
+async function copyPollUrl(item: PollItem) {
+	const url = location.origin + '/polls/' + item.slug + '/';
+
+	if (!await copyText(url)) {
+		error('Не вдалося скопіювати');
+		return;
+	}
+
+	success(
+		item.draft ?
+			'Посилання скопійовано. Опитування — чернетка, тому сторінка ще не опублікована.' :
+			'Посилання скопійовано'
+	);
 }
 
 async function removePoll(item: PollItem) {

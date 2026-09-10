@@ -7,7 +7,6 @@ import {
 	splitSegments,
 	matchAnswer,
 	slugify,
-	hasProseRange,
 } from '../server/models/pollFile.js';
 
 const STRUCT = {
@@ -177,12 +176,9 @@ test('frontmatter: expire, public, draft', function () {
 	assert.equal(poll.draft, true);
 });
 
-test('обмеження прозою розпізнається лише як попередження', function () {
+test('обмеження прозою більше не впливає на групу', function () {
 	const body = 'Оберіть 3 варіанти\n\n[a] A\n[b] B\n[c] C\n';
 
-	assert.equal(hasProseRange(body), true);
-
-	// але на обмеження групи більше не впливає
 	assert.equal(parsePoll(body).groups[0].max, 3, 'max = кількість варіантів, а не 3 з прози');
 	assert.equal(parsePoll('Оберіть 2 варіанти\n\n[a] A\n[b] B\n[c] C\n').groups[0].max, 3);
 });
