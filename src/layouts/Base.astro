@@ -1,9 +1,12 @@
 ---
 import Notifications from '../components/Notifications.astro';
 import Meta from '../components/Meta.astro';
-// тема Flatly (bootswatch) замість базового bootstrap; пакет замість CDN, щоб
-// не тягнути сторонній домен у критичний шлях і не світити IP відвідувачів
-import 'bootswatch/dist/flatly/bootstrap.min.css';
+// Теми bootswatch: Flatly світла, Darkly темна. Обидві з пакета, а не з CDN,
+// щоб не тягнути сторонній домен у критичний шлях і не світити IP відвідувачів.
+// `?url` дає посилання на файл замість вбудовування, бо кожну тему треба
+// підключити окремим <link> зі своєю media — інакше вибрати одну неможливо.
+import flatly from 'bootswatch/dist/flatly/bootstrap.min.css?url';
+import darkly from 'bootswatch/dist/darkly/bootstrap.min.css?url';
 import '../styles/global.less';
 
 interface Props {
@@ -23,12 +26,48 @@ if (!title) {
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <title>{title}</title>
 
+    {/*
+      Тему вибирає media в <link> нижче, але половина змінних bootstrap 5.3
+      (рамки, поля, дропдауни — 50+ штук) живе під `[data-bs-theme=dark]`, а
+      атрибут медіа-запитом не виставити. Скрипт інлайновий і до стилів, щоб не
+      було блимання. Без JS темна тема все одно застосується, лише з рамками
+      світлого відтінку.
+    */}
+    <script is:inline>
+		(function () {
+			var mq = window.matchMedia('(prefers-color-scheme: dark)');
+			var apply = function () {
+				document.documentElement.dataset.bsTheme = mq.matches ? 'dark' : 'light';
+			};
+
+			apply();
+			mq.addEventListener('change', apply);
+
+			// підстраховка: якщо подію змін пропущено, атрибут розійшовся б зі
+			// стилем і вийшла б темна картка на світлому фоні. Повернення на
+			// вкладку або з кешу історії це виправляє
+			window.addEventListener('pageshow', apply);
+			document.addEventListener('visibilitychange', function () {
+				if (!document.hidden) apply();
+			});
+		})();
+    </script>
+
     <link rel="apple-touch-icon" sizes="180x180" href="/logo/apple-touch-icon.png"/>
     <link rel="icon" type="image/png" sizes="32x32" href="/logo/favicon-32x32.png"/>
     <link rel="icon" type="image/png" sizes="16x16" href="/logo/favicon-16x16.png"/>
     <link rel="manifest" href="/site.webmanifest"/>
     <meta name="msapplication-TileColor" content="#da532c"/>
-    <meta name="theme-color" content="#ffffff"/>
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)"/>
+    <meta name="theme-color" content="#222222" media="(prefers-color-scheme: dark)"/>
+
+    {/*
+      Рівно одна тема діє за раз. Світла умова записана як `not all and ... dark`,
+      а не `... light`: у браузері без підтримки prefers-color-scheme перша
+      не спрацювала б і сторінка лишилась би зовсім без bootstrap.
+    */}
+    <link rel="stylesheet" href={flatly} media="not all and (prefers-color-scheme: dark)"/>
+    <link rel="stylesheet" href={darkly} media="(prefers-color-scheme: dark)"/>
 
     <Meta
         title={title!}

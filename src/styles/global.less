@@ -6,6 +6,18 @@
 	--border: #e5e7eb;
 }
 
+// у темній темі беремо кольори з активної теми bootstrap, а не тримаємо другу
+// копію палітри — інакше вони роз'їдуться при будь-якій зміні теми
+@media (prefers-color-scheme: dark) {
+	:root {
+		--bg: var(--bs-body-bg);
+		--fg: var(--bs-body-color);
+		--muted: var(--bs-secondary-color);
+		--card: var(--bs-tertiary-bg);
+		--border: var(--bs-border-color);
+	}
+}
+
 body {
 	background: var(--bg);
 	color: var(--fg);
@@ -83,16 +95,16 @@ a.badge {
 		}
 
 		&.left::before {
-			border-right-color: black;
+			border-right-color: currentColor;
 		}
 		&.right::before {
-			border-left-color: black;
+			border-left-color: currentColor;
 		}
 		&.up::before {
-			border-bottom-color: black;
+			border-bottom-color: currentColor;
 		}
 		&.down::before {
-			border-top-color: black;
+			border-top-color: currentColor;
 		}
 	}
 }
