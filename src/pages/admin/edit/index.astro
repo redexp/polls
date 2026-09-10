@@ -8,16 +8,15 @@ import '../../../styles/poll.less';
 
 <Base title="Редагування опитування">
     <main class="container-xxl py-4 admin admin-edit">
-        <!-- шапка на рівні контейнера: він фіксованої ширини, тому кнопка стоїть
-             на місці, навіть коли форма переїжджає з центру до лівого краю -->
-        <div class="d-flex align-items-center justify-content-between gap-3 mb-4">
-            <a href="/admin/" class="btn btn-outline-secondary">← До списку</a>
-
-            <button id="preview-btn" type="button" class="btn btn-outline-secondary">Прев'ю</button>
-        </div>
-
         <div class="editor-row">
             <div id="form-col">
+                <!-- шапка в межах колонки форми, тому переїжджає разом з нею -->
+                <div class="d-flex align-items-center justify-content-between gap-3 mb-4">
+                    <a href="/admin/" class="btn btn-outline-secondary">← До списку</a>
+
+                    <button id="preview-btn" type="button" class="btn btn-outline-secondary">Прев'ю</button>
+                </div>
+
                 <div id="votes-warning" class="alert alert-warning d-none">
                     За це опитування вже проголосували (<strong id="votes-count">0</strong>).
                     Ідентифікатор заблоковано, а варіанти, за які є голоси, не можна видалити,

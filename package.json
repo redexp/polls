@@ -39,6 +39,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "astro": "^7.3.2",
     "bootstrap": "^5.3.7",
+    "bootswatch": "^5.3.8",
     "less": "^4.4.1",
     "mapbox-gl": "^3.14.0",
     "minimist": "^1.2.8",

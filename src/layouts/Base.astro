@@ -1,7 +1,9 @@
 ---
 import Notifications from '../components/Notifications.astro';
 import Meta from '../components/Meta.astro';
-import 'bootstrap/dist/css/bootstrap.css';
+// тема Flatly (bootswatch) замість базового bootstrap; пакет замість CDN, щоб
+// не тягнути сторонній домен у критичний шлях і не світити IP відвідувачів
+import 'bootswatch/dist/flatly/bootstrap.min.css';
 import '../styles/global.less';
 
 interface Props {
