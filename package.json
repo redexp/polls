@@ -5,13 +5,17 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
+    "stop": "astro dev stop",
     "build": "astro build",
     "server": "node server/index.js",
     "bankid": "node server/dev/bankid-oauth.js",
     "migrate": "knex migrate:latest --knexfile=server/db/knexfile.js",
-    "keys": "node bin/generate-keys.js"
+    "migrate-polls": "node bin/migrate-polls.js",
+    "keys": "node bin/generate-keys.js",
+    "test": "node --test \"test/*.test.js\""
   },
   "dependencies": {
+    "@astrojs/markdown-remark": "^7.3.0",
     "@libsql/client": "0.15.10",
     "@libsql/knex-libsql": "^0.1.0",
     "axios": "^1.11.0",
@@ -29,7 +33,6 @@
     "yaml": "^2.8.1"
   },
   "devDependencies": {
-    "@astrojs/markdown-remark": "^7.3.0",
     "@types/bootstrap": "^5.2.10",
     "@types/express": "^5.0.3",
     "@types/hast": "^3.0.4",
