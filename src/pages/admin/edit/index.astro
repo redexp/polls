@@ -8,20 +8,22 @@ import '../../../styles/poll.less';
 
 <Base title="Редагування опитування">
     <main class="container-xxl py-4 admin admin-edit">
-        <div class="d-flex align-items-center justify-content-between gap-3 mb-4">
-            <a href="/admin/" class="btn btn-outline-secondary">← До списку</a>
-
-            <button id="preview-btn" type="button" class="btn btn-outline-secondary">Прев'ю</button>
-        </div>
-
-        <div id="votes-warning" class="alert alert-warning d-none">
-            За це опитування вже проголосували (<strong id="votes-count">0</strong>).
-            Ідентифікатор заблоковано, а варіанти, за які є голоси, не можна видалити,
-            перейменувати чи перенести в питання іншого типу. Додавати нові варіанти можна.
-        </div>
-
         <div class="editor-row">
             <div id="form-col">
+                <!-- шапка всередині колонки форми, щоб кнопка не зʼїжджала,
+                     коли контейнер розширюється під прев'ю -->
+                <div class="d-flex align-items-center justify-content-between gap-3 mb-4">
+                    <a href="/admin/" class="btn btn-outline-secondary">← До списку</a>
+
+                    <button id="preview-btn" type="button" class="btn btn-outline-secondary">Прев'ю</button>
+                </div>
+
+                <div id="votes-warning" class="alert alert-warning d-none">
+                    За це опитування вже проголосували (<strong id="votes-count">0</strong>).
+                    Ідентифікатор заблоковано, а варіанти, за які є голоси, не можна видалити,
+                    перейменувати чи перенести в питання іншого типу. Додавати нові варіанти можна.
+                </div>
+
                 <form id="poll-form" class="card p-3 mb-4">
                     <div class="mb-3">
                         <label class="form-label" for="title">Заголовок</label>
@@ -115,7 +117,16 @@ import '../../../styles/poll.less';
 
                         <textarea data-body class="form-control"></textarea>
 
-                        <div class="row g-3 mt-2 align-items-end">
+                        <div class="row g-3 mt-2 align-items-center">
+                            <div class="col-auto d-flex align-items-center">
+                                <label class="form-check mb-0">
+                                    <input data-optional type="checkbox" class="form-check-input"/>
+                                    <span class="form-check-label">Відповідь необов'язкова</span>
+                                </label>
+
+                                <button type="button" class="btn-help" data-help="help-optional"
+                                        aria-label="Пояснення про необов'язкову відповідь">?</button>
+                            </div>
                             <div class="col-auto d-flex align-items-center" data-limit-col>
                                 <label class="form-check mb-0">
                                     <input data-limit type="checkbox" class="form-check-input"/>
@@ -126,21 +137,12 @@ import '../../../styles/poll.less';
                                         aria-label="Пояснення про обмеження кількості відповідей">?</button>
                             </div>
                             <div class="col-auto d-none" data-min-col>
-                                <label class="form-label mb-1">Від</label>
-                                <input data-min type="number" min="0" step="1" class="form-control range-input"/>
+                                <input data-min type="number" min="0" step="1" placeholder="Від"
+                                       class="form-control form-control-sm range-input"/>
                             </div>
                             <div class="col-auto d-none" data-max-col>
-                                <label class="form-label mb-1">До</label>
-                                <input data-max type="number" min="1" step="1" class="form-control range-input"/>
-                            </div>
-                            <div class="col-auto d-flex align-items-center">
-                                <label class="form-check mb-0">
-                                    <input data-optional type="checkbox" class="form-check-input"/>
-                                    <span class="form-check-label">Відповідь необов'язкова</span>
-                                </label>
-
-                                <button type="button" class="btn-help" data-help="help-optional"
-                                        aria-label="Пояснення про необов'язкову відповідь">?</button>
+                                <input data-max type="number" min="1" step="1" placeholder="До"
+                                       class="form-control form-control-sm range-input"/>
                             </div>
                         </div>
                     </div>
@@ -158,18 +160,9 @@ import '../../../styles/poll.less';
 
             <div id="preview-col" class="d-none">
                 <div id="preview-pane" class="preview-pane">
-                    <div class="preview-toolbar d-flex align-items-center justify-content-between gap-3 mb-2">
-                        <h2 class="h6 m-0 d-flex align-items-center text-secondary">
-                            Прев'ю
-
-                            <button type="button" class="btn-help" data-help="help-preview"
-                                    aria-label="Пояснення про прев'ю">?</button>
-                        </h2>
-
-                        <span class="d-flex align-items-center gap-2">
-                            <button id="preview-refresh" type="button" class="btn btn-sm btn-outline-secondary">Оновити</button>
-                            <button id="preview-close" type="button" class="btn-close" aria-label="Закрити прев'ю"></button>
-                        </span>
+                    <div class="preview-toolbar d-flex align-items-center justify-content-end gap-2 mb-2">
+                        <button id="preview-refresh" type="button" class="btn btn-sm btn-outline-secondary">Оновити</button>
+                        <button id="preview-close" type="button" class="btn-close" aria-label="Закрити прев'ю"></button>
                     </div>
 
                     <div id="preview" class="poll card p-3"></div>
@@ -258,14 +251,6 @@ import '../../../styles/poll.less';
         </p>
         <p class="mb-0">
             У файлі опитування це записується як мінімум <code>0</code> відповідей.
-        </p>
-    </template>
-
-    <template id="help-preview">
-        <p class="mb-0">
-            Рендериться тим самим кодом, що й опубліковані сторінки, тому виглядає точно так,
-            як побачить учасник. Поле для власного тексту зʼявляється лише коли відмічено
-            відповідний варіант.
         </p>
     </template>
 

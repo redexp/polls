@@ -54,7 +54,6 @@ const savePublishBtn = byId<HTMLButtonElement>('save-publish');
 const previewBtn = byId<HTMLButtonElement>('preview-btn');
 const log = byId<HTMLPreElement>('log');
 
-const editorRoot = document.querySelector<HTMLElement>('main.admin-edit')!;
 const previewCol = byId('preview-col');
 const previewBox = byId('preview');
 
@@ -376,9 +375,8 @@ function isPreviewOpen(): boolean {
 }
 
 async function openPreview() {
+	// місце під прев'ю зарезервоване в стилях, тому форма і кнопки не рухаються
 	previewCol.classList.remove('d-none');
-	// розширюємо контейнер, а не звужуємо форму — форма лишається тієї ж ширини
-	editorRoot.classList.add('with-preview');
 	previewBtn.innerText = 'Сховати прев\'ю';
 
 	await renderPreview();
@@ -394,7 +392,6 @@ async function openPreview() {
 
 function closePreview() {
 	previewCol.classList.add('d-none');
-	editorRoot.classList.remove('with-preview');
 	previewBtn.innerText = 'Прев\'ю';
 }
 

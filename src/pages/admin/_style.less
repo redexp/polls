@@ -11,8 +11,9 @@
 		background: var(--bs-body-bg);
 	}
 
+	// підписи «Від»/«До» живуть у placeholder, тому поле вузьке
 	.range-input {
-		width: 6rem;
+		width: 5rem;
 	}
 
 	#log {
@@ -27,26 +28,27 @@
 @editor-gap: 24px; // = 1.5rem, стільки ж у gap нижче
 @container-padding: 24px; // --bs-gutter-x контейнера, по 12px з боків
 
-// форма лишається однакової ширини і без прев'ю, і з ним: коли прев'ю
-// відкривається, розширюється контейнер рівно на прев'ю з проміжком, а не
-// звужується форма
+// Ширина контейнера постійна — форма плюс місце під прев'ю. Форма прибита до
+// лівого краю і має свою фіксовану ширину, тому при відкритті прев'ю ніщо не
+// рухається: ні форма, ні кнопки в її шапці. Прев'ю просто займає вільне місце
+// праворуч. Якби контейнер розширювався, він, бувши центрованим, зʼїжджав би
+// вліво разом з усім вмістом.
 .admin-edit {
-	max-width: @editor-width;
+	max-width: @editor-width + @preview-width + @editor-gap;
 	margin: 0 auto;
-
-	&.with-preview {
-		max-width: @editor-width + @preview-width + @editor-gap;
-	}
 }
 
 .editor-row {
 	display: flex;
 	flex-wrap: wrap;
-	align-items: flex-start;
+	// саме stretch, а не flex-start: інакше колонка прев'ю стискається до висоти
+	// вмісту і sticky всередині не має де рухатись
+	align-items: stretch;
+	justify-content: flex-start;
 	gap: @editor-gap;
 
 	#form-col {
-		// стискається лише коли місця справді не вистачає
+		// стискається лише коли вікна справді не вистачає на форму і прев'ю
 		flex: 1 1 640px;
 		min-width: 0;
 		max-width: @editor-width - @container-padding;
