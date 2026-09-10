@@ -1,21 +1,15 @@
 import db from '../db/index.js';
 import pick from '../lib/pick.js';
 import moment from "moment";
-import axios from "axios";
 import pc from "pluscodes";
 import {createPublicKey, publicEncrypt, createHash} from 'crypto';
-import {MAPS} from '../config/index.js';
 import {STATISTIC_PUBLIC_KEY} from '../keys/index.js';
 import authAddress from "../lib/authAddress.js";
+import getLocation from "../lib/getLocation.js";
 
 export const NO_LOC = 'no_loc';
 
 const publicKey = createPublicKey(STATISTIC_PUBLIC_KEY);
-
-const mapApi = axios.create({
-	baseURL: 'https://api.mapbox.com',
-	method: 'GET',
-});
 
 /**
  * @returns {import('./statistic').StatisticBuilder}
@@ -143,35 +137,6 @@ export async function getGeoPlusCode(addr) {
 	}
 
 	return pc.encode(loc, 8);
-}
-
-/**
- * @param {import('./bankid').Address} addr
- * @returns {Promise<{latitude: number, longitude: number}>}
- */
-async function getLocation(addr) {
-	if (isNA(addr.street)) {
-		return null;
-	}
-
-	const {data} = await mapApi({
-		url: '/search/geocode/v6/forward',
-		params: {
-			country: MAPS.country,
-			region: MAPS.region,
-			place: addr.city,
-			street: addr.street.replace(/\.\s*/g, '. '),
-			address_number: isNA(addr.houseNo) ? '' : addr.houseNo,
-			limit: 1,
-			access_token: MAPS.access_token,
-		}
-	});
-
-	return data?.features?.[0]?.properties?.coordinates;
-}
-
-function isNA(v) {
-	return !v || v === 'n/a';
 }
 
 /**
