@@ -195,6 +195,44 @@ export function isImageRef(line) {
 }
 
 /**
+ * Переписує дужки варіантів під інший тип відповіді, зберігаючи значення і `+`.
+ *
+ * Живе тут, а не в конструкторі, щоб знання про синтаксис не роздвоювалось.
+ *
+ * @param {string} body
+ * @param {'checkbox'|'radio'} type
+ * @returns {string}
+ */
+export function retypeBody(body, type) {
+	const open = type === 'radio' ? '(' : '[';
+	const close = type === 'radio' ? ')' : ']';
+	const forbidden = type === 'radio' ? ')' : ']';
+
+	return (
+		String(body || '')
+		.split(/\r?\n/)
+		.map(function (line) {
+			if (isImageRef(line)) return line;
+
+			const answer = matchAnswer(line);
+
+			if (!answer || !answer.value) return line;
+
+			if (answer.value.includes(forbidden)) {
+				// інакше значення саме себе закрило б і група стала б нечитабельною
+				throw {type: 'retype_conflict', value: answer.value, bracket: forbidden};
+			}
+
+			const indent = line.match(/^\s*/)[0];
+			const label = line.replace(/^\s*(?:\[[^\]]+\]|\([^)]+\))\+?/, '');
+
+			return indent + open + answer.value + close + (answer.text ? '+' : '') + label;
+		})
+		.join('\n')
+	);
+}
+
+/**
  * Розбирає сегмент у групу. Повертає null, якщо в сегменті немає відповідей —
  * тоді це проза, а не група.
  *

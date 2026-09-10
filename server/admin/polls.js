@@ -15,6 +15,7 @@ import {
 	toStructure,
 	fromStructure,
 	parsePoll,
+	retypeBody,
 	slugify,
 } from '../models/pollFile.js';
 import {handler} from './errors.js';
@@ -96,6 +97,12 @@ router.post('/get', handler(async function (req, res) {
 
 router.post('/slug', handler(async function (req, res) {
 	res.json({slug: slugify(req.body.title)});
+}));
+
+router.post('/retype', handler(async function (req, res) {
+	const type = req.body.type === 'radio' ? 'radio' : 'checkbox';
+
+	res.json({body: retypeBody(req.body.body, type)});
 }));
 
 router.post('/save', handler(async function (req, res) {

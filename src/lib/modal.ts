@@ -83,6 +83,31 @@ export function showInfoModal(text: string, params?: ModalParams): Modal {
 	return modal;
 }
 
+/**
+ * Показує пояснення, розмітка якого вже лежить у сторінці — зазвичай у
+ * <template>. Санітайзер тут не потрібен і не застосовується: вміст приходить
+ * не із запиту, а з самої сторінки. Ніколи не передавайте сюди вузол, зібраний
+ * з даних користувача.
+ */
+export function showHelpModal(source: HTMLElement, params?: ModalParams): Modal {
+	const modal = showModal('info-modal', {
+		size: 'default',
+		...params,
+	});
+
+	modal.loadingBtn = modal.node.querySelector<HTMLButtonElement>('.btn')!;
+
+	const body = modal.node.querySelector<HTMLDivElement>('.modal-body')!;
+
+	body.replaceChildren(
+		source instanceof HTMLTemplateElement ?
+			source.content.cloneNode(true) :
+			source.cloneNode(true)
+	);
+
+	return modal;
+}
+
 export type Modal = {
 	node: HTMLDivElement,
 	loadingBtn?: HTMLButtonElement,

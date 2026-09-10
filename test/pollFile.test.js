@@ -6,6 +6,7 @@ import {
 	parsePoll,
 	splitSegments,
 	matchAnswer,
+	retypeBody,
 	slugify,
 } from '../server/models/pollFile.js';
 
@@ -181,6 +182,50 @@ test('обмеження прозою більше не впливає на гр
 
 	assert.equal(parsePoll(body).groups[0].max, 3, 'max = кількість варіантів, а не 3 з прози');
 	assert.equal(parsePoll('Оберіть 2 варіанти\n\n[a] A\n[b] B\n[c] C\n').groups[0].max, 3);
+});
+
+test('retypeBody: перемикання типу відповіді переписує дужки', function () {
+	const checkbox = 'Проза лишається\n[перша] Відповідь 1\n[інше]+ Свій варіант\n';
+
+	assert.equal(
+		retypeBody(checkbox, 'radio'),
+		'Проза лишається\n(перша) Відповідь 1\n(інше)+ Свій варіант\n'
+	);
+
+	assert.equal(
+		retypeBody('(так) Так\n(ні) Ні\n', 'checkbox'),
+		'[так] Так\n[ні] Ні\n'
+	);
+
+	// значення і `+` зберігаються, тому голоси в БД лишаються придатними
+	assert.deepEqual(parsePoll(retypeBody(checkbox, 'radio')).values, ['перша', 'інше']);
+});
+
+test('retypeBody: той самий тип нічого не змінює', function () {
+	const body = '[a] A\n[b]+ B\n';
+
+	assert.equal(retypeBody(body, 'checkbox'), body);
+});
+
+test('retypeBody: не чіпає image ref і зберігає відступ', function () {
+	assert.equal(
+		retypeBody('[image]: <data:image/png;base64,xxx>\n  [a] A\n', 'radio'),
+		'[image]: <data:image/png;base64,xxx>\n  (a) A\n'
+	);
+});
+
+test('retypeBody: значення з дужкою — помилка, а не зламаний файл', function () {
+	assert.throws(
+		() => retypeBody('[a)b] A\n', 'radio'),
+		function (err) {
+			assert.equal(err.type, 'retype_conflict');
+			assert.equal(err.value, 'a)b');
+			return true;
+		}
+	);
+
+	// у зворотний бік так само
+	assert.throws(() => retypeBody('(a]b) A\n', 'checkbox'), err => err.type === 'retype_conflict');
 });
 
 test('slugify: транслітерація', function () {

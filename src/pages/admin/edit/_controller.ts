@@ -2,7 +2,9 @@ import ajax from '@lib/ajax.js';
 import {qs, byId, loading, copyText} from '@lib/dom.ts';
 import {error, success} from '@lib/notify.ts';
 import {getAuthParams, getJwt, hasAuth, isAdmin, retrieveJwt} from '@lib/auth.ts';
-import {showModal} from '@lib/modal.ts';
+import {showModal, showHelpModal} from '@lib/modal.ts';
+
+type AnswerType = 'checkbox'|'radio';
 
 type GroupData = {
 	body: string,
@@ -23,7 +25,7 @@ type PollStruct = {
 	slugLocked?: boolean,
 };
 
-/** розбір груп, який повертає прев'ю; null — група без варіантів */
+/** розбір питань, який повертає прев'ю; null — питання без варіантів */
 type PreviewGroup = {type: string, values: string[]} | null;
 
 const POLLS_PATH = '/polls/';
@@ -56,12 +58,24 @@ const previewCol = byId('preview-col');
 const previewPane = byId('preview-pane');
 const previewBox = byId('preview');
 
-/** порядок груп на момент останнього рендеру прев'ю, за їх gid */
+/** порядок питань на момент останнього рендеру прев'ю, за їх gid */
 let renderedGids: string[] = [];
-/** розбір груп з останнього рендеру, у тому ж порядку */
+/** розбір питань з останнього рендеру, у тому ж порядку */
 let renderedGroups: PreviewGroup[] = [];
 
 let gidSeq = 0;
+
+// пояснення лежать у <template> у сторінці; делегування покриває і ті кнопки,
+// що зʼявляються разом з новим питанням
+document.addEventListener('click', function (e) {
+	const btn = (e.target as HTMLElement).closest?.('[data-help]') as HTMLElement|null;
+
+	if (!btn) return;
+
+	const source = byId(btn.dataset.help!);
+
+	if (source) showHelpModal(source);
+});
 
 byId('slug-prefix').innerText = location.origin + POLLS_PATH;
 
@@ -71,8 +85,6 @@ byId<HTMLButtonElement>('slug-copy').onclick = function () {
 
 byId<HTMLButtonElement>('add-group').onclick = function () {
 	const node = addGroup({body: '', min: 1, max: null});
-
-	relabel();
 
 	qs<HTMLTextAreaElement>('[data-body]', node).focus();
 };
@@ -133,7 +145,6 @@ if (await isAdmin()) {
 	}
 	else {
 		addGroup({body: '', min: 1, max: null});
-		relabel();
 	}
 }
 else {
@@ -144,8 +155,6 @@ else {
 
 async function load(slug: string) {
 	const data: PollStruct = await ajax('/api/admin/polls/get', {jwt: getJwt(), slug});
-
-	byId('page-title').innerText = data.title || slug;
 
 	titleInput.value = data.title;
 	slugInput.value = data.slug || slug;
@@ -159,8 +168,6 @@ async function load(slug: string) {
 	for (const group of data.groups) {
 		addGroup(group);
 	}
-
-	relabel();
 
 	const votes = data.votes || 0;
 
@@ -216,33 +223,38 @@ function addGroup(group: GroupData): HTMLElement {
 
 	optional.onchange = () => applyOptional(node);
 
-	// фокус у будь-якому полі групи гортає прев'ю до цієї ж групи
+	for (const btn of Array.from(node.querySelectorAll<HTMLButtonElement>('[data-type]'))) {
+		btn.onclick = function () {
+			const next = btn.dataset.type as AnswerType;
+
+			if (node.dataset.type === next) return;
+
+			retype(node, next).catch(showError);
+		};
+	}
+
+	// фокус у будь-якому полі питання гортає прев'ю до цього ж питання
 	node.addEventListener('focusin', () => scrollPreviewToGroup(node));
 
 	qs<HTMLButtonElement>('[data-remove]', node).onclick = function () {
 		if (groupsRoot.children.length === 1) {
-			error('Опитування має містити хоча б одну групу');
+			error('Опитування має містити хоча б одне питання');
 			return;
 		}
 
 		node.remove();
-		relabel();
 	};
 
 	qs<HTMLButtonElement>('[data-up]', node).onclick = function () {
 		const prev = node.previousElementSibling;
 
 		if (prev) groupsRoot.insertBefore(node, prev);
-
-		relabel();
 	};
 
 	qs<HTMLButtonElement>('[data-down]', node).onclick = function () {
 		const next = node.nextElementSibling;
 
 		if (next) groupsRoot.insertBefore(next, node);
-
-		relabel();
 	};
 
 	groupsRoot.appendChild(node);
@@ -251,7 +263,25 @@ function addGroup(group: GroupData): HTMLElement {
 }
 
 /**
- * «Необов'язкова» — це рівно min = 0, окремого поля у файлі немає.
+ * Перемикає тип відповіді. Дужки в тексті переписує сервер — конструктор не
+ * тримає власної копії знань про синтаксис.
+ */
+async function retype(node: HTMLElement, type: AnswerType) {
+	const body = qs<HTMLTextAreaElement>('[data-body]', node);
+
+	const data = await ajax('/api/admin/polls/retype', {
+		jwt: getJwt(),
+		body: body.value,
+		type,
+	});
+
+	body.value = data.body;
+
+	applyType(node, type);
+}
+
+/**
+ * «Відповідь необов'язкова» — це рівно min = 0, окремого поля у файлі немає.
  */
 function applyOptional(node: HTMLElement) {
 	const min = qs<HTMLInputElement>('[data-min]', node);
@@ -271,44 +301,41 @@ function applyOptional(node: HTMLElement) {
 }
 
 /**
- * Тип групи визначає сервер (при завантаженні і при прев'ю) — конструктор не
- * тримає власної копії знань про синтаксис.
+ * Тип або задає перемикач, або приносить сервер при завантаженні і прев'ю.
+ * Для «Тільки одна відповідь» полів «Від» і «До» немає: вибрати можна лише
+ * один варіант, а «можна пропустити» задається галочкою.
  */
 function applyType(node: HTMLElement, type?: string) {
-	const hint = qs('[data-hint]', node);
-	const maxCol = qs('[data-max-col]', node);
+	const resolved: AnswerType = type === 'radio' ? 'radio' : 'checkbox';
 
-	if (type === 'radio') {
-		// у radio-групі можна вибрати лише один варіант, тому «До» не має сенсу
-		maxCol.classList.add('d-none');
-		hint.innerText = 'Одна відповідь. «Від 0» дозволяє пропустити питання.';
-		return;
+	node.dataset.type = resolved;
+
+	for (const btn of Array.from(node.querySelectorAll<HTMLButtonElement>('[data-type]'))) {
+		const active = btn.dataset.type === resolved;
+
+		btn.classList.toggle('active', active);
+		btn.setAttribute('aria-pressed', String(active));
 	}
 
-	maxCol.classList.remove('d-none');
+	const single = resolved === 'radio';
 
-	hint.innerText = (
-		type === 'checkbox' ?
-			'Кілька відповідей. Порожнє «До» — без обмеження.' :
-			'Тип визначиться після прев\'ю.'
-	);
-}
-
-function relabel() {
-	Array.from(groupsRoot.children).forEach(function (node, i) {
-		qs('[data-label]', node as HTMLElement).innerText = 'Група ' + (i + 1);
-	});
+	qs('[data-min-col]', node).classList.toggle('d-none', single);
+	qs('[data-max-col]', node).classList.toggle('d-none', single);
 }
 
 function collect(): PollStruct {
 	const groups: GroupData[] = Array.from(groupsRoot.children).map(function (node) {
 		const el = node as HTMLElement;
-		const max = qs<HTMLInputElement>('[data-max]', el).value.trim();
+		const single = el.dataset.type === 'radio';
+		const optional = qs<HTMLInputElement>('[data-optional]', el).checked;
+		const minRaw = qs<HTMLInputElement>('[data-min]', el).value.trim();
+		const maxRaw = qs<HTMLInputElement>('[data-max]', el).value.trim();
 
 		return {
 			body: qs<HTMLTextAreaElement>('[data-body]', el).value,
-			min: Number(qs<HTMLInputElement>('[data-min]', el).value || 0),
-			max: max === '' ? null : Number(max),
+			min: optional ? 0 : (single ? 1 : Number(minRaw || 1)),
+			// для одного варіанта максимум завжди 1 — його підставить сервер
+			max: single || maxRaw === '' ? null : Number(maxRaw),
 		};
 	});
 
@@ -332,7 +359,7 @@ async function openPreview() {
 
 	await renderPreview();
 
-	// якщо курсор уже стоїть у якійсь групі — показати саме її
+	// якщо курсор уже стоїть у якомусь питанні — показати саме його
 	const active = document.activeElement as HTMLElement|null;
 	const group = active?.closest?.('.group') as HTMLElement|null;
 
@@ -357,8 +384,11 @@ async function renderPreview() {
 		renderedGroups = data.groups || [];
 		renderedGids = Array.from(groupsRoot.children).map(node => (node as HTMLElement).dataset.gid!);
 
+		// текст міг задати тип інакше, ніж стоїть перемикач — довіряємо розбору
 		Array.from(groupsRoot.children).forEach(function (node, i) {
-			applyType(node as HTMLElement, renderedGroups[i]?.type);
+			const type = renderedGroups[i]?.type;
+
+			if (type) applyType(node as HTMLElement, type);
 		});
 	}
 	finally {
@@ -367,12 +397,12 @@ async function renderPreview() {
 }
 
 /**
- * Гортає прев'ю до групи, що зараз у фокусі.
+ * Гортає прев'ю до питання, що зараз у фокусі.
  *
  * Прив'язка йде через значення першого варіанта, а не через порядковий номер:
- * `data-group` у розмітці нумерується розділювачами, тож порожня група збила б
- * нумерацію. Якщо групу додали після рендеру — не гортаємо нікуди, бо в прев'ю
- * її ще немає.
+ * `data-group` у розмітці нумерується розділювачами, тож питання без варіантів
+ * збило б нумерацію. Якщо питання додали після рендеру — не гортаємо нікуди,
+ * бо в прев'ю його ще немає.
  */
 function scrollPreviewToGroup(node: HTMLElement) {
 	if (!isPreviewOpen()) return;
@@ -392,7 +422,7 @@ function scrollPreviewToGroup(node: HTMLElement) {
 
 /**
  * Гортає мінімально: якщо цільове місце вже видно, не рухаємо нічого — інакше
- * прев'ю смикалось би при кожному переході фокусу між сусідніми групами.
+ * прев'ю смикалось би при кожному переході фокусу між сусідніми питаннями.
  *
  * @param target null — на початок прев'ю
  */
@@ -438,8 +468,6 @@ async function save(): Promise<string> {
 		const url = new URL(location.href);
 		url.searchParams.set('slug', data.slug);
 		history.replaceState({}, '', url);
-
-		byId('page-title').innerText = titleInput.value || data.slug;
 
 		return data.slug;
 	}

@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import LoginModal from '../../components/LoginModal.astro';
+import InfoModal from '../../components/InfoModal.astro';
 import './_style.less';
 ---
 
@@ -57,14 +58,15 @@ import './_style.less';
 
         <section class="card p-3 mt-4">
             <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
-                <h2 class="h5 m-0">Публікація</h2>
+                <h2 class="h5 m-0 d-flex align-items-center gap-2">
+                    Публікація
+
+                    <button type="button" class="btn-help" data-help="help-publish"
+                            aria-label="Пояснення про публікацію">?</button>
+                </h2>
 
                 <button id="publish" type="button" class="btn btn-success">Опублікувати сайт</button>
             </div>
-
-            <p class="text-secondary small mb-3">
-                Публікація збирає сайт заново і переставляє його на нову збірку. Чернетки в збірку не потрапляють.
-            </p>
 
             <pre id="log" class="bg-body-secondary p-3 small mb-3 d-none"></pre>
 
@@ -82,7 +84,19 @@ import './_style.less';
         </section>
     </main>
 
+    <template id="help-publish">
+        <p>
+            Публікація збирає сайт заново в окрему теку і переставляє його на цю нову збірку.
+            Якщо збірка впаде, сайт лишиться на попередній версії.
+        </p>
+        <p class="mb-0">
+            Чернетки у збірку не потрапляють. Зберігаються 3 останні збірки — на будь-яку з них
+            можна відкотитись кнопкою «Відкатити».
+        </p>
+    </template>
+
 	<LoginModal/>
+	<InfoModal/>
 </Base>
 
 <script>

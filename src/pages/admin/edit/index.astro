@@ -1,22 +1,23 @@
 ---
 import Base from '../../../layouts/Base.astro';
 import LoginModal from '../../../components/LoginModal.astro';
+import InfoModal from '../../../components/InfoModal.astro';
 import '../_style.less';
 import '../../../styles/poll.less';
 ---
 
 <Base title="Редагування опитування">
-    <main class="container-fluid py-4 admin admin-edit">
+    <main class="container-xxl py-4 admin admin-edit">
         <div class="d-flex align-items-center justify-content-between gap-3 mb-4">
-            <h1 id="page-title" class="h3 m-0">Нове опитування</h1>
+            <a href="/admin/" class="btn btn-outline-secondary">← До списку</a>
 
-            <a href="/admin/" class="btn btn-link">← До списку</a>
+            <button id="preview-btn" type="button" class="btn btn-outline-secondary">Прев'ю</button>
         </div>
 
         <div id="votes-warning" class="alert alert-warning d-none">
             За це опитування вже проголосували (<strong id="votes-count">0</strong>).
             Ідентифікатор заблоковано, а варіанти, за які є голоси, не можна видалити,
-            перейменувати чи перенести в групу іншого типу. Додавати нові варіанти можна.
+            перейменувати чи перенести в питання іншого типу. Додавати нові варіанти можна.
         </div>
 
         <div class="row g-4">
@@ -28,7 +29,11 @@ import '../../../styles/poll.less';
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label" for="slug">Посилання на опитування</label>
+                        <label class="form-label" for="slug">
+                            Посилання на опитування
+                            <button type="button" class="btn-help" data-help="help-slug"
+                                    aria-label="Пояснення про посилання">?</button>
+                        </label>
 
                         <div class="input-group slug-group">
                             <span id="slug-prefix" class="input-group-text"></span>
@@ -38,66 +43,80 @@ import '../../../styles/poll.less';
                             <button id="slug-copy" type="button" class="btn btn-outline-secondary"
                                     title="Скопіювати посилання">Копіювати</button>
                         </div>
-
-                        <div class="form-text">
-                            Малі латинські літери, цифри і дефіс. Це ще й ідентифікатор опитування
-                            в базі відповідей, тому після першого голосу змінити його неможливо.
-                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label" for="intro">Вступний текст</label>
-                        <textarea id="intro" name="intro" class="form-control" rows="4"></textarea>
-                        <div class="form-text">Markdown. Виводиться під заголовком, до першої групи.</div>
-                    </div>
-
-                    <div class="row g-3">
+                    <div class="row g-3 mb-3">
                         <div class="col-sm-4">
-                            <label class="form-label" for="expire">Активне до</label>
+                            <label class="form-label" for="expire">
+                                Активне до
+                                <button type="button" class="btn-help" data-help="help-expire"
+                                        aria-label="Пояснення про дату закінчення">?</button>
+                            </label>
                             <input id="expire" name="expire" type="date" class="form-control"/>
                         </div>
-                        <div class="col-sm-8 d-flex align-items-end gap-4">
-                            <label class="form-check">
-                                <input id="public" type="checkbox" class="form-check-input"/>
-                                <span class="form-check-label">Публічне (імена учасників видимі)</span>
-                            </label>
-                            <label class="form-check">
-                                <input id="draft" type="checkbox" class="form-check-input"/>
-                                <span class="form-check-label">Чернетка</span>
-                            </label>
+
+                        <div class="col-sm-8 d-flex align-items-center flex-wrap gap-4 pt-sm-4">
+                            <span class="d-flex align-items-center gap-2">
+                                <label class="form-check mb-0">
+                                    <input id="public" type="checkbox" class="form-check-input"/>
+                                    <span class="form-check-label">Публічне</span>
+                                </label>
+
+                                <button type="button" class="btn-help" data-help="help-public"
+                                        aria-label="Пояснення про публічне опитування">?</button>
+                            </span>
+
+                            <span class="d-flex align-items-center gap-2">
+                                <label class="form-check mb-0">
+                                    <input id="draft" type="checkbox" class="form-check-input"/>
+                                    <span class="form-check-label">Чернетка</span>
+                                </label>
+
+                                <button type="button" class="btn-help" data-help="help-draft"
+                                        aria-label="Пояснення про чернетку">?</button>
+                            </span>
                         </div>
+                    </div>
+
+                    <div>
+                        <label class="form-label" for="intro">
+                            Вступний текст
+                            <button type="button" class="btn-help" data-help="help-intro"
+                                    aria-label="Пояснення про вступний текст">?</button>
+                        </label>
+                        <textarea id="intro" name="intro" class="form-control" rows="4"></textarea>
                     </div>
                 </form>
 
-                <h2 class="h5">Групи варіантів</h2>
+                <h2 class="h5 d-flex align-items-center gap-2">
+                    Питання з варіантами відповідей
 
-                <p class="text-secondary hint">
-                    У тілі групи кожен варіант — окремий рядок:
-                    <code>[значення] Підпис</code> для кількох відповідей,
-                    <code>(значення) Підпис</code> для однієї.
-                    Додайте <code>+</code> після дужки (<code>[інше]+ Свій варіант</code>),
-                    щоб під варіантом з'явилось поле для власного тексту.
-                    Розділювачі <code>---</code> ставити не потрібно — їх додає кнопка «Додати групу».
-                </p>
+                    <button type="button" class="btn-help" data-help="help-syntax"
+                            aria-label="Пояснення про формат варіантів">?</button>
+                </h2>
 
                 <div id="groups"></div>
 
                 <template id="group-tpl">
                     <div class="group card p-3 mb-3">
-                        <div class="d-flex align-items-center justify-content-between gap-3 mb-2">
-                            <strong data-label class="group-label"></strong>
+                        <div class="d-flex align-items-center flex-wrap gap-2 mb-2">
+                            <button data-up type="button" class="btn btn-sm btn-outline-secondary" title="Вище">↑</button>
+                            <button data-down type="button" class="btn btn-sm btn-outline-secondary" title="Нижче">↓</button>
 
-                            <span class="d-flex align-items-center gap-2">
-                                <button data-up type="button" class="btn btn-sm btn-outline-secondary" title="Вище">↑</button>
-                                <button data-down type="button" class="btn btn-sm btn-outline-secondary" title="Нижче">↓</button>
-                                <button data-remove type="button" class="btn btn-sm btn-outline-danger">Видалити групу</button>
-                            </span>
+                            <div class="btn-group btn-group-sm type-switch" role="group">
+                                <button data-type="checkbox" type="button" class="btn btn-outline-secondary">Декілька відповідей</button>
+                                <button data-type="radio" type="button" class="btn btn-outline-secondary">Тільки одна відповідь</button>
+                            </div>
+
+                            <span class="flex-fill"></span>
+
+                            <button data-remove type="button" class="btn btn-sm btn-outline-danger">Видалити</button>
                         </div>
 
-                        <textarea data-body class="form-control" rows="6"></textarea>
+                        <textarea data-body class="form-control"></textarea>
 
                         <div class="row g-3 mt-2 align-items-end">
-                            <div class="col-auto">
+                            <div class="col-auto" data-min-col>
                                 <label class="form-label mb-1">Від</label>
                                 <input data-min type="number" min="0" step="1" class="form-control range-input"/>
                             </div>
@@ -105,20 +124,21 @@ import '../../../styles/poll.less';
                                 <label class="form-label mb-1">До</label>
                                 <input data-max type="number" min="1" step="1" class="form-control range-input"/>
                             </div>
-                            <div class="col-auto">
-                                <label class="form-check">
+                            <div class="col-auto d-flex align-items-center gap-2">
+                                <label class="form-check mb-0">
                                     <input data-optional type="checkbox" class="form-check-input"/>
-                                    <span class="form-check-label">Необов'язкова</span>
+                                    <span class="form-check-label">Відповідь необов'язкова</span>
                                 </label>
+
+                                <button type="button" class="btn-help" data-help="help-optional"
+                                        aria-label="Пояснення про необов'язкову відповідь">?</button>
                             </div>
-                            <div class="col text-secondary hint" data-hint></div>
                         </div>
                     </div>
                 </template>
 
                 <div class="d-flex flex-wrap align-items-center gap-2 mb-4">
-                    <button id="add-group" type="button" class="btn btn-outline-primary">Додати групу</button>
-                    <button id="preview-btn" type="button" class="btn btn-outline-secondary">Прев'ю</button>
+                    <button id="add-group" type="button" class="btn btn-outline-primary">Додати питання</button>
                     <span class="flex-fill"></span>
                     <button id="save" type="button" class="btn btn-primary">Зберегти</button>
                     <button id="save-publish" type="button" class="btn btn-success">Зберегти і опублікувати</button>
@@ -130,7 +150,12 @@ import '../../../styles/poll.less';
             <div id="preview-col" class="col-lg-5 d-none">
                 <div id="preview-pane" class="preview-pane card p-3">
                     <div class="d-flex align-items-center justify-content-between gap-3 mb-2">
-                        <h2 class="h5 m-0">Прев'ю</h2>
+                        <h2 class="h5 m-0 d-flex align-items-center gap-2">
+                            Прев'ю
+
+                            <button type="button" class="btn-help" data-help="help-preview"
+                                    aria-label="Пояснення про прев'ю">?</button>
+                        </h2>
 
                         <span class="d-flex align-items-center gap-2">
                             <button id="preview-refresh" type="button" class="btn btn-sm btn-outline-secondary">Оновити</button>
@@ -138,17 +163,93 @@ import '../../../styles/poll.less';
                         </span>
                     </div>
 
-                    <p class="text-secondary hint">
-                        Рендериться тим самим кодом, що й опубліковані сторінки.
-                    </p>
-
                     <div id="preview" class="poll"></div>
                 </div>
             </div>
         </div>
     </main>
 
+    <template id="help-slug">
+        <p>
+            Малі латинські літери, цифри і дефіс. Підставляється автоматично із заголовка,
+            але його можна виправити.
+        </p>
+        <p class="mb-0">
+            Це ще й ідентифікатор опитування в базі відповідей, тому
+            <strong>після першого голосу змінити його неможливо</strong> — статистика привʼязана
+            до нього незворотно.
+        </p>
+    </template>
+
+    <template id="help-expire">
+        <p class="mb-0">
+            Дата, після якої опитування переходить у «Минулі» і більше не приймає відповідей.
+            Якщо не заповнено — опитування безстрокове.
+        </p>
+    </template>
+
+    <template id="help-public">
+        <p class="mb-0">
+            У публічному опитуванні поруч із відповідями зберігається і показується
+            <strong>імʼя учасника</strong> — так результат може працювати як петиція.
+            Якщо вимкнено, опитування анонімне: імʼя не зберігається.
+        </p>
+    </template>
+
+    <template id="help-draft">
+        <p class="mb-0">
+            Чернетка не потрапляє ні в список опитувань, ні у збірку сайту — сторінки за
+            прямим посиланням теж не буде. Відповіді на чернетку сервер не приймає.
+            Кнопка «Зберегти і опублікувати» знімає цю галочку.
+        </p>
+    </template>
+
+    <template id="help-intro">
+        <p class="mb-0">
+            Markdown. Виводиться під заголовком, перед першим питанням.
+        </p>
+    </template>
+
+    <template id="help-syntax">
+        <p>Кожен варіант відповіді — окремий рядок у тілі питання:</p>
+        <pre class="mb-3">[перша] Відповідь 1
+[друга] Відповідь 2
+[інше]+ Свій варіант</pre>
+        <p>
+            У дужках — <strong>значення</strong>, яке зберігається в базі; далі підпис,
+            який бачить людина. Значення мають бути унікальними в межах усього опитування,
+            і після першого голосу їх не можна ні перейменувати, ні видалити.
+        </p>
+        <p>
+            Тип дужок задає перемикач «Декілька відповідей / Тільки одна відповідь» —
+            він переписує дужки в тексті сам.
+        </p>
+        <p class="mb-0">
+            <code>+</code> одразу після дужки додає під варіантом поле, у яке людина
+            впише свій текст.
+        </p>
+    </template>
+
+    <template id="help-optional">
+        <p>
+            Зазвичай на питання треба відповісти, щоб надіслати опитування. З цією галочкою
+            питання можна пропустити, не вибравши нічого.
+        </p>
+        <p class="mb-0">
+            У файлі опитування це записується як мінімум <code>0</code> відповідей.
+        </p>
+    </template>
+
+    <template id="help-preview">
+        <p class="mb-0">
+            Рендериться тим самим кодом, що й опубліковані сторінки, тому виглядає точно так,
+            як побачить учасник. Поле для власного тексту зʼявляється лише коли відмічено
+            відповідний варіант.
+        </p>
+    </template>
+
 	<LoginModal/>
+	<InfoModal/>
 </Base>
 
 <script>

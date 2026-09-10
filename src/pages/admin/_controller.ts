@@ -2,7 +2,7 @@ import ajax from '@lib/ajax.js';
 import {qs, each, loading, copyText} from '@lib/dom.ts';
 import {error, success} from '@lib/notify.ts';
 import {getAuthParams, getJwt, hasAuth, isAdmin, retrieveJwt} from '@lib/auth.ts';
-import {showModal} from '@lib/modal.ts';
+import {showModal, showHelpModal} from '@lib/modal.ts';
 
 type PollItem = {
 	slug: string,
@@ -72,6 +72,17 @@ const builds = each<BuildItem>('#builds', function (item, q) {
 		.catch(showError)
 		.finally(() => loading(btn, false));
 	};
+});
+
+// пояснення лежать у <template> у сторінці
+document.addEventListener('click', function (e) {
+	const btn = (e.target as HTMLElement).closest?.('[data-help]') as HTMLElement|null;
+
+	if (!btn) return;
+
+	const source = document.getElementById(btn.dataset.help!);
+
+	if (source) showHelpModal(source);
 });
 
 const publishBtn = qs<HTMLButtonElement>('#publish');

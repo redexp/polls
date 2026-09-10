@@ -2,6 +2,7 @@
 	max-width: 1000px;
 
 	[data-body] {
+		min-height: 9rem;
 		font-family: var(--bs-font-monospace);
 		font-size: .875rem;
 	}
@@ -19,16 +20,49 @@
 		overflow: auto;
 		white-space: pre-wrap;
 	}
+}
 
-	.hint {
-		font-size: .8125rem;
+// форма з прев'ю праворуч потребує більше місця, ніж список, але не всієї
+// ширини вікна: довгі рядки читати важко
+.admin-edit {
+	max-width: 1140px;
+	margin: 0 auto;
+}
+
+// кругла кнопка «?»: усі пояснення живуть у попапах, а не в тексті сторінки
+.btn-help {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	width: 1.25rem;
+	height: 1.25rem;
+	padding: 0;
+	border: 1px solid var(--bs-border-color);
+	border-radius: 50%;
+	background: transparent;
+	color: var(--bs-secondary-color);
+	font-size: .75rem;
+	font-weight: 600;
+	line-height: 1;
+
+	&:hover, &:focus-visible {
+		border-color: var(--bs-primary);
+		color: var(--bs-primary);
 	}
 }
 
-// дві колонки з прев'ю праворуч потребують більше місця, ніж решта адмінки
-.admin-edit {
-	max-width: 1600px;
-	margin: 0 auto;
+#info-modal .modal-body {
+	pre {
+		padding: .75rem;
+		border-radius: var(--bs-border-radius);
+		background: var(--bs-secondary-bg);
+		font-size: .8125rem;
+	}
+
+	p:last-child {
+		margin-bottom: 0;
+	}
 }
 
 // поле slug — найвужчий елемент рядка, решта показує, як складається адреса
@@ -58,7 +92,7 @@
 }
 
 // прев'ю лишається на місці, поки гортаєш форму, і має власний скрол —
-// саме його рухає фокус у групах
+// саме його рухає фокус у питаннях
 .preview-pane {
 	position: sticky;
 	top: 1rem;
