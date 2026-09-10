@@ -4,6 +4,7 @@ import {SERVER} from './config/index.js';
 import {router as bankid} from './bankid.js';
 import {router as answers} from './answers.js';
 import {router as map} from './map.js';
+import {router as admin} from './admin/index.js';
 
 reloadPollsData()
 .catch(err => {
@@ -18,6 +19,7 @@ app.use(express.json());
 app.use(bankid);
 app.use('/api/answers', answers);
 app.use('/api/map', map);
+app.use('/api/admin', admin);
 
 app.use(function (err, _req, res, _next) {
 	res.sendStatus(500);

@@ -11,4 +11,6 @@ export type PollMeta = {
 export type ValuesGroup = {
 	type: 'checkbox'|'radio',
 	values: string[],
+	min: number,
+	max: number,
 };

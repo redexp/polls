@@ -127,6 +127,33 @@ export default {
 			.del()
 		);
 	},
+
+	/**
+	 * @param {string} poll_id
+	 * @returns {import('./statistic').StatisticBuilder}
+	 */
+	removeByPoll(poll_id) {
+		return (
+			Statistic()
+			.where({poll: String(poll_id)})
+			.del()
+		);
+	},
+
+	/**
+	 * Зашифровані рядки без опитування лишалися б сиротами, які неможливо
+	 * розшифрувати в контекст — тому видаляються разом з ним.
+	 *
+	 * @param {string} poll_id
+	 * @returns {import('./statistic').ArchiveBuilder}
+	 */
+	removeArchiveByPoll(poll_id) {
+		return (
+			Archive()
+			.where({poll: String(poll_id)})
+			.del()
+		);
+	},
 };
 
 /**

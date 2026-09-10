@@ -20,6 +20,21 @@ export const POLLS_DIR = (
 	resolve(SRC_DIR, 'polls')
 );
 
+/** тека, куди складаються збірки; активна доступна через симлінк DIST_LINK */
+export const BUILDS_DIR = (
+	get('BUILDS_DIR') ||
+	resolve(ROOT_DIR, 'builds')
+);
+
+/** симлінк, на який дивиться nginx */
+export const DIST_LINK = (
+	get('DIST_LINK') ||
+	resolve(ROOT_DIR, 'dist')
+);
+
+/** скільки збірок тримати для відкату */
+export const BUILDS_KEEP = 3;
+
 const config = {
 	server: {
 		port: 8000,
@@ -38,9 +53,6 @@ const config = {
 		region: 'Cherkasy Oblast', // taken from mapbox playground
 	},
 
-	docs: {
-		folder_id: ''
-	},
 };
 
 update(config);
@@ -59,5 +71,4 @@ export const IS_DEV = get('NODE_ENV') !== 'production';
 export const SERVER = config.server;
 export const MAPS = config.maps;
 export const ASTRO_URL = config.astro.url;
-export const DOCS = config.docs;
 

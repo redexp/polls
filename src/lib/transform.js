@@ -2,6 +2,9 @@ export default function transform() {
 	return transformInput;
 }
 
+/** директива обмежень групи: {min-max}, завжди два числа */
+const DIRECTIVE_RE = /^\s*\{(\d+)\s*-\s*(\d+)\}\s*$/;
+
 /**
  * @param {import('hast').Root} root
  */
@@ -10,46 +13,48 @@ function transformInput(root) {
 		id: 0,
 		type: '',
 		inputId: 0,
-		min: 0,
-		max: 0,
+		min: null,
+		max: null,
 	};
+
+	/** @type {Set<import('hast').Element>} */
+	const dropBlocks = new Set();
 
 	for (const block of root.children) {
 		if (block.tagName === 'hr') {
 			group.id++;
 			group.type = '';
 			group.inputId = 0;
-			group.min = group.max = 0;
+			group.min = group.max = null;
 			continue;
 		}
 
 		if (block.tagName !== 'p') continue;
 
-		const range = getMinMaxNumOfAnswers(block);
-
-		if (range) {
-			Object.assign(group, range);
-		}
-
 		/** @type {import('hast').Element[]} */
 		const children = block.children;
+
+		takeRangeDirective(children, group);
+
+		if (children.length === 0) {
+			// у абзаці була лише директива
+			dropBlocks.add(block);
+			continue;
+		}
+
+		/** @type {Set<import('hast').Element>} */
+		const withText = new Set();
 
 		for (let i = 0; i < children.length; i++) {
 			const item = children[i];
 
 			if (item.type !== 'text') continue;
 
-			if (i > 0) {
-				const prev = children[i - 1];
-
-				if (prev.tagName !== 'br' && prev.value !== '\n') {
-					continue;
-				}
-			}
+			if (!isLineStart(children, i)) continue;
 
 			const match = (
-				item.value.match(/^\s*(\[)([^\]"]+)\]/) ||
-				item.value.match(/^\s*(\()([^\)"]+)\)/)
+				item.value.match(/^\s*(\[)([^\]"]+)\](\+?)/) ||
+				item.value.match(/^\s*(\()([^\)"]+)\)(\+?)/)
 			);
 
 			if (!match) continue;
@@ -85,8 +90,15 @@ function transformInput(root) {
 				},
 			};
 
-			if (group.min || group.max) {
-				input.properties['data-range'] = group.min + '-' + group.max;
+			// дефолти обчислює клієнт: він знає кількість інпутів у групі,
+			// а тут вона ще невідома — група може тривати кілька абзаців
+			if (group.min !== null) {
+				input.properties['data-min'] = group.min;
+				input.properties['data-max'] = group.max;
+			}
+
+			if (match[3] === '+') {
+				withText.add(input);
 			}
 
 			item.value = item.value.replace(match[0], '');
@@ -103,6 +115,8 @@ function transformInput(root) {
 			const t = item.tagName;
 
 			if (t === 'input') {
+				const needsText = withText.has(item);
+
 				children[i] = label = {
 					type: 'element',
 					tagName: 'label',
@@ -110,7 +124,7 @@ function transformInput(root) {
 					children: [item],
 				};
 
-				if (item.properties?.value?.endsWith('-інше')) {
+				if (needsText) {
 					const textarea = {
 						type: 'element',
 						tagName: 'textarea',
@@ -139,46 +153,56 @@ function transformInput(root) {
 
 		block.children = children.filter(item => !!item);
 	}
+
+	if (dropBlocks.size > 0) {
+		root.children = root.children.filter(block => !dropBlocks.has(block));
+	}
 }
 
 /**
- * @param {import('hast').Element | import('hast').Text} node
- * @return {{min: number, max: number} | null}
+ * Знаходить рядок-директиву {min-max} серед дітей абзацу, застосовує до групи і
+ * прибирає з дерева разом із наступним переносом рядка.
+ *
+ * @param {import('hast').Element[]} children
+ * @param {{min: number|null, max: number|null}} group
  */
-function getMinMaxNumOfAnswers(node) {
-	switch (node.type) {
-	case 'element':
-		if (!node.children) break;
+function takeRangeDirective(children, group) {
+	for (let i = 0; i < children.length; i++) {
+		const item = children[i];
 
-		for (const child of node.children) {
-			const res = getMinMaxNumOfAnswers(child);
+		if (item.type !== 'text') continue;
 
-			if (res) return res;
+		if (!isLineStart(children, i)) continue;
+
+		const match = item.value.match(DIRECTIVE_RE);
+
+		if (!match) continue;
+
+		if (group.min !== null) {
+			throw new Error(`Duplicate range directive in one group: ${JSON.stringify(item.value.trim())}`);
 		}
 
-		break;
+		group.min = Number(match[1]);
+		group.max = Number(match[2]);
 
-	case 'text':
-		const fromTo = node.value.match(/від\s+(\d+)\s+до\s+(\d+)\s+варіантів/);
+		const next = children[i + 1];
+		const removeCount = next && next.tagName === 'br' ? 2 : 1;
 
-		if (fromTo) {
-			return {
-				min: Number(fromTo[1]),
-				max: Number(fromTo[2]),
-			};
-		}
+		children.splice(i, removeCount);
 
-		const max = node.value.match(/Оберіть\s+(\d+)/);
-
-		if (max) {
-			return {
-				min: 1,
-				max: Number(max[1]),
-			};
-		}
-
-		break;
+		return;
 	}
+}
 
-	return null;
+/**
+ * @param {import('hast').Element[]} children
+ * @param {number} i
+ * @returns {boolean}
+ */
+function isLineStart(children, i) {
+	if (i === 0) return true;
+
+	const prev = children[i - 1];
+
+	return prev.tagName === 'br' || prev.value === '\n';
 }

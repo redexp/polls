@@ -1,6 +1,8 @@
 import {getCollection, type CollectionEntry} from 'astro:content';
 
-export const polls = await getCollection('polls');
+// чернетки не потрапляють у збірку взагалі — інакше сторінка була б доступна за
+// прямим URL, попри відсутність опитування в списках
+export const polls = (await getCollection('polls')).filter(poll => !poll.data.draft);
 
 export type Poll = CollectionEntry<'polls'>;
 

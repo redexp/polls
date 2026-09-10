@@ -59,7 +59,7 @@ export default function answerConfirm(form: HTMLFormElement): Promise<boolean> {
 	});
 }
 
-export function getPollData(form: HTMLFormElement): {public: boolean, expire?: Date, active: boolean, optional?: string[]} {
+export function getPollData(form: HTMLFormElement): {public: boolean, expire?: Date, active: boolean} {
 	const json = form.querySelector('script[type="text/json"]')!.innerHTML;
 	const data = JSON.parse(json);
 
@@ -122,10 +122,20 @@ function isValidAnswers(form: HTMLFormElement): boolean {
 		}
 	}
 
+	for (const group of groups.values()) {
+		if (group.checkedCount === 0) continue; // це окремий випадок, нижче
+
+		if (group.checkedCount < group.min) {
+			scrollTo(group.inputs[0]);
+			showInfoModal(`Потрібно вибрати щонайменше ${group.min} відповідей`);
+			return false;
+		}
+	}
+
 	let hasInvalid = false;
 
 	for (const group of groups.values()) {
-		if (group.optional) continue;
+		if (group.min === 0) continue; // {0-N} — необов'язкова група
 
 		const isInvalid = group.checkedCount === 0;
 
@@ -142,7 +152,7 @@ function isValidAnswers(form: HTMLFormElement): boolean {
 	}
 
 	if (hasInvalid) {
-		const count = Array.from(groups.values()).reduce((sum, g) => sum + (g.checkedCount > 0 ? 0 : 1), 0);
+		const count = Array.from(groups.values()).reduce((sum, g) => sum + (g.min > 0 && g.checkedCount === 0 ? 1 : 0), 0);
 		showInfoModal(`Ви не відповіли на ${count} ${count < 5 ? 'питання' : 'питань'}`);
 		return false;
 	}
@@ -226,14 +236,12 @@ function getTextAreas(form: HTMLFormElement): HTMLTextAreaElement[] {
 type InputsGroup = {
 	inputs: HTMLInputElement[],
 	checkedCount: number,
-	optional: boolean,
-	min?: number,
-	max?: number,
+	min: number,
+	max: number,
 };
 
 export function getInputsGroups(form: HTMLFormElement): Map<string, InputsGroup> {
 	const inputs = getInputs(form);
-	const data = getPollData(form);
 	const groups = new Map<string, InputsGroup>();
 
 	for (const input of inputs) {
@@ -247,14 +255,9 @@ export function getInputsGroups(form: HTMLFormElement): Map<string, InputsGroup>
 			g = {
 				inputs: [],
 				checkedCount: 0,
-				optional: false,
+				min: input.dataset.min ? Number(input.dataset.min) : 1,
+				max: input.dataset.max ? Number(input.dataset.max) : 0,
 			};
-
-			if (input.dataset.range) {
-				const [min, max] = input.dataset.range.split('-').map(v => Number(v));
-				g.min = min;
-				g.max = max;
-			}
 
 			groups.set(group, g);
 		}
@@ -264,10 +267,13 @@ export function getInputsGroups(form: HTMLFormElement): Map<string, InputsGroup>
 		if (input.checked) {
 			g.checkedCount++;
 		}
+	}
 
-		if (!g.optional && data.optional && input.value) {
-			g.optional = data.optional.some(value => input.value.startsWith(value));
-		}
+	// дефолт max відомий лише коли група зібрана: radio — один, checkbox — усі
+	for (const g of groups.values()) {
+		if (g.max) continue;
+
+		g.max = g.inputs[0]?.type === 'radio' ? 1 : g.inputs.length;
 	}
 
 	return groups;

@@ -1,0 +1,84 @@
+---
+import Base from '../../layouts/Base.astro';
+import LoginModal from '../../components/LoginModal.astro';
+import './_style.less';
+---
+
+<Base title="Опитування — адмінка">
+    <main class="container py-4 admin">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 m-0">Опитування</h1>
+
+            <a href="/admin/edit/" class="btn btn-primary">Створити опитування</a>
+        </div>
+
+        <div id="empty" class="alert alert-secondary d-none">
+            Опитувань ще немає.
+        </div>
+
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Заголовок</th>
+                        <th>Ідентифікатор</th>
+                        <th>Стан</th>
+                        <th class="text-end">Голосів</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="polls">
+                    <tr>
+                        <td>
+                            <a data-title href="#"></a>
+                            <div data-error class="text-danger small"></div>
+                        </td>
+                        <td><code data-slug></code></td>
+                        <td class="text-nowrap">
+                            <span data-draft class="badge text-bg-warning">Чернетка</span>
+                            <span data-active class="badge"></span>
+                            <span data-public class="badge"></span>
+                        </td>
+                        <td class="text-end"><strong data-votes></strong></td>
+                        <td class="text-end text-nowrap">
+                            <a data-edit href="#" class="btn btn-sm btn-outline-secondary">Редагувати</a>
+                            <button data-delete type="button" class="btn btn-sm btn-outline-danger">Видалити</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <section class="card p-3 mt-4">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="h5 m-0">Публікація</h2>
+
+                <button id="publish" type="button" class="btn btn-success">Опублікувати сайт</button>
+            </div>
+
+            <p class="text-secondary small mb-3">
+                Публікація збирає сайт заново і переставляє його на нову збірку. Чернетки в збірку не потрапляють.
+            </p>
+
+            <pre id="log" class="bg-body-secondary p-3 small mb-3 d-none"></pre>
+
+            <h3 class="h6">Збірки</h3>
+
+            <ul id="builds" class="list-group list-group-flush">
+                <li class="list-group-item d-flex align-items-center justify-content-between px-0">
+                    <code data-name></code>
+                    <span class="d-flex align-items-center gap-2">
+                        <span data-current class="badge text-bg-success">Активна</span>
+                        <button data-rollback type="button" class="btn btn-sm btn-outline-secondary">Відкатити</button>
+                    </span>
+                </li>
+            </ul>
+        </section>
+    </main>
+
+	<LoginModal/>
+</Base>
+
+<script>
+	import './_controller.ts';
+</script>

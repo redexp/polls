@@ -127,6 +127,70 @@ export default {
 	},
 
 	/**
+	 * Кількість учасників по опитуваннях. Саме учасників, а не рядків: один
+	 * учасник дає стільки рядків, скільки вибрав варіантів.
+	 *
+	 * @param {Array<string>} polls
+	 * @return {Promise<Object<string, number>>}
+	 */
+	async countVoters(polls) {
+		if (!Array.isArray(polls) || polls.length === 0) return {};
+
+		const rows = await (
+			Answers()
+			.select('poll')
+			.countDistinct({count: 'bank_id'})
+			.whereIn('poll', polls)
+			.groupBy('poll')
+		);
+
+		const counts = {};
+
+		for (const {poll, count} of rows) {
+			counts[poll] = count;
+		}
+
+		return counts;
+	},
+
+	/**
+	 * Скільки голосів має кожне значення — потрібно, щоб не дати видалити
+	 * значення, за яке вже проголосували.
+	 *
+	 * @param {string} poll
+	 * @return {Promise<Object<string, number>>}
+	 */
+	async countValues(poll) {
+		const rows = await (
+			Answers()
+			.select('value')
+			.count({count: '*'})
+			.where({poll: String(poll)})
+			.groupBy('value')
+		);
+
+		const counts = {};
+
+		for (const {value, count} of rows) {
+			counts[value] = count;
+		}
+
+		return counts;
+	},
+
+	/**
+	 * @param {string} poll
+	 * @returns {import('./answer').AnswersBuilder}
+	 */
+	removeByPoll(poll) {
+		return (
+			Answers()
+			.del()
+			.where({poll: String(poll)})
+		);
+	},
+
+	/**
 	 * @param {Array<string>} polls
 	 * @return {Promise<import('./answer').PollsStats>}
 	 */

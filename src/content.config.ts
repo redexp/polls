@@ -10,7 +10,9 @@ const polls = defineCollection({
 	schema: z.object({
 		expire: z.date().optional(),
 		public: z.boolean().optional(),
-		optional: z.array(z.string()).optional(),
+		// обмеження груп задаються директивою {min-max} у тілі опитування;
+		// поле optional скасоване — воно було рівно min = 0
+		draft: z.boolean().optional(),
 	}),
 });
 

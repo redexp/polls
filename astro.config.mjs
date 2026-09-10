@@ -1,11 +1,11 @@
 import {defineConfig, envField} from 'astro/config';
-import {unified} from '@astrojs/markdown-remark';
-import remarkBreaks from 'remark-breaks';
 import {SERVER} from './server/config';
-import transform from './src/lib/transform.js';
+import {processor} from './src/lib/processor.js';
 
 export default defineConfig({
 	site: SERVER.url,
+	// адмінка збирає в теку зі штампом часу і потім переставляє симлінк dist
+	outDir: process.env.ASTRO_OUT_DIR || './dist',
 	env: {
 		schema: {
 			TITLE: envField.string({context: 'client', access: 'public'}),
@@ -14,10 +14,7 @@ export default defineConfig({
 		}
 	},
 	markdown: {
-		processor: unified({
-			remarkPlugins: [remarkBreaks],
-			rehypePlugins: [transform],
-		}),
+		processor,
 	},
 	devToolbar: {
 		enabled: false,

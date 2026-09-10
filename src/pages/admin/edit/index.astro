@@ -1,0 +1,140 @@
+---
+import Base from '../../../layouts/Base.astro';
+import LoginModal from '../../../components/LoginModal.astro';
+import '../_style.less';
+import '../../../styles/poll.less';
+---
+
+<Base title="Редагування опитування">
+    <main class="container py-4 admin">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <h1 id="page-title" class="h3 m-0">Нове опитування</h1>
+
+            <a href="/admin/" class="btn btn-link">← До списку</a>
+        </div>
+
+        <div id="votes-warning" class="alert alert-warning d-none">
+            За це опитування вже проголосували (<strong id="votes-count">0</strong>).
+            Ідентифікатор заблоковано, а варіанти, за які є голоси, не можна видалити,
+            перейменувати чи перенести в групу іншого типу. Додавати нові варіанти можна.
+        </div>
+
+        <div id="prose-warning" class="alert alert-info d-none">
+            У тексті знайдено обмеження, записане словами («Оберіть 3», «від 1 до 3 варіантів»).
+            Воно більше не діє — обмеження задається полями «Від» і «До». Приберіть його з тексту,
+            якщо воно дублює поля.
+        </div>
+
+        <form id="poll-form" class="card p-3 mb-4">
+            <div class="mb-3">
+                <label class="form-label" for="title">Заголовок</label>
+                <input id="title" name="title" type="text" class="form-control" required/>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="slug">Ідентифікатор</label>
+                <input id="slug" name="slug" type="text" class="form-control font-monospace"
+                       pattern="[a-z0-9-]+" required/>
+                <div class="form-text">
+                    Малі латинські літери, цифри і дефіс. Використовується в адресі сторінки і
+                    в базі відповідей, тому після першого голосу змінити його неможливо.
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="intro">Вступний текст</label>
+                <textarea id="intro" name="intro" class="form-control" rows="4"></textarea>
+                <div class="form-text">Markdown. Виводиться під заголовком, до першої групи.</div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-sm-4">
+                    <label class="form-label" for="expire">Активне до</label>
+                    <input id="expire" name="expire" type="date" class="form-control"/>
+                </div>
+                <div class="col-sm-8 d-flex align-items-end gap-4">
+                    <label class="form-check">
+                        <input id="public" type="checkbox" class="form-check-input"/>
+                        <span class="form-check-label">Публічне (імена учасників видимі)</span>
+                    </label>
+                    <label class="form-check">
+                        <input id="draft" type="checkbox" class="form-check-input"/>
+                        <span class="form-check-label">Чернетка</span>
+                    </label>
+                </div>
+            </div>
+        </form>
+
+        <h2 class="h5">Групи варіантів</h2>
+
+        <p class="text-secondary hint">
+            У тілі групи кожен варіант — окремий рядок:
+            <code>[значення] Підпис</code> для кількох відповідей,
+            <code>(значення) Підпис</code> для однієї.
+            Додайте <code>+</code> після дужки (<code>[інше]+ Свій варіант</code>),
+            щоб під варіантом з'явилось поле для власного тексту.
+            Розділювачі <code>---</code> ставити не потрібно — їх додає кнопка «Додати групу».
+        </p>
+
+        <div id="groups"></div>
+
+        <template id="group-tpl">
+            <div class="group card p-3 mb-3">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <strong data-label class="group-label"></strong>
+                    <span class="group-actions">
+                        <button data-up type="button" class="btn btn-sm btn-outline-secondary" title="Вище">↑</button>
+                        <button data-down type="button" class="btn btn-sm btn-outline-secondary" title="Нижче">↓</button>
+                        <button data-remove type="button" class="btn btn-sm btn-outline-danger">Видалити групу</button>
+                    </span>
+                </div>
+
+                <textarea data-body class="form-control" rows="6"></textarea>
+
+                <div class="row g-3 mt-2 align-items-end">
+                    <div class="col-auto">
+                        <label class="form-label mb-1">Від</label>
+                        <input data-min type="number" min="0" step="1" class="form-control" style="width: 6rem"/>
+                    </div>
+                    <div class="col-auto" data-max-col>
+                        <label class="form-label mb-1">До</label>
+                        <input data-max type="number" min="1" step="1" class="form-control" style="width: 6rem"/>
+                    </div>
+                    <div class="col-auto">
+                        <label class="form-check">
+                            <input data-optional type="checkbox" class="form-check-input"/>
+                            <span class="form-check-label">Необов'язкова</span>
+                        </label>
+                    </div>
+                    <div class="col text-secondary hint" data-hint></div>
+                </div>
+            </div>
+        </template>
+
+        <div class="d-flex flex-wrap gap-2 mb-4">
+            <button id="add-group" type="button" class="btn btn-outline-primary">Додати групу</button>
+            <button id="preview-btn" type="button" class="btn btn-outline-secondary">Прев'ю</button>
+            <span class="flex-fill"></span>
+            <button id="save" type="button" class="btn btn-primary">Зберегти</button>
+            <button id="save-publish" type="button" class="btn btn-success">Зберегти і опублікувати</button>
+        </div>
+
+        <pre id="log" class="bg-body-secondary p-3 small mb-4 d-none"></pre>
+
+        <section class="card p-3">
+            <h2 class="h5">Прев'ю</h2>
+
+            <p class="text-secondary hint">
+                Рендериться тим самим кодом, що й опубліковані сторінки.
+            </p>
+
+            <div id="preview" class="poll"></div>
+        </section>
+    </main>
+
+	<LoginModal/>
+</Base>
+
+<script>
+	import './_controller.ts';
+</script>

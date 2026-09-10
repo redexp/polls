@@ -17,11 +17,6 @@ export const STATISTIC_PUBLIC_KEY = (
 );
 
 export const BANKID_CERT = (
-	process.env.STATISTIC_PUBLIC_KEY ||
+	process.env.BANKID_CERT ||
 	read('bankid.cer').toString('base64')
-);
-
-export const GOOGLE_SERVICE_ACCOUNT = (
-	process.env.GOOGLE_SERVICE_ACCOUNT ||
-	resolve(KEYS_DIR, 'service_account.json')
 );
