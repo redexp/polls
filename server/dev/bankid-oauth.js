@@ -51,6 +51,10 @@ root.post('/oauth2/token', function (req, res) {
 	res.json(store.get(code));
 });
 
+root.post('/decrypt', express.json(), function (req, res) {
+	res.json(req.body);
+});
+
 root.post('/resource/client', function (req, res) {
 	const auth = req.headers['authorization'];
 
