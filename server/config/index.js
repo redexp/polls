@@ -51,6 +51,10 @@ const config = {
 		access_token: '',
 		country: 'UA',
 		region: 'Cherkasy Oblast', // taken from mapbox playground
+		dev_location: {
+			latitude: 49.441352,
+			longitude: 32.064452,
+		}
 	},
 
 };
