@@ -31,7 +31,7 @@ import '../../../styles/poll.less';
 
                     <div class="mb-3">
                         <label class="form-label form-label-sm text-secondary mb-1" for="slug">
-                            Посилання на опитування
+                            Посилання
                             <button type="button" class="btn-help" data-help="help-slug"
                                     aria-label="Пояснення про посилання">?</button>
                         </label>
@@ -144,12 +144,7 @@ import '../../../styles/poll.less';
                     <button id="add-group" type="button" class="btn btn-outline-primary">Додати питання</button>
                     <span class="flex-fill"></span>
 
-                    <span class="d-flex align-items-center">
-                        <button id="publish-toggle" type="button" class="btn btn-success">Опублікувати</button>
-
-                        <button type="button" class="btn-help" data-help="help-publish"
-                                aria-label="Пояснення про публікацію">?</button>
-                    </span>
+                    <button id="publish-toggle" type="button" class="btn btn-success">Опублікувати</button>
 
                     <button id="save" type="button" class="btn btn-primary">Зберегти</button>
                 </div>
@@ -176,9 +171,8 @@ import '../../../styles/poll.less';
             але його можна виправити.
         </p>
         <p class="mb-0">
-            Це ще й ідентифікатор опитування в базі відповідей, тому
-            <strong>після першого голосу змінити його неможливо</strong> — статистика привʼязана
-            до нього незворотно.
+            Це ще й ідентифікатор опитування в базі відповідей, тому <strong>після першого
+            голосу змінити його неможливо</strong> — статистика привʼязана до нього незворотно.
         </p>
     </template>
 
@@ -198,19 +192,6 @@ import '../../../styles/poll.less';
             Якщо вимкнути, опитування стає публічним: імʼя зберігається і показується поруч
             з відповіддю, і тоді результат може працювати як петиція. Учасник бачить це
             попередньо за позначкою на самому опитуванні.
-        </p>
-    </template>
-
-    <template id="help-publish">
-        <p>
-            Поки опитування не опубліковане, воно <strong>чернетка</strong>: не потрапляє ні
-            в список на сайті, ні у збірку — сторінки за прямим посиланням теж немає, і
-            відповіді на нього сервер не приймає. «Зберегти» лишає цей стан як є.
-        </p>
-        <p class="mb-0">
-            «Опублікувати» зберігає опитування і збирає сайт заново. «Зробити чернеткою»
-            робить зворотне — теж зі збіркою, бо інакше вже опублікована сторінка лишилась
-            би доступною.
         </p>
     </template>
 

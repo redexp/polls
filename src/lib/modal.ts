@@ -1,5 +1,8 @@
 import {byId, clearHtml, loading} from './dom.ts';
 
+/** слухачі Esc по id модалки, щоб знімати їх при закритті */
+const escapeHandlers = new Map<string, (e: KeyboardEvent) => void>();
+
 export function showModal(id: string, params?: ModalParams): Modal {
 	const root = byId<HTMLDivElement>(id);
 
@@ -45,6 +48,19 @@ export function showModal(id: string, params?: ModalParams): Modal {
 				modal.close();
 			}
 		};
+
+		// Esc закриває так само, як клік поза вікном. Слухач знімається при
+		// закритті, інакше вони накопичувались би з кожним відкриттям
+		const onKeyDown = function (e: KeyboardEvent) {
+			if (e.key !== 'Escape') return;
+
+			e.preventDefault();
+			modal.close();
+		};
+
+		document.addEventListener('keydown', onKeyDown);
+
+		escapeHandlers.set(id, onKeyDown);
 	}
 
 	for (const btn of root.querySelectorAll<HTMLButtonElement>('[data-close]')) {
@@ -61,6 +77,13 @@ export function hideModal(id: string) {
 
 	root.style.display = '';
 	root.classList.remove('show');
+
+	const onKeyDown = escapeHandlers.get(id);
+
+	if (onKeyDown) {
+		document.removeEventListener('keydown', onKeyDown);
+		escapeHandlers.delete(id);
+	}
 }
 
 export function showInfoModal(text: string, params?: ModalParams): Modal {
