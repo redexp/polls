@@ -39,6 +39,13 @@ let currentSlug: string|null = params.get('slug');
 /** чи користувач правив поле id руками — тоді автогенерація не втручається */
 let slugTouched = !!currentSlug;
 
+/**
+ * Стан публікації. Окремого поля у формі немає: його задають кнопки
+ * «Опублікувати» / «Зробити чернеткою», а «Зберегти» лишає як є. Нове
+ * опитування починається чернеткою, щоб не потрапити на сайт випадково.
+ */
+let isDraft = true;
+
 const groupsRoot = byId('groups');
 const tpl = byId<HTMLTemplateElement>('group-tpl');
 
@@ -46,11 +53,10 @@ const titleInput = byId<HTMLInputElement>('title');
 const slugInput = byId<HTMLInputElement>('slug');
 const introInput = byId<HTMLTextAreaElement>('intro');
 const expireInput = byId<HTMLInputElement>('expire');
-const publicInput = byId<HTMLInputElement>('public');
-const draftInput = byId<HTMLInputElement>('draft');
+const anonymousInput = byId<HTMLInputElement>('anonymous');
 
 const saveBtn = byId<HTMLButtonElement>('save');
-const savePublishBtn = byId<HTMLButtonElement>('save-publish');
+const publishToggleBtn = byId<HTMLButtonElement>('publish-toggle');
 const previewBtn = byId<HTMLButtonElement>('preview-btn');
 const log = byId<HTMLPreElement>('log');
 
@@ -107,9 +113,11 @@ saveBtn.onclick = function () {
 	save().then(() => success('Збережено')).catch(showError);
 };
 
-savePublishBtn.onclick = function () {
-	saveAndPublish().catch(showError);
+publishToggleBtn.onclick = function () {
+	setPublished(isDraft).catch(showError);
 };
+
+applyPublishState();
 
 slugInput.oninput = function () {
 	slugTouched = true;
@@ -164,8 +172,10 @@ async function load(slug: string) {
 	slugInput.value = data.slug || slug;
 	introInput.value = data.intro;
 	expireInput.value = data.expire || '';
-	publicInput.checked = data.public;
-	draftInput.checked = data.draft;
+	anonymousInput.checked = !data.public;
+
+	isDraft = data.draft;
+	applyPublishState();
 
 	groupsRoot.innerHTML = '';
 
@@ -197,7 +207,7 @@ async function copyPollUrl() {
 
 	if (await copyText(pollUrl())) {
 		success(
-			draftInput.checked ?
+			isDraft ?
 				'Посилання скопійовано. Опитування — чернетка, тому сторінка ще не опублікована.' :
 				'Посилання скопійовано'
 		);
@@ -367,8 +377,8 @@ function collect(): PollStruct {
 		groups,
 		// type=date завжди віддає РРРР-ММ-ДД, незалежно від формату показу
 		expire: expireInput.value || null,
-		public: publicInput.checked,
-		draft: draftInput.checked,
+		public: !anonymousInput.checked,
+		draft: isDraft,
 	};
 }
 
@@ -500,15 +510,32 @@ async function save(): Promise<string> {
 	}
 }
 
-async function saveAndPublish() {
-	const slug = await save();
+function applyPublishState() {
+	publishToggleBtn.innerText = isDraft ? 'Опублікувати' : 'Зробити чернеткою';
 
-	loading(savePublishBtn, true);
+	publishToggleBtn.classList.toggle('btn-success', isDraft);
+	publishToggleBtn.classList.toggle('btn-warning', !isDraft);
+}
+
+/**
+ * Обидва напрямки вимагають збірки: опублікувати — щоб сторінка зʼявилась,
+ * зробити чернеткою — щоб уже опублікована зникла.
+ */
+async function setPublished(published: boolean) {
+	const previous = isDraft;
+
+	isDraft = !published;
+
 	log.classList.remove('d-none');
 	log.innerText = 'запуск...';
 
+	loading(publishToggleBtn, true);
+
 	try {
-		let job = await ajax('/api/admin/publish', {jwt: getJwt(), slug});
+		const slug = await save();
+
+		// slug передаємо лише при публікації: там сервер ще й сам зніме чернетку
+		let job = await ajax('/api/admin/publish', published ? {jwt: getJwt(), slug} : {jwt: getJwt()});
 
 		while (job.status === 'running') {
 			await wait(1000);
@@ -521,15 +548,20 @@ async function saveAndPublish() {
 		log.innerText = job.log.join('\n');
 
 		if (job.status === 'failed') {
-			error(job.error || 'Збірка не вдалася');
-			return;
+			throw {message: job.error || 'Збірка не вдалася'};
 		}
 
-		draftInput.checked = false;
-		success('Опубліковано');
+		success(published ? 'Опубліковано' : 'Опитування знову чернетка');
+	}
+	catch (err) {
+		// стан не змінився, тому кнопка має лишитись такою ж, як була
+		isDraft = previous;
+
+		throw err;
 	}
 	finally {
-		loading(savePublishBtn, false);
+		applyPublishState();
+		loading(publishToggleBtn, false);
 	}
 }
 

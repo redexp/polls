@@ -73,6 +73,27 @@ test('round-trip: дефолтне обмеження директиви не п
 	assert.equal(back.groups[0].max, 2);
 });
 
+test('блоки відділені порожнім рядком', function () {
+	const md = fromStructure(STRUCT);
+
+	// без порожнього рядка вступний текст і перше питання злипаються в один
+	// абзац markdown, і варіанти опиняються всередині того ж <p>, що й проза
+	assert.match(md, /^---\n[\s\S]*?\n---\n\n## /, 'порожній рядок після frontmatter: ' + md);
+	assert.match(md, /Текст опитування\n\n\{1-2\}\n\[перша\]/, 'порожній рядок перед питанням: ' + md);
+
+	assert.ok(!md.includes('\n\n\n'), 'зайвих порожніх рядків бути не має: ' + md);
+});
+
+test('без вступного тексту зайвого порожнього рядка не лишається', function () {
+	const md = fromStructure({
+		title: 'T',
+		intro: '',
+		groups: [{body: '[a] A'}],
+	});
+
+	assert.match(md, /^---\n[\s\S]*?\n---\n\n## T\n\n\[a\] A\n$/, md);
+});
+
 test('розділювач груп відділений порожніми рядками', function () {
 	const md = fromStructure(STRUCT);
 

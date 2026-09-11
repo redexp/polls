@@ -481,17 +481,7 @@ export function fromStructure(struct) {
 
 	lines.push('public: ' + (struct.public ? 'true' : 'false'));
 	lines.push('draft: ' + (struct.draft ? 'true' : 'false'));
-	lines.push('---', '');
-
-	const head = [];
-
-	if (struct.title) {
-		head.push('## ' + struct.title.trim(), '');
-	}
-
-	if (struct.intro && struct.intro.trim()) {
-		head.push(struct.intro.trim(), '');
-	}
+	lines.push('---');
 
 	const groups = (struct.groups || []).map(function (group) {
 		// директива береться з полів форми, тому з тіла її прибираємо —
@@ -523,7 +513,16 @@ export function fromStructure(struct) {
 		);
 	});
 
-	return lines.join('\n') + head.join('\n') + groups.join(GROUP_SEPARATOR) + '\n';
+	// Блоки розділяємо порожнім рядком. Без нього вступний текст і перше
+	// питання злипаються в один абзац markdown, і варіанти рендеряться всередині
+	// того ж <p>, що й проза
+	const body = [
+		struct.title ? '## ' + struct.title.trim() : '',
+		struct.intro ? struct.intro.trim() : '',
+		groups.join(GROUP_SEPARATOR),
+	];
+
+	return lines.join('\n') + '\n\n' + body.filter(part => !!part).join('\n\n') + '\n';
 }
 
 /**

@@ -61,22 +61,12 @@ import '../../../styles/poll.less';
                         <div class="col-sm-8 d-flex align-items-center flex-wrap gap-4 pt-sm-4">
                             <span class="d-flex align-items-center">
                                 <label class="form-check form-switch mb-0">
-                                    <input id="public" type="checkbox" role="switch" class="form-check-input"/>
-                                    <span class="form-check-label">Публічне</span>
+                                    <input id="anonymous" type="checkbox" role="switch" class="form-check-input"/>
+                                    <span class="form-check-label">Анонімне</span>
                                 </label>
 
-                                <button type="button" class="btn-help" data-help="help-public"
-                                        aria-label="Пояснення про публічне опитування">?</button>
-                            </span>
-
-                            <span class="d-flex align-items-center">
-                                <label class="form-check form-switch mb-0">
-                                    <input id="draft" type="checkbox" role="switch" class="form-check-input"/>
-                                    <span class="form-check-label">Чернетка</span>
-                                </label>
-
-                                <button type="button" class="btn-help" data-help="help-draft"
-                                        aria-label="Пояснення про чернетку">?</button>
+                                <button type="button" class="btn-help" data-help="help-anonymous"
+                                        aria-label="Пояснення про анонімне опитування">?</button>
                             </span>
                         </div>
                     </div>
@@ -150,8 +140,15 @@ import '../../../styles/poll.less';
                 <div class="d-flex flex-wrap align-items-center gap-2 mb-4">
                     <button id="add-group" type="button" class="btn btn-outline-primary">Додати питання</button>
                     <span class="flex-fill"></span>
+
+                    <span class="d-flex align-items-center">
+                        <button id="publish-toggle" type="button" class="btn btn-success">Опублікувати</button>
+
+                        <button type="button" class="btn-help" data-help="help-publish"
+                                aria-label="Пояснення про публікацію">?</button>
+                    </span>
+
                     <button id="save" type="button" class="btn btn-primary">Зберегти</button>
-                    <button id="save-publish" type="button" class="btn btn-success">Зберегти і опублікувати</button>
                 </div>
 
                 <pre id="log" class="bg-body-secondary p-3 small mb-4 d-none"></pre>
@@ -189,19 +186,28 @@ import '../../../styles/poll.less';
         </p>
     </template>
 
-    <template id="help-public">
+    <template id="help-anonymous">
+        <p>
+            В анонімному опитуванні імʼя учасника <strong>не зберігається</strong> разом
+            з відповіддю — лишається тільки сама відповідь.
+        </p>
         <p class="mb-0">
-            У публічному опитуванні поруч із відповідями зберігається і показується
-            <strong>імʼя учасника</strong> — так результат може працювати як петиція.
-            Якщо вимкнено, опитування анонімне: імʼя не зберігається.
+            Якщо вимкнути, опитування стає публічним: імʼя зберігається і показується поруч
+            з відповіддю, і тоді результат може працювати як петиція. Учасник бачить це
+            попередньо за позначкою на самому опитуванні.
         </p>
     </template>
 
-    <template id="help-draft">
+    <template id="help-publish">
+        <p>
+            Поки опитування не опубліковане, воно <strong>чернетка</strong>: не потрапляє ні
+            в список на сайті, ні у збірку — сторінки за прямим посиланням теж немає, і
+            відповіді на нього сервер не приймає. «Зберегти» лишає цей стан як є.
+        </p>
         <p class="mb-0">
-            Чернетка не потрапляє ні в список опитувань, ні у збірку сайту — сторінки за
-            прямим посиланням теж не буде. Відповіді на чернетку сервер не приймає.
-            Кнопка «Зберегти і опублікувати» знімає цю галочку.
+            «Опублікувати» зберігає опитування і збирає сайт заново. «Зробити чернеткою»
+            робить зворотне — теж зі збіркою, бо інакше вже опублікована сторінка лишилась
+            би доступною.
         </p>
     </template>
 
