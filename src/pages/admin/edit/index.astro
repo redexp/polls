@@ -53,12 +53,9 @@ import '../../../styles/poll.less';
                                 <button type="button" class="btn-help" data-help="help-expire"
                                         aria-label="Пояснення про дату закінчення">?</button>
                             </label>
-                            <!-- текстове, а не type=date: рідне поле показує дату
-                                 у форматі локалі браузера, і задати їй дд.мм.рррр
-                                 зі сторінки неможливо -->
-                            <input id="expire" name="expire" type="text" class="form-control"
-                                   inputmode="numeric" placeholder="дд.мм.рррр"
-                                   pattern="\d{1,2}\.\d{1,2}\.\d{4}" maxlength="10"/>
+                            <!-- рідне поле дає календарик; формат показу задає
+                                 локаль браузера, зі сторінки він не керується -->
+                            <input id="expire" name="expire" type="date" class="form-control"/>
                         </div>
 
                         <div class="col-sm-8 d-flex align-items-center flex-wrap gap-4 pt-sm-4">
