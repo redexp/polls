@@ -25,7 +25,6 @@ const list = each<PollItem>('#polls', function (item, q) {
 	link.innerText = item.title;
 	link.href = '/admin/edit/?slug=' + encodeURIComponent(item.slug);
 
-	q('[data-slug]').innerText = item.slug;
 	q('[data-votes]').innerText = String(item.votes);
 
 	const err = q('[data-error]');
@@ -35,6 +34,10 @@ const list = each<PollItem>('#polls', function (item, q) {
 
 	const active = !item.expire || new Date(item.expire) > new Date();
 	const activeBadge = q('[data-active]');
+
+	// у чернетки немає ні «Активне», ні «Завершилось»: вона не опублікована,
+	// тому її стан на сайті просто не існує
+	activeBadge.classList.toggle('d-none', item.draft);
 	activeBadge.innerText = active ? 'Активне' : 'Завершилось';
 	activeBadge.classList.add(active ? 'text-bg-success' : 'text-bg-secondary');
 
