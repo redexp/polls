@@ -61,7 +61,10 @@ import '../../../styles/poll.less';
                         <div class="col-sm-8 d-flex align-items-center flex-wrap gap-4 pt-sm-4">
                             <span class="d-flex align-items-center">
                                 <label class="form-check form-switch mb-0">
-                                    <input id="anonymous" type="checkbox" role="switch" class="form-check-input"/>
+                                    <!-- увімкнений за замовчуванням: нове опитування
+                                         анонімне, поки автор не вирішить інакше -->
+                                    <input id="anonymous" type="checkbox" role="switch" checked
+                                           class="form-check-input"/>
                                     <span class="form-check-label">Анонімне</span>
                                 </label>
 
