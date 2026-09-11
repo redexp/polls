@@ -53,7 +53,12 @@ import '../../../styles/poll.less';
                                 <button type="button" class="btn-help" data-help="help-expire"
                                         aria-label="Пояснення про дату закінчення">?</button>
                             </label>
-                            <input id="expire" name="expire" type="date" class="form-control"/>
+                            <!-- текстове, а не type=date: рідне поле показує дату
+                                 у форматі локалі браузера, і задати їй дд.мм.рррр
+                                 зі сторінки неможливо -->
+                            <input id="expire" name="expire" type="text" class="form-control"
+                                   inputmode="numeric" placeholder="дд.мм.рррр"
+                                   pattern="\d{1,2}\.\d{1,2}\.\d{4}" maxlength="10"/>
                         </div>
 
                         <div class="col-sm-8 d-flex align-items-center flex-wrap gap-4 pt-sm-4">
@@ -116,7 +121,7 @@ import '../../../styles/poll.less';
 
                         <textarea data-body class="form-control"></textarea>
 
-                        <div class="row g-3 mt-2 align-items-center">
+                        <div class="row g-3 mt-2 align-items-center answer-options">
                             <div class="col-auto d-flex align-items-center">
                                 <label class="form-check form-switch mb-0">
                                     <input data-optional type="checkbox" role="switch" class="form-check-input"/>
@@ -135,13 +140,11 @@ import '../../../styles/poll.less';
                                 <button type="button" class="btn-help" data-help="help-limit"
                                         aria-label="Пояснення про обмеження кількості відповідей">?</button>
                             </div>
-                            <div class="col-auto d-none" data-min-col>
-                                <input data-min type="number" min="0" step="1" placeholder="Від"
-                                       class="form-control form-control-sm range-input"/>
+                            <div class="col-auto is-hidden" data-min-col>
+                                <input data-min type="number" min="0" step="1" placeholder="Від" class="form-control range-input"/>
                             </div>
-                            <div class="col-auto d-none" data-max-col>
-                                <input data-max type="number" min="1" step="1" placeholder="До"
-                                       class="form-control form-control-sm range-input"/>
+                            <div class="col-auto is-hidden" data-max-col>
+                                <input data-max type="number" min="1" step="1" placeholder="До" class="form-control range-input"/>
                             </div>
                         </div>
                     </div>

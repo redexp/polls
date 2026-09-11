@@ -163,7 +163,7 @@ async function load(slug: string) {
 	titleInput.value = data.title;
 	slugInput.value = data.slug || slug;
 	introInput.value = data.intro;
-	expireInput.value = data.expire || '';
+	expireInput.value = toDisplayDate(data.expire);
 	publicInput.checked = data.public;
 	draftInput.checked = data.draft;
 
@@ -316,8 +316,9 @@ function applyLimit(node: HTMLElement) {
 	const single = node.dataset.type === 'radio';
 	const on = qs<HTMLInputElement>('[data-limit]', node).checked && !single;
 
-	qs('[data-min-col]', node).classList.toggle('d-none', !on);
-	qs('[data-max-col]', node).classList.toggle('d-none', !on);
+	// is-hidden лишає колонки в потоці — інакше рядок стрибав би по висоті
+	qs('[data-min-col]', node).classList.toggle('is-hidden', !on);
+	qs('[data-max-col]', node).classList.toggle('is-hidden', !on);
 }
 
 /**
@@ -364,10 +365,53 @@ function collect(): PollStruct {
 		title: titleInput.value,
 		intro: introInput.value,
 		groups,
-		expire: expireInput.value || null,
+		expire: parseDisplayDate(expireInput.value),
 		public: publicInput.checked,
 		draft: draftInput.checked,
 	};
+}
+
+/**
+ * Файл і сервер зберігають дату як РРРР-ММ-ДД, показуємо її як дд.мм.рррр.
+ *
+ * @param iso
+ */
+function toDisplayDate(iso: string|null|undefined): string {
+	const match = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+
+	return match ? `${match[3]}.${match[2]}.${match[1]}` : '';
+}
+
+/**
+ * Зворотне перетворення. Порожнє поле — це «без дати», а не помилка.
+ *
+ * @throws якщо дата написана не так або такої дати не існує
+ */
+function parseDisplayDate(text: string): string|null {
+	const value = String(text || '').trim();
+
+	if (!value) return null;
+
+	const match = value.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+
+	if (!match) {
+		throw {message: 'Дата має бути у форматі дд.мм.рррр, наприклад 31.12.2027'};
+	}
+
+	const iso = [
+		match[3],
+		match[2].padStart(2, '0'),
+		match[1].padStart(2, '0'),
+	].join('-');
+
+	// відсіює 31.02: Date «виправив» би такий рядок на 3 березня
+	const date = new Date(iso + 'T00:00:00Z');
+
+	if (isNaN(date.valueOf()) || date.toISOString().slice(0, 10) !== iso) {
+		throw {message: `Такої дати не існує: ${value}`};
+	}
+
+	return iso;
 }
 
 function isPreviewOpen(): boolean {
