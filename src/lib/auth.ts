@@ -1,5 +1,7 @@
 import ajax from './ajax';
 
+const KEY = 'jwt';
+
 /**
  * @returns {{auth_token: string|null, state: string|null}}
  */
@@ -19,11 +21,12 @@ export function getAuthParams() {
 }
 
 export function getJwt(): string|null {
-	return sessionStorage.getItem('jwt');
+	return sessionStorage.getItem(KEY) || localStorage.getItem(KEY);
 }
 
 export function removeJwt() {
-	sessionStorage.removeItem('jwt');
+	sessionStorage.removeItem(KEY);
+	localStorage.removeItem(KEY);
 	trigger();
 }
 
@@ -37,10 +40,16 @@ export async function isAdmin(): Promise<boolean> {
 	return ajax('/api/bankid/is-admin', {jwt: getJwt()}).catch(() => false);
 }
 
-export async function retrieveJwt(auth_token: string) {
+export async function retrieveJwt(auth_token: string, remember = false) {
 	const {jwt} = await ajax('/api/bankid/jwt', {auth_token});
 
-	sessionStorage.setItem('jwt', jwt);
+	if (remember) {
+		localStorage.setItem(KEY, jwt);
+	}
+	else {
+		sessionStorage.setItem(KEY, jwt);
+	}
+
 	trigger();
 }
 
@@ -52,7 +61,7 @@ export function onChange(cb: (state: boolean) => void) {
 	listeners.push(cb);
 
 	window.addEventListener('storage', function (e) {
-		if (e.key === 'jwt') {
+		if (e.key === KEY) {
 			trigger();
 		}
 	});
