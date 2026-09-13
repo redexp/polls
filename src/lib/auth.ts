@@ -1,7 +1,6 @@
 import ajax from './ajax';
 
 const KEY = 'jwt';
-const EXP_TIMEOUT = 60 * 60 * 24 * 7; // 1Week
 
 /**
  * @returns {{auth_token: string|null, state: string|null}}
@@ -39,16 +38,19 @@ export function hasAuth(): boolean {
 	let data;
 
 	try {
-		data = JSON.parse(atob(jwt.split('.')[0]));
+		data = JSON.parse(atob(jwt.split('.')[1]));
 	}
 	catch (_err) {
 		return false;
 	}
 
-	return (
-		typeof data.exp !== 'number' ||
-		Date.now() / 1000 - data.exp < EXP_TIMEOUT
-	);
+	if (!data) return false;
+
+	if (typeof data.exp === 'number') {
+		return data.exp - Date.now() / 1000 > 0;
+	}
+
+	return true;
 }
 
 export async function isAdmin(): Promise<boolean> {
