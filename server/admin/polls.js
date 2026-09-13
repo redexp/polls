@@ -106,7 +106,7 @@ router.post('/retype', handler(async function (req, res) {
 }));
 
 router.post('/save', handler(async function (req, res) {
-	const {slug, prev_slug, title, intro, groups, expire, draft} = req.body;
+	const {slug, prev_slug, title, intro, groups, outro, hideQuestions, expire, draft} = req.body;
 	const pub = req.body.public;
 
 	validateSlug(slug);
@@ -137,7 +137,7 @@ router.post('/save', handler(async function (req, res) {
 		throw {type: 'slug_conflict', slug, file: conflict};
 	}
 
-	const md = fromStructure({title, intro, groups, expire, public: pub, draft});
+	const md = fromStructure({title, intro, groups, outro, hideQuestions, expire, public: pub, draft});
 
 	// розбір щойно згенерованого файлу — це і є валідація DSL
 	const parsed = parsePoll(md, slug + '.md');

@@ -20,10 +20,10 @@ async function getRenderer() {
 }
 
 router.post('/preview', handler(async function (req, res) {
-	const {title, intro, groups, expire, draft} = req.body;
+	const {title, intro, groups, outro, hideQuestions, expire, draft} = req.body;
 	const pub = req.body.public;
 
-	const md = fromStructure({title, intro, groups, expire, public: pub, draft});
+	const md = fromStructure({title, intro, groups, outro, hideQuestions, expire, public: pub, draft});
 	const {body} = stripFrontmatter(md);
 
 	// валідація цілого файлу — щоб прев'ю не показувало те, що не збережеться

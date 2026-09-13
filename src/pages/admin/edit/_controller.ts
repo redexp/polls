@@ -19,6 +19,9 @@ type PollStruct = {
 	title: string,
 	intro: string,
 	groups: GroupData[],
+	/** текст після всіх питань; порожній — блоку результатів немає */
+	outro: string,
+	hideQuestions: boolean,
 	expire: string|null,
 	public: boolean,
 	draft: boolean,
@@ -52,6 +55,10 @@ const tpl = byId<HTMLTemplateElement>('group-tpl');
 const titleInput = byId<HTMLInputElement>('title');
 const slugInput = byId<HTMLInputElement>('slug');
 const introInput = byId<HTMLTextAreaElement>('intro');
+const outroInput = byId<HTMLTextAreaElement>('outro');
+const resultsInput = byId<HTMLInputElement>('results');
+const hideQuestionsInput = byId<HTMLInputElement>('hide-questions');
+const hideQuestionsCol = byId('hide-questions-col');
 const expireInput = byId<HTMLInputElement>('expire');
 const anonymousInput = byId<HTMLInputElement>('anonymous');
 
@@ -127,6 +134,12 @@ slugInput.oninput = function () {
 titleInput.addEventListener('focusin', () => scrollPreviewTo(null));
 introInput.addEventListener('focusin', () => scrollPreviewTo(null));
 
+// текст результатів — навпаки, хвіст сторінки
+outroInput.addEventListener('focusin', () => scrollPreviewToEnd());
+
+resultsInput.onchange = applyResults;
+applyResults();
+
 let slugTimer = 0;
 
 titleInput.oninput = function () {
@@ -173,6 +186,12 @@ async function load(slug: string) {
 	introInput.value = data.intro;
 	expireInput.value = data.expire || '';
 	anonymousInput.checked = !data.public;
+
+	outroInput.value = data.outro || '';
+	hideQuestionsInput.checked = !!data.hideQuestions;
+	// окремого поля у файлі немає: блок увімкнений, якщо в ньому щось задано
+	resultsInput.checked = !!(data.outro || data.hideQuestions);
+	applyResults();
 
 	isDraft = data.draft;
 	applyPublishState();
@@ -371,15 +390,33 @@ function collect(): PollStruct {
 		};
 	});
 
+	// вимкнений перемикач не стирає текст у полі — його видно знову, щойно
+	// блок повернуть; у файл при цьому не потрапляє нічого
+	const results = resultsInput.checked;
+
 	return {
 		title: titleInput.value,
 		intro: introInput.value,
 		groups,
+		outro: results ? outroInput.value : '',
+		hideQuestions: results && hideQuestionsInput.checked,
 		// type=date завжди віддає РРРР-ММ-ДД, незалежно від формату показу
 		expire: expireInput.value || null,
 		public: !anonymousInput.checked,
 		draft: isDraft,
 	};
+}
+
+/**
+ * Блок результатів: текст під усіма питаннями і, разом з ним, можливість
+ * згорнути самі питання. Перемикач лише відкриває поля — у файл іде те, що в
+ * них, тому вимкнення нічого не стирає.
+ */
+function applyResults() {
+	const on = resultsInput.checked;
+
+	outroInput.classList.toggle('d-none', !on);
+	hideQuestionsCol.classList.toggle('d-none', !on);
 }
 
 function isPreviewOpen(): boolean {
@@ -431,9 +468,9 @@ async function renderPreview() {
 }
 
 /**
- * Гортає прев'ю до питання, що зараз у фокусі.
+ * Гортає прев'ю до питання, що зараз у фокусі, показуючи його варіанти цілком.
  *
- * Прив'язка йде через значення першого варіанта, а не через порядковий номер:
+ * Прив'язка йде через значення варіантів, а не через порядковий номер:
  * `data-group` у розмітці нумерується розділювачами, тож питання без варіантів
  * збило б нумерацію. Якщо питання додали після рендеру — не гортаємо нікуди,
  * бо в прев'ю його ще немає.
@@ -445,42 +482,93 @@ function scrollPreviewToGroup(node: HTMLElement) {
 
 	if (index < 0) return;
 
-	const value = renderedGroups[index]?.values?.[0];
+	const values = renderedGroups[index]?.values;
 
-	if (!value) return;
+	if (!values?.length) return;
 
-	const input = previewBox.querySelector<HTMLInputElement>(`[value="${CSS.escape(value)}"]`);
+	const first = findPreviewInput(values[0]);
 
-	scrollPreviewTo(input?.closest('label') || input);
+	if (!first) return;
+
+	// останній варіант шукаємо вже в межах того самого блоку розмітки: однакові
+	// підписи в різних питаннях інакше вкрали б нижню межу діапазону
+	const last = findPreviewInput(values[values.length - 1], first.dataset.group) || first;
+
+	scrollPreviewTo(lineStart(first), lineEnd(last));
 }
 
 /**
- * Гортає мінімально: якщо цільове місце вже видно, не рухаємо нічого — інакше
- * прев'ю смикалось би при кожному переході фокусу між сусідніми питаннями.
- *
- * @param target null — на початок прев'ю
+ * @param group якщо задано — шукати лише серед варіантів цього блоку розмітки
  */
-function scrollPreviewTo(target: Element|null) {
+function findPreviewInput(value: string, group?: string): HTMLInputElement|null {
+	const scope = group === undefined ? '' : `[data-group="${CSS.escape(group)}"]`;
+
+	return previewBox.querySelector<HTMLInputElement>(`input${scope}[value="${CSS.escape(value)}"]`);
+}
+
+/** верхня межа варіанта — його підпис разом з кружечком */
+function lineStart(input: HTMLInputElement): Element {
+	return input.closest('label') || input;
+}
+
+/** нижня межа варіанта — поле «своя відповідь», якщо воно в нього є */
+function lineEnd(input: HTMLInputElement): Element {
+	const label = lineStart(input);
+	const next = label.nextElementSibling;
+
+	return next?.tagName === 'TEXTAREA' ? next : label;
+}
+
+/**
+ * Гортає плавно і мінімально: якщо питання вже видно цілком, не рухаємо
+ * нічого — інакше прев'ю смикалось би при кожному переході фокусу між
+ * сусідніми питаннями. Питання, вище за саме прев'ю, притискаємо горішнім
+ * краєм: краще показати його початок, ніж хвіст.
+ *
+ * @param start null — на початок прев'ю
+ * @param end кінець діапазону, який має вміститися; за замовчуванням — start
+ */
+function scrollPreviewTo(start: Element|null, end: Element|null = start) {
 	if (!isPreviewOpen()) return;
 
-	if (!target) {
-		previewBox.scrollTop = 0;
+	if (!start || !end) {
+		scrollPreview(0);
 		return;
 	}
 
 	const gap = 12;
 	const pane = previewBox.getBoundingClientRect();
-	const el = target.getBoundingClientRect();
 
-	const above = el.top - pane.top - gap;
-	const below = el.bottom - pane.bottom + gap;
+	/** від'ємне — початок питання вище за видиму частину */
+	const above = start.getBoundingClientRect().top - pane.top - gap;
+	/** додатне — кінець питання нижче за видиму частину */
+	const below = end.getBoundingClientRect().bottom - pane.bottom + gap;
+
+	let delta;
 
 	if (above < 0) {
-		previewBox.scrollTop += above;
+		delta = above;
 	}
 	else if (below > 0) {
-		previewBox.scrollTop += below;
+		// питання не вміщується цілком — радше обріжемо хвіст, ніж початок
+		delta = Math.min(below, above);
 	}
+	else return;
+
+	scrollPreview(previewBox.scrollTop + delta);
+}
+
+/** до самого низу прев'ю — там, де текст результатів */
+function scrollPreviewToEnd() {
+	if (!isPreviewOpen()) return;
+
+	scrollPreview(previewBox.scrollHeight);
+}
+
+function scrollPreview(top: number) {
+	const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+	previewBox.scrollTo({top, behavior: reduced ? 'auto' : 'smooth'});
 }
 
 async function save(): Promise<string> {

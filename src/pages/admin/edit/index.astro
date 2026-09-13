@@ -30,7 +30,7 @@ import '../../../styles/poll.less';
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label form-label-sm text-secondary mb-1" for="slug">
+                        <label class="form-label form-label-sm mb-1" for="slug">
                             Посилання
                             <button type="button" class="btn-help" data-help="help-slug"
                                     aria-label="Пояснення про посилання">?</button>
@@ -74,13 +74,41 @@ import '../../../styles/poll.less';
                         </div>
                     </div>
 
-                    <div>
+                    <div class="mb-3">
                         <label class="form-label" for="intro">
                             Вступний текст
                             <button type="button" class="btn-help" data-help="help-intro"
                                     aria-label="Пояснення про вступний текст">?</button>
                         </label>
                         <textarea id="intro" name="intro" class="form-control" rows="4"></textarea>
+                    </div>
+
+                    <div>
+                        <div class="d-flex align-items-center flex-wrap gap-4">
+                            <span class="d-flex align-items-center">
+                                <label class="form-check form-switch mb-0">
+                                    <input id="results" type="checkbox" role="switch" class="form-check-input"/>
+                                    <span class="form-check-label">Результати опитування</span>
+                                </label>
+
+                                <button type="button" class="btn-help" data-help="help-results"
+                                        aria-label="Пояснення про текст результатів">?</button>
+                            </span>
+
+                            <!-- ховати питання має сенс лише разом із результатами,
+                                 тому перемикач зʼявляється тільки поруч з ними -->
+                            <span id="hide-questions-col" class="d-flex align-items-center d-none">
+                                <label class="form-check form-switch mb-0">
+                                    <input id="hide-questions" type="checkbox" role="switch" class="form-check-input"/>
+                                    <span class="form-check-label">Сховати питання</span>
+                                </label>
+
+                                <button type="button" class="btn-help" data-help="help-hide-questions"
+                                        aria-label="Пояснення про сховані питання">?</button>
+                            </span>
+                        </div>
+
+                        <textarea id="outro" name="outro" class="form-control mt-2 d-none" rows="4"></textarea>
                     </div>
                 </form>
 
@@ -198,6 +226,28 @@ import '../../../styles/poll.less';
     <template id="help-intro">
         <p class="mb-0">
             Markdown. Виводиться під заголовком, перед першим питанням.
+        </p>
+    </template>
+
+    <template id="help-results">
+        <p>
+            Markdown. Виводиться в самому кінці опитування, після всіх питань —
+            наприклад, підсумки голосування, коли воно вже завершилось.
+        </p>
+        <p class="mb-0">
+            Якщо рядок починається з <code>[</code>, екрануйте дужку —
+            <code>\[так\]</code>, — інакше вона стане варіантом відповіді.
+        </p>
+    </template>
+
+    <template id="help-hide-questions">
+        <p>
+            Ховає всі питання під рядок «Показати питання»: людина бачить вступ і
+            результати, а самі варіанти розгортає за бажанням.
+        </p>
+        <p class="mb-0">
+            Відповідати це не заважає — питання лишаються на сторінці, просто
+            згорнутими.
         </p>
     </template>
 

@@ -277,3 +277,83 @@ test('вступний текст відділяється від першої �
 	assert.equal(struct.intro, 'Перший абзац\n\nДругий абзац');
 	assert.equal(struct.groups[0].body, '[a] A');
 });
+
+const RESULTS = {
+	title: 'Заголовок',
+	intro: 'Вступ',
+	groups: [
+		{body: '[a] A\n[b] B', min: 1, max: null},
+		{body: '(c) C\n(d) D', min: 1, max: 1},
+	],
+	outro: 'Ось **результати**.',
+	hideQuestions: true,
+	expire: null,
+	public: false,
+	draft: false,
+};
+
+test('round-trip: текст результатів і сховані питання', function () {
+	const md = fromStructure(RESULTS);
+	const back = toStructure(md);
+
+	assert.equal(back.outro, RESULTS.outro);
+	assert.equal(back.hideQuestions, true);
+
+	// обгортка не має потрапити ні в тіло питання, ні в текст результатів
+	assert.equal(back.groups.length, 2);
+	assert.equal(back.groups[0].body, RESULTS.groups[0].body);
+	assert.equal(back.groups[1].body, RESULTS.groups[1].body);
+
+	assert.equal(fromStructure(back), md);
+});
+
+test('обидва перемикачі незалежні', function () {
+	const onlyOutro = toStructure(fromStructure({...RESULTS, hideQuestions: false}));
+
+	assert.equal(onlyOutro.outro, RESULTS.outro);
+	assert.equal(onlyOutro.hideQuestions, false);
+	assert.equal(onlyOutro.groups.length, 2);
+
+	const onlyHidden = toStructure(fromStructure({...RESULTS, outro: ''}));
+
+	assert.equal(onlyHidden.outro, '');
+	assert.equal(onlyHidden.hideQuestions, true);
+	assert.equal(onlyHidden.groups.length, 2);
+
+	const neither = toStructure(fromStructure({...RESULTS, outro: '', hideQuestions: false}));
+
+	assert.equal(neither.outro, '');
+	assert.equal(neither.hideQuestions, false);
+	assert.ok(!fromStructure({...RESULTS, outro: '', hideQuestions: false}).includes('<details'));
+});
+
+test('текст результатів відділений розділювачем від останньої групи', function () {
+	const md = fromStructure({...RESULTS, hideQuestions: false});
+
+	assert.ok(md.includes('(c) C\n(d) D\n\n-------------------\n\nОсь **результати**.'));
+});
+
+test('сховані питання лишаються питаннями для валідації', function () {
+	const parsed = parsePoll(fromStructure(RESULTS));
+
+	assert.deepEqual(parsed.values, ['a', 'b', 'c', 'd']);
+	assert.equal(parsed.groups.length, 2);
+});
+
+test('одна група: текст результатів не злипається з нею', function () {
+	const md = fromStructure({...RESULTS, groups: [RESULTS.groups[0]]});
+	const back = toStructure(md);
+
+	assert.equal(back.groups.length, 1);
+	assert.equal(back.groups[0].body, '[a] A\n[b] B');
+	assert.equal(back.outro, RESULTS.outro);
+});
+
+test('проза посеред файлу текстом результатів не стає', function () {
+	const struct = toStructure(
+		'## Т\n\n[a] A\n\n-------------------\n\nПроза\n\n-------------------\n\n[b] B\n'
+	);
+
+	assert.equal(struct.outro, '');
+	assert.equal(struct.groups.length, 2);
+});

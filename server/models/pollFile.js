@@ -20,6 +20,13 @@ const FRONTMATTER_RE = /^---+\s*\r?\n(.*?)\r?\n---+\s*\r?\n/s;
 
 const GROUP_SEPARATOR = '\n\n-------------------\n\n';
 
+/** підпис, за яким розгортаються сховані питання */
+const SUMMARY_TEXT = 'Показати питання';
+
+const DETAILS_OPEN_RE = /^\s*<details\b[^>]*>\s*$/i;
+const DETAILS_CLOSE_RE = /^\s*<\/details>\s*$/i;
+const SUMMARY_RE = /^\s*<summary\b[^>]*>.*<\/summary>\s*$/i;
+
 /**
  * Валідує slug і повертає абсолютний шлях до файлу опитування.
  * Єдине місце, де зі slug робиться шлях — саме тут відсікається path traversal.
@@ -95,6 +102,29 @@ export function stripFrontmatter(md) {
 	});
 
 	return {data, body};
+}
+
+/**
+ * Знімає обгортку <details>, під яку ховаються питання: далі тіло розбирається
+ * так само, як і без неї, тож решта коду про обгортку не знає.
+ *
+ * @param {string} body
+ * @returns {{body: string, hidden: boolean}}
+ */
+export function stripDetails(body) {
+	let hidden = false;
+
+	const lines = body.split(/\r?\n/).filter(function (line) {
+		if (DETAILS_OPEN_RE.test(line)) {
+			hidden = true;
+
+			return false;
+		}
+
+		return !DETAILS_CLOSE_RE.test(line) && !SUMMARY_RE.test(line);
+	});
+
+	return {body: lines.join('\n'), hidden};
 }
 
 /**
@@ -379,16 +409,19 @@ export function parsePoll(md, file) {
  *
  * @param {string} md
  * @param {string} [file]
- * @returns {{title: string, intro: string, groups: Array<{body: string, min: number, max: number, explicitRange: boolean, type: string}>, expire: string|null, public: boolean, draft: boolean}}
+ * @returns {{title: string, intro: string, groups: Array<{body: string, min: number, max: number, explicitRange: boolean, type: string}>, outro: string, hideQuestions: boolean, expire: string|null, public: boolean, draft: boolean}}
  */
 export function toStructure(md, file) {
-	const {data, body} = stripFrontmatter(md);
+	const {data, body: raw} = stripFrontmatter(md);
+	const {body, hidden} = stripDetails(raw);
 	const segments = splitSegments(body);
 
 	const struct = {
 		title: '',
 		intro: '',
 		groups: [],
+		outro: '',
+		hideQuestions: hidden,
 		expire: data.expire ? formatDate(data.expire) : null,
 		public: !!data.public,
 		draft: !!data.draft,
@@ -409,7 +442,16 @@ export function toStructure(md, file) {
 
 		const group = parseSegment(rest, {file, seen});
 
-		if (!group) return;
+		if (!group) {
+			// хвостовий сегмент без жодного варіанта — це текст результатів,
+			// який показується після всіх питань. Проза посеред файлу лишається
+			// нічиєю, як і була: конструктор не має куди її покласти
+			if (index > 0 && index === segments.length - 1) {
+				struct.outro = trimBlankLines(rest).join('\n');
+			}
+
+			return;
+		}
 
 		seen.push(...group.values);
 
@@ -469,7 +511,7 @@ function splitHead(lines) {
 /**
  * Збирає .md з структури конструктора. Пара до toStructure.
  *
- * @param {{title?: string, intro?: string, groups?: Array<{body: string, min?: number|null, max?: number|null}>, expire?: string|null, public?: boolean, draft?: boolean}} struct
+ * @param {{title?: string, intro?: string, groups?: Array<{body: string, min?: number|null, max?: number|null}>, outro?: string, hideQuestions?: boolean, expire?: string|null, public?: boolean, draft?: boolean}} struct
  * @returns {string}
  */
 export function fromStructure(struct) {
@@ -513,16 +555,32 @@ export function fromStructure(struct) {
 		);
 	});
 
+	const outro = String(struct.outro || '').trim();
+
+	// порожні рядки всередині обгортки обовʼязкові: без них markdown вважає
+	// вміст <details> суцільним HTML-блоком і не розбирає варіанти
+	const questions = (
+		struct.hideQuestions ?
+			'<details>\n<summary>' + SUMMARY_TEXT + '</summary>\n\n' +
+			groups.join(GROUP_SEPARATOR) +
+			'\n\n</details>' :
+			groups.join(GROUP_SEPARATOR)
+	);
+
 	// Блоки розділяємо порожнім рядком. Без нього вступний текст і перше
 	// питання злипаються в один абзац markdown, і варіанти рендеряться всередині
 	// того ж <p>, що й проза
 	const body = [
 		struct.title ? '## ' + struct.title.trim() : '',
 		struct.intro ? struct.intro.trim() : '',
-		groups.join(GROUP_SEPARATOR),
+		questions,
 	];
 
-	return lines.join('\n') + '\n\n' + body.filter(part => !!part).join('\n\n') + '\n';
+	// текст результатів іде через той самий розділювач, що й питання: інакше він
+	// прилипне до останньої групи і при наступному розборі стане її підписом
+	const tail = outro ? GROUP_SEPARATOR + outro : '';
+
+	return lines.join('\n') + '\n\n' + body.filter(part => !!part).join('\n\n') + tail + '\n';
 }
 
 /**
