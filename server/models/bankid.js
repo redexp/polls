@@ -8,6 +8,7 @@ import AUTH from '../config/auth.js';
 import {BANKID_CERT, JWT_KEY} from '../keys/index.js';
 import authAddress from "../lib/authAddress.js";
 
+/** @type {function(p: any, s: any, ops: import('jsonwebtoken').SignOptions): Promise<string>} */
 const jwtEncode = promisify(JWT.sign);
 const jwtDecode = promisify(JWT.verify);
 
@@ -154,7 +155,10 @@ const BankID = {
 	},
 
 	async toJWT(data) {
-		return jwtEncode(data, JWT_KEY, {algorithm: 'HS256'});
+		return jwtEncode(data, JWT_KEY, {
+			algorithm: 'HS256',
+			expiresIn: '1Week',
+		});
 	},
 
 	/**
