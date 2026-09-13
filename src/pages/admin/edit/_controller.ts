@@ -498,7 +498,8 @@ function scrollPreviewToGroup(node: HTMLElement) {
 }
 
 /**
- * @param group якщо задано — шукати лише серед варіантів цього блоку розмітки
+ * @param value
+ * @param [group] якщо задано — шукати лише серед варіантів цього блоку розмітки
  */
 function findPreviewInput(value: string, group?: string): HTMLInputElement|null {
 	const scope = group === undefined ? '' : `[data-group="${CSS.escape(group)}"]`;
