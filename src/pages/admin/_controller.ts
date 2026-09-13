@@ -98,7 +98,7 @@ publishBtn.onclick = function () {
 const {auth_token} = getAuthParams();
 
 if (auth_token) {
-	await retrieveJwt(auth_token);
+	await retrieveJwt(auth_token, true);
 }
 
 if (await isAdmin()) {
