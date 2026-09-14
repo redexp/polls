@@ -1,7 +1,7 @@
 import {readdir, readFile, writeFile, unlink} from 'node:fs/promises';
 import {resolve, relative, basename, sep} from 'node:path';
 import {parse} from 'yaml';
-import {POLLS_DIR} from '../config/index.js';
+import {POLLS_DIR, IMAGES_URL} from '../config/index.js';
 
 export const SLUG_RE = /^[a-z0-9-]+$/;
 
@@ -17,6 +17,11 @@ const RADIO_RE = /^\s*\(([^)]+)\)(\+?)/;
 const ESCAPED_RE = /^\s*\\\[([^\]]+)\\\]/gm;
 
 const FRONTMATTER_RE = /^---+\s*\r?\n(.*?)\r?\n---+\s*\r?\n/s;
+
+/** визначення посилальної картинки: `[id]: адреса` */
+const IMAGE_DEF_RE = /^\s*\[([^\]\s]+)\]:\s*(\S+)\s*$/;
+/** посилальна картинка в тексті: `![Картинка 1][id]` */
+const IMAGE_REF_RE = /!\[[^\]]*\]\[([^\]\s]+)\]/g;
 
 const GROUP_SEPARATOR = '\n\n-------------------\n\n';
 
@@ -225,6 +230,94 @@ export function isImageRef(line) {
 }
 
 /**
+ * Вирізає з тіла визначення картинок, якими керує адмінка — ті, що вказують на
+ * IMAGES_URL. Вирізати треба з усього тіла, а не з хвоста: без тексту
+ * результатів визначення опинилися б у тілі останнього питання, з ним — у
+ * тексті результатів. Визначення з іншими адресами (написані руками, зокрема
+ * `[image]: <data:...>` зі старого імпорту) лишаються в тексті як були.
+ *
+ * @param {string} body
+ * @returns {{body: string, images: Object<string, string>}} images — id → адреса
+ */
+export function extractImageDefs(body) {
+	const images = {};
+
+	const lines = body.split(/\r?\n/).filter(function (line) {
+		const match = line.match(IMAGE_DEF_RE);
+
+		if (!match || !match[2].startsWith(IMAGES_URL)) return true;
+
+		images[match[1]] = match[2];
+
+		return false;
+	});
+
+	return {body: lines.join('\n'), images};
+}
+
+/**
+ * Ідентифікатори посилальних картинок `![…][id]` у тексті, без повторів, у
+ * порядку появи.
+ *
+ * @param {string} text
+ * @returns {string[]}
+ */
+export function findImageRefs(text) {
+	const ids = [];
+
+	for (const match of String(text || '').matchAll(IMAGE_REF_RE)) {
+		if (!ids.includes(match[1])) ids.push(match[1]);
+	}
+
+	return ids;
+}
+
+/**
+ * Ідентифікатори, для яких у тексті є власне визначення `[id]: …` — байдуже,
+ * куди воно вказує. Такі посилання не потребують картинки від адмінки.
+ *
+ * @param {string} text
+ * @returns {string[]}
+ */
+export function findDefinedIds(text) {
+	const ids = [];
+
+	for (const line of String(text || '').split(/\r?\n/)) {
+		const match = line.match(IMAGE_DEF_RE);
+
+		if (match) ids.push(match[1]);
+	}
+
+	return ids;
+}
+
+/**
+ * Ім'я файлу з адреси картинки адмінки; null — адреса не з IMAGES_URL.
+ *
+ * @param {string} url
+ * @returns {string|null}
+ */
+export function imageNameFromUrl(url) {
+	if (typeof url !== 'string' || !url.startsWith(IMAGES_URL)) return null;
+
+	return url.slice(IMAGES_URL.length);
+}
+
+/**
+ * Імена файлів картинок, на які посилається файл опитування. Різниця цих
+ * списків до і після збереження — це те, що треба перенести або видалити.
+ *
+ * @param {string} md
+ * @returns {string[]}
+ */
+export function imageFilesOf(md) {
+	const {body} = stripFrontmatter(md);
+	const {images} = extractImageDefs(body);
+
+	return Object.values(images).map(imageNameFromUrl).filter(name => !!name);
+}
+
+/**
  * Переписує дужки варіантів під інший тип відповіді, зберігаючи значення і `+`.
  *
  * Живе тут, а не в конструкторі, щоб знання про синтаксис не роздвоювалось.
@@ -409,10 +502,11 @@ export function parsePoll(md, file) {
  *
  * @param {string} md
  * @param {string} [file]
- * @returns {{title: string, intro: string, groups: Array<{body: string, min: number, max: number, explicitRange: boolean, type: string}>, outro: string, hideQuestions: boolean, expire: string|null, public: boolean, draft: boolean}}
+ * @returns {{title: string, intro: string, groups: Array<{body: string, min: number, max: number, explicitRange: boolean, type: string}>, outro: string, hideQuestions: boolean, images: Object<string, string>, expire: string|null, public: boolean, draft: boolean}}
  */
 export function toStructure(md, file) {
-	const {data, body: raw} = stripFrontmatter(md);
+	const {data, body: withDefs} = stripFrontmatter(md);
+	const {body: raw, images} = extractImageDefs(withDefs);
 	const {body, hidden} = stripDetails(raw);
 	const segments = splitSegments(body);
 
@@ -422,6 +516,7 @@ export function toStructure(md, file) {
 		groups: [],
 		outro: '',
 		hideQuestions: hidden,
+		images,
 		expire: data.expire ? formatDate(data.expire) : null,
 		public: !!data.public,
 		draft: !!data.draft,
@@ -491,11 +586,13 @@ function splitHead(lines) {
 
 	const rest = lines.slice(start);
 
-	// вступ — усе до першого рядка, що є відповіддю або директивою
+	// вступ — усе до першого рядка, що є відповіддю або директивою. Визначення
+	// картинки `[x]: адреса` теж починається з дужки, але відповіддю не є — як і
+	// в parseSegment
 	let split = rest.length;
 
 	for (let i = 0; i < rest.length; i++) {
-		if (looksLikeAnswer(rest[i]) || DIRECTIVE_RE.test(rest[i])) {
+		if ((looksLikeAnswer(rest[i]) && !isImageRef(rest[i])) || DIRECTIVE_RE.test(rest[i])) {
 			split = i;
 			break;
 		}
@@ -511,7 +608,7 @@ function splitHead(lines) {
 /**
  * Збирає .md з структури конструктора. Пара до toStructure.
  *
- * @param {{title?: string, intro?: string, groups?: Array<{body: string, min?: number|null, max?: number|null}>, outro?: string, hideQuestions?: boolean, expire?: string|null, public?: boolean, draft?: boolean}} struct
+ * @param {{title?: string, intro?: string, groups?: Array<{body: string, min?: number|null, max?: number|null}>, outro?: string, hideQuestions?: boolean, images?: Object<string, string>, expire?: string|null, public?: boolean, draft?: boolean}} struct
  * @returns {string}
  */
 export function fromStructure(struct) {
@@ -580,7 +677,23 @@ export function fromStructure(struct) {
 	// прилипне до останньої групи і при наступному розборі стане її підписом
 	const tail = outro ? GROUP_SEPARATOR + outro : '';
 
-	return lines.join('\n') + '\n\n' + body.filter(part => !!part).join('\n\n') + tail + '\n';
+	// Визначення картинок — у самому кінці. Пишуться лише ті, на які текст
+	// справді посилається: прибраний з тексту токен прибирає і визначення, і
+	// саме по різниці визначень сервер розуміє, який файл видалити
+	const text = [struct.intro || '', ...(struct.groups || []).map(group => group.body || ''), outro].join('\n');
+	const defs = [];
+
+	for (const id of findImageRefs(text)) {
+		const url = struct.images?.[id];
+
+		if (typeof url !== 'string' || !url) continue;
+
+		defs.push('[' + id + ']: ' + url);
+	}
+
+	const images = defs.length > 0 ? '\n\n' + defs.join('\n') : '';
+
+	return lines.join('\n') + '\n\n' + body.filter(part => !!part).join('\n\n') + tail + images + '\n';
 }
 
 /**

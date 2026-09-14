@@ -34,6 +34,179 @@
 		overflow: auto;
 		white-space: pre-wrap;
 	}
+
+	// поле, над яким тягнуть файл
+	textarea.is-drop-target {
+		outline: 2px dashed var(--bs-primary);
+		outline-offset: 2px;
+	}
+}
+
+// візуальний редактор стоїть на місці textarea і виглядає як поле форми
+.visual-editor {
+	.editor-toolbar {
+		margin-bottom: .35rem;
+
+		.btn {
+			min-width: 2.4rem;
+		}
+	}
+
+	.editor-body {
+		border: var(--bs-border-width) solid var(--bs-border-color);
+		border-radius: var(--bs-border-radius);
+		background: var(--bs-body-bg);
+
+		&:focus-within {
+			border-color: var(--bs-primary);
+			box-shadow: 0 0 0 .25rem rgba(var(--bs-primary-rgb), .25);
+		}
+	}
+
+	.ProseMirror {
+		min-height: 7rem;
+		padding: .5rem .75rem;
+		outline: none;
+		white-space: pre-wrap;
+
+		> * + * {
+			margin-top: .5rem;
+		}
+
+		p {
+			margin-bottom: 0;
+		}
+
+		h2 {
+			font-size: 1.35rem;
+		}
+
+		h3 {
+			font-size: 1.15rem;
+		}
+	}
+
+	// рядки варіантів — дослівний блок, тим самим шрифтом, що й сира textarea
+	.poll-answers {
+		margin: 0;
+		padding: .5rem .75rem;
+		border-left: 3px solid var(--bs-primary);
+		border-radius: var(--bs-border-radius);
+		background: var(--bs-secondary-bg);
+		font-size: .875rem;
+		white-space: pre-wrap;
+
+		code {
+			color: inherit;
+			font-size: inherit;
+		}
+	}
+}
+
+// картинка в редакторі — чип, який можна лише прибрати цілком
+.poll-image-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: .35rem;
+	padding: .1rem .3rem .1rem .55rem;
+	border: 1px solid var(--bs-border-color);
+	border-radius: 1rem;
+	background: var(--bs-secondary-bg);
+	font-size: .8125rem;
+	line-height: 1.4;
+	vertical-align: baseline;
+	user-select: none;
+
+	&.ProseMirror-selectednode {
+		border-color: var(--bs-primary);
+		box-shadow: 0 0 0 2px rgba(var(--bs-primary-rgb), .25);
+	}
+
+	.remove {
+		width: 1.1rem;
+		height: 1.1rem;
+		padding: 0;
+		border: 0;
+		border-radius: 50%;
+		background: transparent;
+		color: var(--bs-danger);
+		font-size: .9rem;
+		line-height: 1;
+
+		&:hover, &:focus-visible {
+			background: var(--bs-danger);
+			color: #fff;
+		}
+	}
+}
+
+// смужка мініатюр під полем: похідна від токенів у тексті, тож порожня —
+// значить картинок у полі немає, і місця вона не займає
+.image-strip {
+	display: flex;
+	flex-wrap: wrap;
+	gap: .75rem;
+	margin-top: .5rem;
+
+	&:empty {
+		display: none;
+	}
+}
+
+.image-thumb {
+	position: relative;
+	width: 84px;
+	font-size: .75rem;
+	color: var(--bs-secondary-color);
+	text-align: center;
+
+	img {
+		display: block;
+		width: 84px;
+		height: 64px;
+		object-fit: cover;
+		border: 1px solid var(--bs-border-color);
+		border-radius: var(--bs-border-radius);
+		background: var(--bs-secondary-bg);
+	}
+
+	.caption {
+		display: block;
+		margin-top: .15rem;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+	}
+
+	// токен у тексті є, а файлу немає: вкладку перезавантажили до збереження
+	&.is-missing {
+		img {
+			opacity: .35;
+		}
+
+		.caption {
+			color: var(--bs-danger);
+		}
+	}
+
+	.btn-remove {
+		position: absolute;
+		top: -.4rem;
+		right: -.4rem;
+		width: 1.25rem;
+		height: 1.25rem;
+		padding: 0;
+		border: 1px solid var(--bs-border-color);
+		border-radius: 50%;
+		background: var(--bs-body-bg);
+		color: var(--bs-danger);
+		font-size: .8rem;
+		line-height: 1;
+
+		&:hover, &:focus-visible {
+			border-color: var(--bs-danger);
+		}
+	}
 }
 
 @editor-width: 1140px;

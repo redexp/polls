@@ -23,7 +23,11 @@ router.post('/preview', handler(async function (req, res) {
 	const {title, intro, groups, outro, hideQuestions, expire, draft} = req.body;
 	const pub = req.body.public;
 
-	const md = fromStructure({title, intro, groups, outro, hideQuestions, expire, public: pub, draft});
+	// адреси картинок тут не перевіряються: для ще не збережених клієнт шле
+	// blob:-адреси, які браузер показує сам. Перевірка — лише при збереженні
+	const images = plainStrings(req.body.images);
+
+	const md = fromStructure({title, intro, groups, outro, hideQuestions, images, expire, public: pub, draft});
 	const {body} = stripFrontmatter(md);
 
 	// валідація цілого файлу — щоб прев'ю не показувало те, що не збережеться
@@ -49,3 +53,19 @@ router.post('/preview', handler(async function (req, res) {
 		}),
 	});
 }));
+
+/**
+ * @param {*} value
+ * @returns {Object<string, string>}
+ */
+function plainStrings(value) {
+	const result = {};
+
+	if (!value || typeof value !== 'object') return result;
+
+	for (const [key, item] of Object.entries(value)) {
+		if (typeof item === 'string') result[key] = item;
+	}
+
+	return result;
+}

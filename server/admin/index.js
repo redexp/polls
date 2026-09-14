@@ -13,7 +13,7 @@ export const router = Router({mergeParams: true});
  */
 router.use(function (req, res, next) {
 	BankID
-	.isAdmin(req.body?.jwt)
+	.isAdmin(req.body?.jwt || bearerToken(req))
 	.then(function (valid) {
 		if (!valid) {
 			res.sendStatus(401);
@@ -28,3 +28,19 @@ router.use(function (req, res, next) {
 router.use('/polls', polls);
 router.use(preview);
 router.use(build);
+
+/**
+ * Завантаження картинки йде multipart, і на момент цієї перевірки тіла ще
+ * немає — express.json його не розбирає. Тому для нього jwt іде в заголовку.
+ * Перевірка при цьому відбувається до розбору файлу, і неавторизований запит
+ * не тримає в пам'яті ні байта.
+ *
+ * @param {import('express').Request} req
+ * @returns {string|undefined}
+ */
+function bearerToken(req) {
+	const header = req.get('authorization') || '';
+	const match = header.match(/^Bearer\s+(.+)$/i);
+
+	return match ? match[1].trim() : undefined;
+}

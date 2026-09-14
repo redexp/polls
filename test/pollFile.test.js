@@ -8,6 +8,10 @@ import {
 	matchAnswer,
 	retypeBody,
 	slugify,
+	findImageRefs,
+	findDefinedIds,
+	imageFilesOf,
+	imageNameFromUrl,
 } from '../server/models/pollFile.js';
 
 const STRUCT = {
@@ -356,4 +360,114 @@ test('проза посеред файлу текстом результатів
 
 	assert.equal(struct.outro, '');
 	assert.equal(struct.groups.length, 2);
+});
+
+const IMAGES = {
+	k1: '/img/polls/0123456789abcdef.webp',
+	k2: '/img/polls/fedcba9876543210.webp',
+	k3: '/img/polls/00000000000000aa.webp',
+};
+
+// картинка у другому питанні, а не в першому: проза перед варіантами першого
+// питання від вступу не відрізняється і при читанні файлу переходить у вступ
+const WITH_IMAGES = {
+	title: 'Заголовок',
+	intro: 'Вступ\n\n![Картинка 1][k1]',
+	groups: [
+		{body: '[a] A\n[b] B', min: 1, max: null},
+		{body: 'Питання\n\n![Картинка 2][k2]\n\n(c) C\n(d) D', min: 1, max: 1},
+	],
+	outro: 'Підсумок\n\n![Картинка 3][k3]',
+	hideQuestions: false,
+	images: IMAGES,
+	expire: null,
+	public: false,
+	draft: false,
+};
+
+test('картинки: визначення пишуться в кінець файлу і повертаються мапою', function () {
+	const md = fromStructure(WITH_IMAGES);
+
+	assert.ok(
+		md.endsWith('\n\n[k1]: /img/polls/0123456789abcdef.webp\n[k2]: /img/polls/fedcba9876543210.webp\n[k3]: /img/polls/00000000000000aa.webp\n'),
+		md
+	);
+
+	const back = toStructure(md);
+
+	assert.deepEqual(back.images, IMAGES);
+	assert.equal(back.intro, WITH_IMAGES.intro);
+	assert.equal(back.groups[0].body, WITH_IMAGES.groups[0].body);
+	assert.equal(back.groups[1].body, WITH_IMAGES.groups[1].body);
+	assert.equal(back.outro, WITH_IMAGES.outro, 'визначення не мають потрапити в текст результатів');
+
+	assert.equal(fromStructure(back), md);
+});
+
+test('картинки: без тексту результатів визначення не потрапляють у тіло останнього питання', function () {
+	const struct = {...WITH_IMAGES, outro: ''};
+	const back = toStructure(fromStructure(struct));
+
+	assert.equal(back.groups[1].body, WITH_IMAGES.groups[1].body);
+	assert.deepEqual(Object.keys(back.images).sort(), ['k1', 'k2']);
+});
+
+test('картинки: зі схованими питаннями визначення стоять після </details>', function () {
+	const struct = {...WITH_IMAGES, hideQuestions: true};
+	const md = fromStructure(struct);
+
+	assert.match(md, /<\/details>\n\n-------------------\n\nПідсумок[\s\S]*\n\n\[k1\]: /);
+
+	const back = toStructure(md);
+
+	assert.equal(back.hideQuestions, true);
+	assert.equal(back.groups.length, 2);
+	assert.deepEqual(back.images, IMAGES);
+	assert.equal(fromStructure(back), md);
+});
+
+test('картинки: непотрібне визначення не пишеться, а без мапи — жодного', function () {
+	// токен k3 з тексту прибрали, визначення має зникнути разом з ним —
+	// саме по різниці визначень сервер знаходить файли на видалення
+	const md = fromStructure({...WITH_IMAGES, outro: 'Підсумок без картинки'});
+
+	assert.ok(!md.includes('[k3]:'), md);
+	assert.ok(md.includes('[k1]:') && md.includes('[k2]:'), md);
+
+	const plain = fromStructure({...WITH_IMAGES, images: {}});
+
+	assert.ok(!plain.includes(']: /img/polls/'), plain);
+	assert.ok(plain.includes('![Картинка 1][k1]'), 'токен у тексті лишається як є');
+});
+
+test('картинки: визначення не ламають розбір варіантів', function () {
+	const md = fromStructure(WITH_IMAGES);
+	const parsed = parsePoll(md);
+
+	assert.deepEqual(parsed.values, ['a', 'b', 'c', 'd']);
+	assert.equal(parsed.groups.length, 2);
+});
+
+test('картинки: чуже визначення лишається в тексті', function () {
+	// написане руками посилання не з /img/polls/ адмінка не чіпає
+	const body = 'Текст\n\n![Схема][ext]\n\n[ext]: https://example.com/a.png\n\n[a] A';
+	const back = toStructure('## T\n\n' + body + '\n');
+
+	assert.deepEqual(back.images, {});
+	assert.ok(back.intro.includes('[ext]: https://example.com/a.png'));
+	assert.deepEqual(findDefinedIds(body), ['ext']);
+});
+
+test('картинки: пошук посилань і імен файлів', function () {
+	assert.deepEqual(findImageRefs('![a][x] текст ![b][y] ![c][x]'), ['x', 'y']);
+	assert.deepEqual(findImageRefs('![inline](/img/polls/a.webp)'), [], 'інлайнова картинка — не посилальна');
+
+	assert.deepEqual(
+		imageFilesOf(fromStructure(WITH_IMAGES)),
+		['0123456789abcdef.webp', 'fedcba9876543210.webp', '00000000000000aa.webp']
+	);
+
+	assert.equal(imageNameFromUrl('/img/polls/abc.webp'), 'abc.webp');
+	assert.equal(imageNameFromUrl('https://evil/img/polls/abc.webp'), null);
+	assert.equal(imageNameFromUrl(42), null);
 });

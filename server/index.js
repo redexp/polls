@@ -1,6 +1,6 @@
 import express from 'express';
 import {reloadPollsData} from './models/polls.js';
-import {SERVER} from './config/index.js';
+import {SERVER, UPLOADS_DIR, IMAGES_URL} from './config/index.js';
 import {router as bankid} from './bankid.js';
 import {router as answers} from './answers.js';
 import {router as map} from './map.js';
@@ -15,6 +15,10 @@ reloadPollsData()
 const app = express();
 
 app.use(express.json());
+
+// у prod цей шлях віддає nginx напряму з UPLOADS_DIR; сюди запити доходять лише
+// в dev через проксі vite. Файли незмінні — нове завантаження дає нове ім'я
+app.use(IMAGES_URL, express.static(UPLOADS_DIR, {immutable: true, maxAge: '1y'}));
 
 app.use(bankid);
 app.use('/api/answers', answers);

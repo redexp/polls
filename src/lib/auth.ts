@@ -38,7 +38,7 @@ export function hasAuth(): boolean {
 	let data;
 
 	try {
-		data = JSON.parse(atob(jwt.split('.')[1]));
+		data = JSON.parse(decodeBase64Url(jwt.split('.')[1]));
 	}
 	catch (_err) {
 		return false;
@@ -51,6 +51,20 @@ export function hasAuth(): boolean {
 	}
 
 	return true;
+}
+
+/**
+ * Частини JWT — base64url, а не base64: замість `+` і `/` там `-` і `_`, і без
+ * `=` у кінці. Голий atob на такому падає, щойно в корисному навантаженні
+ * трапляється байт, що дає ці символи — а з кириличним імʼям це майже завжди.
+ * До того ж atob повертає латиницю-1, тому UTF-8 треба розкодувати окремо.
+ */
+function decodeBase64Url(text: string): string {
+	const base64 = text.replace(/-/g, '+').replace(/_/g, '/');
+	const padded = base64 + '='.repeat((4 - base64.length % 4) % 4);
+	const bytes = Uint8Array.from(atob(padded), ch => ch.charCodeAt(0));
+
+	return new TextDecoder().decode(bytes);
 }
 
 export async function isAdmin(): Promise<boolean> {

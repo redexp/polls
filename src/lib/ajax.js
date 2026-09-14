@@ -20,6 +20,40 @@ export default async function ajax(url, body) {
 }
 
 /**
+ * Завантаження файлу multipart. JWT іде в заголовку, а не в тілі, як у решти
+ * запитів: тіло тут — не JSON, і сервер розбирає його вже після перевірки.
+ *
+ * @param {string} url
+ * @param {File} file
+ * @param {string|null} jwt
+ * @returns {Promise<any>}
+ */
+export async function uploadFile(url, file, jwt) {
+	const body = new FormData();
+
+	body.append('file', file, file.name);
+
+	const res = await fetch(url, {
+		method: 'POST',
+		headers: {
+			'authorization': 'Bearer ' + (jwt || ''),
+			'x-requested-with': 'XMLHttpRequest',
+		},
+		body,
+	});
+
+	const data = await res.json().catch(() => null);
+
+	if (res.ok) return data;
+
+	if (typeof data?.message === 'string') {
+		notify.error(data.message);
+	}
+
+	throw res;
+}
+
+/**
  * @param {"POST" | "GET"} method
  * @param {string} url
  * @param {Object} [qs]

@@ -75,11 +75,33 @@ import '../../../styles/poll.less';
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label" for="intro">
-                            Вступний текст
-                            <button type="button" class="btn-help" data-help="help-intro"
-                                    aria-label="Пояснення про вступний текст">?</button>
-                        </label>
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-1">
+                            <label class="form-label mb-0" for="intro">
+                                Вступний текст
+                                <button type="button" class="btn-help" data-help="help-intro"
+                                        aria-label="Пояснення про вступний текст">?</button>
+                            </label>
+
+                            <span class="d-flex align-items-center gap-3">
+                                <!-- кнопка з файловим інпутом є лише тут; в інші поля
+                                     картинки потрапляють перетягуванням -->
+                                <button id="intro-image" type="button" class="btn btn-sm btn-outline-secondary">Картинка</button>
+                                <input id="intro-image-file" type="file" class="d-none" multiple
+                                       accept="image/png,image/jpeg,image/webp"/>
+
+                                <span class="d-flex align-items-center">
+                                    <!-- вмикає редактор на всіх полях одразу; стан —
+                                         вподобання людини, живе в localStorage -->
+                                    <label class="form-check form-switch mb-0">
+                                        <input id="visual-editor" type="checkbox" role="switch" class="form-check-input"/>
+                                        <span class="form-check-label">Візуальний редактор</span>
+                                    </label>
+
+                                    <button type="button" class="btn-help" data-help="help-visual"
+                                            aria-label="Пояснення про візуальний редактор">?</button>
+                                </span>
+                            </span>
+                        </div>
                         <textarea id="intro" name="intro" class="form-control" rows="4"></textarea>
                     </div>
 
@@ -224,8 +246,38 @@ import '../../../styles/poll.less';
     </template>
 
     <template id="help-intro">
-        <p class="mb-0">
+        <p>
             Markdown. Виводиться під заголовком, перед першим питанням.
+        </p>
+        <p>
+            <strong>Картинки.</strong> Перетягніть файл у будь-яке текстове поле або
+            натисніть «Картинка». У тексті картинка показана коротким токеном
+            <code>![Картинка 1][…]</code>, а під полем — мініатюрою з хрестиком, який
+            прибирає її і з тексту. Підтримуються png, jpg і webp до 10 МБ.
+        </p>
+        <p class="mb-0">
+            На сервер файли потрапляють разом зі збереженням опитування. Якщо
+            перезавантажити сторінку до цього, картинки доведеться додати знову.
+        </p>
+    </template>
+
+    <template id="help-visual">
+        <p>
+            Замінює всі текстові поля форми редактором з панеллю: жирний, курсив,
+            списки, картинки. Файл опитування від цього не змінюється — редактор
+            пише той самий markdown.
+        </p>
+        <p>
+            Рядки варіантів відповіді <code>[значення] Підпис</code> показані
+            моноширинним блоком і правляться як текст. Enter у блоку додає рядок,
+            Enter на порожньому рядку в кінці виводить з блоку. Будь-який рядок,
+            що починається з дужки, стає варіантом відповіді.
+        </p>
+        <p class="mb-0">
+            Картинка в тексті — це блок «Картинка N» з хрестиком; сама мініатюра
+            лишається під полем. Після перемикання туди й назад markdown може
+            трохи змінитися на вигляд (маркери списків, порожні рядки) — зміст
+            лишається тим самим.
         </p>
     </template>
 
@@ -265,9 +317,13 @@ import '../../../styles/poll.less';
             Тип дужок задає перемикач «Декілька відповідей / Тільки одна відповідь» —
             він переписує дужки в тексті сам.
         </p>
-        <p class="mb-0">
+        <p>
             <code>+</code> одразу після дужки додає під варіантом поле, у яке людина
             впише свій текст.
+        </p>
+        <p class="mb-0">
+            Картинка, поставлена одразу під рядком варіанта, стає частиною його
+            підпису. Щоб вона була окремим блоком, лишіть перед нею порожній рядок.
         </p>
     </template>
 

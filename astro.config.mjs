@@ -37,7 +37,12 @@ export default defineConfig({
 				'/api': {
 					target: 'http://localhost:' + SERVER.port,
 					changeOrigin: true,
-				}
+				},
+				// картинки опитувань лежать поза public/, у dev їх віддає express
+				'/img/polls': {
+					target: 'http://localhost:' + SERVER.port,
+					changeOrigin: true,
+				},
 			}
 		}
 	},
