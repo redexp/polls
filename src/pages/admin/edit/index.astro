@@ -76,31 +76,23 @@ import '../../../styles/poll.less';
 
                     <div class="mb-3">
                         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-1">
-                            <label class="form-label mb-0" for="intro">
-                                Вступний текст
-                                <button type="button" class="btn-help" data-help="help-intro"
-                                        aria-label="Пояснення про вступний текст">?</button>
-                            </label>
-
                             <span class="d-flex align-items-center gap-3">
+                                <label class="form-label mb-0" for="intro">Вступний текст</label>
+
                                 <!-- кнопка з файловим інпутом є лише тут; в інші поля
-                                     картинки потрапляють перетягуванням -->
-                                <button id="intro-image" type="button" class="btn btn-sm btn-outline-secondary">Картинка</button>
+                                     картинки потрапляють перетягуванням. У візуальному
+                                     режимі ховається: та сама кнопка є на панелі редактора -->
+                                <button id="intro-image" type="button" class="btn btn-sm btn-outline-secondary">Додати картинку</button>
                                 <input id="intro-image-file" type="file" class="d-none" multiple
                                        accept="image/png,image/jpeg,image/webp"/>
-
-                                <span class="d-flex align-items-center">
-                                    <!-- вмикає редактор на всіх полях одразу; стан —
-                                         вподобання людини, живе в localStorage -->
-                                    <label class="form-check form-switch mb-0">
-                                        <input id="visual-editor" type="checkbox" role="switch" class="form-check-input"/>
-                                        <span class="form-check-label">Візуальний редактор</span>
-                                    </label>
-
-                                    <button type="button" class="btn-help" data-help="help-visual"
-                                            aria-label="Пояснення про візуальний редактор">?</button>
-                                </span>
                             </span>
+
+                            <!-- вмикає редактор на всіх полях одразу; стан —
+                                 вподобання людини, живе в localStorage -->
+                            <label class="form-check form-switch mb-0">
+                                <input id="visual-editor" type="checkbox" role="switch" class="form-check-input"/>
+                                <span class="form-check-label">Візуальний редактор</span>
+                            </label>
                         </div>
                         <textarea id="intro" name="intro" class="form-control" rows="4"></textarea>
                     </div>
@@ -205,6 +197,9 @@ import '../../../styles/poll.less';
             <div id="preview-col" class="d-none">
                 <div id="preview-pane" class="preview-pane">
                     <div class="preview-toolbar d-flex align-items-center justify-content-end gap-2 mb-2">
+                        <!-- ховає форму цілком; прев'ю тоді стоїть у такому ж контейнері,
+                             як опитування на сайті, тобто і по ширині поводиться так само -->
+                        <button id="preview-fullscreen" type="button" class="btn btn-sm btn-outline-secondary">На весь екран</button>
                         <button id="preview-refresh" type="button" class="btn btn-sm btn-outline-secondary">Оновити</button>
                         <button id="preview-close" type="button" class="btn btn-sm btn-outline-secondary" aria-label="Закрити прев'ю">×</button>
                     </div>
@@ -242,42 +237,6 @@ import '../../../styles/poll.less';
             Якщо вимкнути, опитування стає публічним: імʼя зберігається і показується поруч
             з відповіддю, і тоді результат може працювати як петиція. Учасник бачить це
             попередньо за позначкою на самому опитуванні.
-        </p>
-    </template>
-
-    <template id="help-intro">
-        <p>
-            Markdown. Виводиться під заголовком, перед першим питанням.
-        </p>
-        <p>
-            <strong>Картинки.</strong> Перетягніть файл у будь-яке текстове поле або
-            натисніть «Картинка». У тексті картинка показана коротким токеном
-            <code>![Картинка 1][…]</code>, а під полем — мініатюрою з хрестиком, який
-            прибирає її і з тексту. Підтримуються png, jpg і webp до 10 МБ.
-        </p>
-        <p class="mb-0">
-            На сервер файли потрапляють разом зі збереженням опитування. Якщо
-            перезавантажити сторінку до цього, картинки доведеться додати знову.
-        </p>
-    </template>
-
-    <template id="help-visual">
-        <p>
-            Замінює всі текстові поля форми редактором з панеллю: жирний, курсив,
-            списки, картинки. Файл опитування від цього не змінюється — редактор
-            пише той самий markdown.
-        </p>
-        <p>
-            Рядки варіантів відповіді <code>[значення] Підпис</code> показані
-            моноширинним блоком і правляться як текст. Enter у блоку додає рядок,
-            Enter на порожньому рядку в кінці виводить з блоку. Будь-який рядок,
-            що починається з дужки, стає варіантом відповіді.
-        </p>
-        <p class="mb-0">
-            Картинка в тексті — це блок «Картинка N» з хрестиком; сама мініатюра
-            лишається під полем. Після перемикання туди й назад markdown може
-            трохи змінитися на вигляд (маркери списків, порожні рядки) — зміст
-            лишається тим самим.
         </p>
     </template>
 

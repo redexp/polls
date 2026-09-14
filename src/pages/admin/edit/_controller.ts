@@ -90,7 +90,10 @@ const previewBtn = byId<HTMLButtonElement>('preview-btn');
 const log = byId<HTMLPreElement>('log');
 
 const previewCol = byId('preview-col');
+const previewPane = byId('preview-pane');
 const previewBox = byId('preview');
+const previewFullBtn = byId<HTMLButtonElement>('preview-fullscreen');
+const editorRow = qs('.editor-row');
 
 /** порядок питань на момент останнього рендеру прев'ю, за їх gid */
 let renderedGids: string[] = [];
@@ -163,6 +166,10 @@ byId<HTMLButtonElement>('preview-refresh').onclick = function () {
 };
 
 byId<HTMLButtonElement>('preview-close').onclick = closePreview;
+
+previewFullBtn.onclick = function () {
+	setFullscreen(!isFullscreen());
+};
 
 saveBtn.onclick = function () {
 	save().then(() => success('Збережено')).catch(showError);
@@ -879,8 +886,27 @@ async function openPreview() {
 }
 
 function closePreview() {
+	// закрите прев'ю без форми лишило б порожню сторінку
+	setFullscreen(false);
+
 	previewCol.classList.add('d-none');
 	previewBtn.innerText = 'Прев\'ю';
+}
+
+function isFullscreen(): boolean {
+	return editorRow.classList.contains('is-fullscreen');
+}
+
+/**
+ * Прев'ю на весь екран: форма ховається цілком, а панель прев'ю отримує клас
+ * `container` — той самий, у якому опитування стоїть на сайті, тож і ширина в
+ * неї така ж на кожному розмірі вікна.
+ */
+function setFullscreen(on: boolean) {
+	editorRow.classList.toggle('is-fullscreen', on);
+	previewPane.classList.toggle('container', on);
+
+	previewFullBtn.innerText = on ? 'Згорнути' : 'На весь екран';
 }
 
 async function renderPreview() {
@@ -1040,6 +1066,9 @@ function saveVisualPref(on: boolean) {
 
 async function setVisual(on: boolean) {
 	saveVisualPref(on);
+
+	// у візуальному режимі та сама кнопка є на панелі редактора вступу
+	introImageBtn.classList.toggle('d-none', on);
 
 	if (on) {
 		await Promise.all(managedAreas().map(mountEditor));

@@ -45,6 +45,9 @@
 // візуальний редактор стоїть на місці textarea і виглядає як поле форми
 .visual-editor {
 	.editor-toolbar {
+		display: flex;
+		flex-wrap: wrap;
+		gap: .5rem;
 		margin-bottom: .35rem;
 
 		.btn {
@@ -249,6 +252,27 @@
 		flex: 0 1 @preview-width;
 		min-width: 320px;
 	}
+
+	// прев'ю на весь екран: форми немає, колонка прев'ю займає все. Сама панель
+	// отримує клас `container` (ставить контролер) — той самий, у якому
+	// опитування стоїть на сайті, тож ширина на кожному розмірі вікна така ж
+	&.is-fullscreen {
+		#form-col {
+			display: none;
+		}
+
+		#preview-col {
+			flex: 1 1 100%;
+			min-width: 0;
+		}
+	}
+}
+
+// у повноекранному режимі відступи дає сам `container` прев'ю; відступи main
+// зверху додали б до ширини ще 24px різниці з сайтом на вузьких екранах
+.admin-edit:has(.editor-row.is-fullscreen) {
+	padding-left: 0;
+	padding-right: 0;
 }
 
 // кругла кнопка «?»: усі пояснення живуть у попапах, а не в тексті сторінки

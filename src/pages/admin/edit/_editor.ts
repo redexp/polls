@@ -314,12 +314,29 @@ const PollImage = Node.create({
 	},
 });
 
-const TOOLBAR: Array<{cmd: string, html: string, title: string}> = [
-	{cmd: 'bold', html: '<strong>Ж</strong>', title: 'Жирний (Ctrl+B)'},
-	{cmd: 'italic', html: '<em>К</em>', title: 'Курсив (Ctrl+I)'},
-	{cmd: 'bulletList', html: '•&nbsp;—', title: 'Список'},
-	{cmd: 'orderedList', html: '1.&nbsp;—', title: 'Нумерований список'},
+type ToolbarItem = {cmd: string, html: string, title: string, level?: number};
+
+/**
+ * Панель — кілька груп. Заголовки лише h3 і h4: h1 на сайті — назва сайту,
+ * h2 — заголовок опитування.
+ */
+const TOOLBAR: ToolbarItem[][] = [
+	[
+		{cmd: 'heading', level: 3, html: 'H3', title: 'Заголовок 3'},
+		{cmd: 'heading', level: 4, html: 'H4', title: 'Заголовок 4'},
+	],
+	[
+		{cmd: 'bold', html: '<strong>Ж</strong>', title: 'Жирний (Ctrl+B)'},
+		{cmd: 'italic', html: '<em>К</em>', title: 'Курсив (Ctrl+I)'},
+	],
+	[
+		{cmd: 'orderedList', html: '1.&nbsp;—', title: 'Нумерований список'},
+		{cmd: 'bulletList', html: '•&nbsp;—', title: 'Список'},
+	],
 ];
+
+/** рівні заголовків, які редактор узагалі приймає */
+const HEADING_LEVELS = [3, 4];
 
 export function createEditor(params: EditorParams): PollEditor {
 	const {area, onUpdate, onImageFiles, onImageButton} = params;
@@ -330,37 +347,47 @@ export function createEditor(params: EditorParams): PollEditor {
 
 	const toolbar = document.createElement('div');
 
-	toolbar.className = 'editor-toolbar btn-group btn-group-sm';
+	toolbar.className = 'editor-toolbar';
 	toolbar.setAttribute('role', 'toolbar');
 
-	const buttons = new Map<string, HTMLButtonElement>();
+	const buttons = new Map<HTMLButtonElement, ToolbarItem>();
 
-	for (const item of TOOLBAR) {
-		const btn = document.createElement('button');
+	for (const group of TOOLBAR) {
+		const wrap = document.createElement('div');
 
-		btn.type = 'button';
-		btn.className = 'btn btn-outline-secondary';
-		btn.title = item.title;
-		btn.innerHTML = item.html;
-		btn.dataset.cmd = item.cmd;
-		// mousedown замість click забирав би фокус у редактора і зняв виділення
-		btn.onmousedown = (e) => e.preventDefault();
+		wrap.className = 'btn-group btn-group-sm';
 
-		buttons.set(item.cmd, btn);
-		toolbar.appendChild(btn);
+		for (const item of group) {
+			const btn = document.createElement('button');
+
+			btn.type = 'button';
+			btn.className = 'btn btn-outline-secondary';
+			btn.title = item.title;
+			btn.innerHTML = item.html;
+			// mousedown замість click забирав би фокус у редактора і зняв виділення
+			btn.onmousedown = (e) => e.preventDefault();
+
+			buttons.set(btn, item);
+			wrap.appendChild(btn);
+		}
+
+		toolbar.appendChild(wrap);
 	}
 
 	if (onImageButton) {
+		const wrap = document.createElement('div');
 		const btn = document.createElement('button');
+
+		wrap.className = 'btn-group btn-group-sm';
 
 		btn.type = 'button';
 		btn.className = 'btn btn-outline-secondary';
-		btn.title = 'Додати картинку';
-		btn.innerText = 'Картинка';
+		btn.innerText = 'Додати картинку';
 		btn.onmousedown = (e) => e.preventDefault();
 		btn.onclick = () => onImageButton();
 
-		toolbar.appendChild(btn);
+		wrap.appendChild(btn);
+		toolbar.appendChild(wrap);
 	}
 
 	const mount = document.createElement('div');
@@ -376,9 +403,9 @@ export function createEditor(params: EditorParams): PollEditor {
 		contentType: 'markdown',
 		extensions: [
 			StarterKit.configure({
-				// набір свідомо малий: bold, italic, списки, заголовки 2–3.
+				// набір свідомо малий: bold, italic, списки, заголовки 3–4.
 				// Посилання лишаються без кнопки — інакше url із тексту губився б
-				heading: {levels: [2, 3]},
+				heading: {levels: HEADING_LEVELS},
 				hardBreak: false,
 				blockquote: false,
 				code: false,
@@ -426,20 +453,25 @@ export function createEditor(params: EditorParams): PollEditor {
 		onTransaction: updateToolbar,
 	});
 
-	for (const [cmd, btn] of buttons) {
+	for (const [btn, item] of buttons) {
 		btn.onclick = function () {
 			const chain = editor.chain().focus();
 
-			if (cmd === 'bold') chain.toggleBold().run();
-			else if (cmd === 'italic') chain.toggleItalic().run();
-			else if (cmd === 'bulletList') chain.toggleBulletList().run();
-			else if (cmd === 'orderedList') chain.toggleOrderedList().run();
+			if (item.cmd === 'heading') chain.toggleHeading({level: item.level as 3|4}).run();
+			else if (item.cmd === 'bold') chain.toggleBold().run();
+			else if (item.cmd === 'italic') chain.toggleItalic().run();
+			else if (item.cmd === 'bulletList') chain.toggleBulletList().run();
+			else if (item.cmd === 'orderedList') chain.toggleOrderedList().run();
 		};
 	}
 
 	function updateToolbar() {
-		for (const [cmd, btn] of buttons) {
-			const active = editor.isActive(cmd);
+		for (const [btn, item] of buttons) {
+			const active = (
+				item.level ?
+					editor.isActive(item.cmd, {level: item.level}) :
+					editor.isActive(item.cmd)
+			);
 
 			btn.classList.toggle('active', active);
 			btn.setAttribute('aria-pressed', String(active));
