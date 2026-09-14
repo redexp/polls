@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "astro",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["start"],
+      "port": 4321
+    },
+    {
+      "name": "api",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["server/index.js"],
+      "port": 8000
+    },
+    {
+      "name": "bankid",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["server/dev/bankid-oauth.js"],
+      "port": 8001
+    }
+  ]
+}
