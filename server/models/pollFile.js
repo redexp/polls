@@ -13,8 +13,14 @@ const DIRECTIVE_RE = /^\s*\{(\d+)\s*-\s*(\d+)\}\s*$/;
 const CHECKBOX_RE = /^\s*\[([^\]]+)\]([+:]?)/;
 /** (значення) Підпис — radio */
 const RADIO_RE = /^\s*\(([^)]+)\)(\+?)/;
-/** \[...\] — екранований markdown, повертаємо у звичайний вигляд */
-const ESCAPED_RE = /^\s*\\\[([^\]]+)\\\]/gm;
+/**
+ * `\[...\]` на початку рядка — екранована дужка варіанта. Візуальний редактор
+ * екранує `[` у звичайному тексті, а рендер (remark) знімає екранування ще до
+ * transform.js, тож для сайту такий рядок і так варіант. Сервер зводить його
+ * до канонічного `[...]` на всіх входах, щоб файл, конструктор і валідація
+ * бачили одне й те саме.
+ */
+const ESCAPED_RE = /^([ \t]*)\\\[([^\]\n]*)\\\]/gm;
 
 const FRONTMATTER_RE = /^---+\s*\r?\n(.*?)\r?\n---+\s*\r?\n/s;
 
@@ -206,6 +212,16 @@ export function matchAnswer(line) {
 }
 
 /**
+ * Знімає екранування дужок на початку рядків: `\[a\] Підпис` → `[a] Підпис`.
+ *
+ * @param {string} text
+ * @returns {string}
+ */
+export function unescapeAnswers(text) {
+	return String(text || '').replace(ESCAPED_RE, '$1[$2]');
+}
+
+/**
  * Чи рядок узагалі претендує на роль відповіді (щоб відрізнити помилку синтаксису
  * від звичайної прози).
  *
@@ -332,7 +348,7 @@ export function retypeBody(body, type) {
 	const forbidden = type === 'radio' ? ')' : ']';
 
 	return (
-		String(body || '')
+		unescapeAnswers(body)
 		.split(/\r?\n/)
 		.map(function (line) {
 			if (isImageRef(line)) return line;
@@ -469,7 +485,7 @@ function applyRangeDefaults(group, file) {
  * @returns {{expire: string|null, public: boolean, draft: boolean, values: string[], groups: Array<{type: string, values: string[], min: number, max: number}>}}
  */
 export function parsePoll(md, file) {
-	const {data, body} = stripFrontmatter(md.replace(ESCAPED_RE, '[$1]'));
+	const {data, body} = stripFrontmatter(unescapeAnswers(md));
 
 	const poll = {
 		expire: data.expire ? formatDate(data.expire) : null,
@@ -505,7 +521,7 @@ export function parsePoll(md, file) {
  * @returns {{title: string, intro: string, groups: Array<{body: string, min: number, max: number, explicitRange: boolean, type: string}>, outro: string, hideQuestions: boolean, images: Object<string, string>, expire: string|null, public: boolean, draft: boolean}}
  */
 export function toStructure(md, file) {
-	const {data, body: withDefs} = stripFrontmatter(md);
+	const {data, body: withDefs} = stripFrontmatter(unescapeAnswers(md));
 	const {body: raw, images} = extractImageDefs(withDefs);
 	const {body, hidden} = stripDetails(raw);
 	const segments = splitSegments(body);
@@ -626,7 +642,7 @@ export function fromStructure(struct) {
 		// директива береться з полів форми, тому з тіла її прибираємо —
 		// інакше вписана вручну дала б duplicate_range при наступному розборі
 		const body = (
-			(group.body || '')
+			unescapeAnswers(group.body)
 			.split(/\r?\n/)
 			.filter(line => !DIRECTIVE_RE.test(line))
 			.join('\n')
@@ -652,7 +668,8 @@ export function fromStructure(struct) {
 		);
 	});
 
-	const outro = String(struct.outro || '').trim();
+	const outro = unescapeAnswers(struct.outro).trim();
+	const intro = unescapeAnswers(struct.intro).trim();
 
 	// порожні рядки всередині обгортки обовʼязкові: без них markdown вважає
 	// вміст <details> суцільним HTML-блоком і не розбирає варіанти
@@ -669,7 +686,7 @@ export function fromStructure(struct) {
 	// того ж <p>, що й проза
 	const body = [
 		struct.title ? '## ' + struct.title.trim() : '',
-		struct.intro ? struct.intro.trim() : '',
+		intro,
 		questions,
 	];
 
@@ -680,7 +697,7 @@ export function fromStructure(struct) {
 	// Визначення картинок — у самому кінці. Пишуться лише ті, на які текст
 	// справді посилається: прибраний з тексту токен прибирає і визначення, і
 	// саме по різниці визначень сервер розуміє, який файл видалити
-	const text = [struct.intro || '', ...(struct.groups || []).map(group => group.body || ''), outro].join('\n');
+	const text = [intro, ...(struct.groups || []).map(group => group.body || ''), outro].join('\n');
 	const defs = [];
 
 	for (const id of findImageRefs(text)) {

@@ -3,14 +3,12 @@
  * лише коли перемикач увімкнено, тому цей модуль не імпортується статично.
  *
  * Джерело правди лишається markdown: редактор читає його з textarea і після
- * кожної зміни пише назад. Два власні вузли захищають DSL опитування від
- * серіалізатора, який інакше екранував би дужки:
- *  - `pollAnswers` — рядки варіантів `[val] Підпис` / `(val) Підпис`, дослівний
- *    моноширинний блок;
- *  - `pollImage` — посилальна картинка `![Картинка N][id]`, атомарний чип з
- *    хрестиком, текст усередині не редагується.
+ * кожної зміни пише назад. Рядки варіантів `[val] Підпис` — звичайний текст:
+ * серіалізатор екранує дужки, а сервер знімає екранування сам. Один власний
+ * вузол — `pollImage`, посилальна картинка `![Картинка N][id]`: атомарний чип з
+ * хрестиком, текст усередині не редагується.
  */
-import {Editor, Node, mergeAttributes} from '@tiptap/core';
+import {Editor, Node} from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import {Markdown} from '@tiptap/markdown';
 
@@ -37,9 +35,6 @@ export type PollEditor = {
 	focus(): void,
 	destroy(): void,
 };
-
-/** рядок варіанта відповіді або директиви — усе, що починається з дужки */
-const ANSWER_LINE_RE = /^[ \t]*[\[(]/;
 
 /**
  * Перенос рядка. Власна копія стандартного hardBreak з однією відмінністю:
@@ -87,106 +82,6 @@ const LineBreak = Node.create({
 });
 /** посилальна `![alt][id]` або інлайнова `![alt](src)` картинка */
 const IMAGE_RE = /^!\[([^\]]*)\](?:\[([^\]\s]+)\]|\(([^)\s]+)\))/;
-
-/**
- * Рядки варіантів. Один вузол — уся послідовність сусідніх рядків з дужками:
- * якби кожен рядок був окремим блоком, серіалізатор розділив би їх порожніми
- * рядками, і кожен варіант став би окремим абзацем у рендері.
- *
- * `code: true` — серіалізатор не екранує текст усередині «кодових» вузлів,
- * саме це і робить блок дослівним.
- */
-const PollAnswers = Node.create({
-	name: 'pollAnswers',
-	group: 'block',
-	content: 'text*',
-	marks: '',
-	code: true,
-	defining: true,
-
-	parseHTML() {
-		return [{tag: 'pre[data-poll-answers]', preserveWhitespace: 'full'}];
-	},
-
-	renderHTML({HTMLAttributes}) {
-		return ['pre', mergeAttributes(HTMLAttributes, {'data-poll-answers': '', class: 'poll-answers'}), ['code', 0]];
-	},
-
-	markdownTokenName: 'pollAnswers',
-
-	markdownTokenizer: {
-		name: 'pollAnswers',
-		level: 'block',
-		// індекс першого рядка з дужкою: так marked обриває абзац прози перед
-		// варіантами, навіть якщо між ними немає порожнього рядка. Лише після
-		// переносу: marked викликає start для зрізаного з початку джерела, тож
-		// прив'язка до початку рядка тут означала б середину рядка — і
-		// `![Картинка 1][id]` розпалося б на «!» і блок варіантів
-		start(src: string) {
-			const match = src.match(/\n[ \t]*[\[(]/);
-
-			return match ? match.index! + 1 : -1;
-		},
-		tokenize(src: string) {
-			const lines = src.split('\n');
-
-			let count = 0;
-
-			while (count < lines.length && ANSWER_LINE_RE.test(lines[count])) count++;
-
-			if (count === 0) return;
-
-			const text = lines.slice(0, count).join('\n');
-
-			return {
-				type: 'pollAnswers',
-				raw: text + (count < lines.length ? '\n' : ''),
-				text,
-			};
-		},
-	},
-
-	parseMarkdown(token, helpers) {
-		const text = String(token.text || '');
-
-		return helpers.createNode('pollAnswers', undefined, text ? [helpers.createTextNode(text)] : []);
-	},
-
-	renderMarkdown(node) {
-		return (node.content || []).map(child => child.text || '').join('');
-	},
-
-	addKeyboardShortcuts() {
-		return {
-			// Enter — новий рядок у блоку; Enter на порожньому рядку в кінці —
-			// вихід у звичайний абзац під блоком, як у блоку коду
-			Enter: () => {
-				const {state} = this.editor;
-				const {$from, empty} = state.selection;
-
-				if (!empty || $from.parent.type !== this.type) return false;
-
-				const atEnd = $from.parentOffset === $from.parent.content.size;
-				const onBlankLine = $from.parent.textContent.endsWith('\n');
-
-				if (atEnd && onBlankLine) {
-					return (
-						this.editor
-						.chain()
-						.command(({tr}) => {
-							tr.delete($from.pos - 1, $from.pos);
-							return true;
-						})
-						.exitCode()
-						.run()
-					);
-				}
-
-				return this.editor.commands.newlineInCode();
-			},
-		};
-	},
-});
 
 /**
  * Картинка в тексті. Атомарний і нередагований: показує підпис і хрестик, а в
@@ -415,7 +310,6 @@ export function createEditor(params: EditorParams): PollEditor {
 				underline: false,
 			}),
 			LineBreak,
-			PollAnswers,
 			PollImage,
 			Markdown.configure({
 				// і читається так само: перенос рядка — це hardBreak
@@ -481,9 +375,15 @@ export function createEditor(params: EditorParams): PollEditor {
 	const api: PollEditor = {
 		element,
 
+		/**
+		 * Рядки варіантів `[a] Підпис` серіалізатор віддає екранованими —
+		 * `\[a\] Підпис`. Це не чіпаємо: сервер зводить їх до канонічного
+		 * вигляду на всіх входах, а рендер знімає екранування ще до
+		 * transform.js, тож для нього такий рядок і так варіант.
+		 */
 		getMarkdown() {
 			return (
-				unescapeAnswerLines(editor.getMarkdown())
+				editor.getMarkdown()
 				// порожній абзац дає зайві порожні рядки; у файлі вони нічого
 				// не означають, а при наступному читанні стали б &nbsp;
 				.replace(/\n{3,}/g, '\n\n')
@@ -522,16 +422,6 @@ export function createEditor(params: EditorParams): PollEditor {
 	updateToolbar();
 
 	return api;
-}
-
-/**
- * Серіалізатор екранує дужки у звичайному тексті: набране в абзаці `[a] Підпис`
- * стало б `\[a\] Підпис`. Рядок, що починається з дужки, у цьому редакторі
- * завжди варіант відповіді, тому екранування на початку рядка знімається — і
- * після наступного читання такий рядок уже стає дослівним блоком.
- */
-function unescapeAnswerLines(markdown: string): string {
-	return markdown.replace(/^([ \t]*)\\\[([^\]\n]*)\\\]/gm, '$1[$2]');
 }
 
 function imageFiles(list?: FileList|null): File[] {

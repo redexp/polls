@@ -12,6 +12,7 @@ import {
 	findDefinedIds,
 	imageFilesOf,
 	imageNameFromUrl,
+	unescapeAnswers,
 } from '../server/models/pollFile.js';
 
 const STRUCT = {
@@ -470,4 +471,31 @@ test('картинки: пошук посилань і імен файлів', f
 	assert.equal(imageNameFromUrl('/img/polls/abc.webp'), 'abc.webp');
 	assert.equal(imageNameFromUrl('https://evil/img/polls/abc.webp'), null);
 	assert.equal(imageNameFromUrl(42), null);
+});
+
+test('екрановані дужки: сервер зводить `\\[a\\]` до канонічного `[a]` на всіх входах', function () {
+	// візуальний редактор екранує дужки у звичайному тексті; рендер і так знімав
+	// екранування до transform.js, тож для сайту це завжди був варіант
+	const escaped = 'Питання\n\\[a\\] Варіант A\n\\[b\\]+ Свій';
+
+	assert.equal(unescapeAnswers(escaped + '\n(c) Радіо'), 'Питання\n[a] Варіант A\n[b]+ Свій\n(c) Радіо');
+	assert.equal(unescapeAnswers('  \\[x\\] з відступом'), '  [x] з відступом', 'відступ зберігається');
+	assert.equal(unescapeAnswers('текст \\[не на початку\\]'), 'текст \\[не на початку\\]', 'посеред рядка не чіпаємо');
+
+	const md = fromStructure({
+		title: 'T',
+		intro: '\\[вступ\\] теж варіант',
+		groups: [{body: escaped}],
+		outro: '\\[так\\] підсумок',
+	});
+
+	assert.ok(!md.includes('\\['), 'у файлі екранування немає: ' + md);
+	assert.deepEqual(parsePoll(md).values, ['вступ', 'a', 'b', 'так']);
+
+	const back = toStructure('## T\n\n\\[a\\] A\n\\[b\\] B\n');
+
+	assert.equal(back.groups[0].body, '[a] A\n[b] B');
+	assert.equal(back.groups[0].type, 'checkbox');
+
+	assert.equal(retypeBody('\\[a\\] A\n\\[b\\]+ B\n', 'radio'), '(a) A\n(b)+ B\n');
 });

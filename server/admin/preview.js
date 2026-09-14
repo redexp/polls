@@ -1,6 +1,6 @@
 import {Router} from 'express';
 import {processor} from '../../src/lib/processor.js';
-import {fromStructure, stripFrontmatter, parsePoll, parseSegment} from '../models/pollFile.js';
+import {fromStructure, stripFrontmatter, parsePoll, parseSegment, unescapeAnswers} from '../models/pollFile.js';
 import {handler} from './errors.js';
 
 export const router = Router({mergeParams: true});
@@ -42,7 +42,8 @@ router.post('/preview', handler(async function (req, res) {
 		// конструктора: так індекси збігаються навіть якщо група порожня.
 		// Конструктор через це не тримає власної копії знань про синтаксис
 		groups: (groups || []).map(function (group) {
-			const parsed = parseSegment(String(group?.body || '').split(/\r?\n/));
+			// з візуального редактора дужки приходять екранованими
+			const parsed = parseSegment(unescapeAnswers(group?.body).split(/\r?\n/));
 
 			if (!parsed) return null;
 
