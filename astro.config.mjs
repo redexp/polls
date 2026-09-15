@@ -19,6 +19,9 @@ export default defineConfig({
 	devToolbar: {
 		enabled: false,
 	},
+	experimental: {
+		incrementalBuild: true,
+	},
 	vite: {
 		server: {
 			// Адмінка пише опитування в src/polls, а це база content-колекції:
