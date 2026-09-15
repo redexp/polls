@@ -136,8 +136,8 @@ async function updateCounts() {
 
 	const counts: Counts = await api('/counts', getFilter());
 
-	for (const name in counts) {
-		for (const [value, count] of Object.entries(counts[name])) {
+	for (const [name, data] of Object.entries(counts)) {
+		for (const [value, count] of Object.entries(data)) {
 			const label = qs(`label:has(input[name="${name}"][value="${value}"])`);
 			label.classList.toggle('opacity-50', count === 0);
 			label.querySelector('strong')!.innerText = String(count);
@@ -176,7 +176,7 @@ async function updateMap() {
 	updateMapData(map, buildGeoJSON([].concat(...list)));
 }
 
-async function api(url, data) {
+async function api(url: string, data: any) {
 	return ajax('/api/map' + url, {
 		...data,
 		jwt: getJwt(),
