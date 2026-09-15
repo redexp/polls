@@ -9,7 +9,6 @@ export default defineConfig({
 	env: {
 		schema: {
 			TITLE: envField.string({context: 'client', access: 'public'}),
-			PUBLIC_MAP_TOKEN: envField.string({context: 'client', access: 'public'}),
 			MAP_CENTER: envField.string({context: 'client', access: 'public'}),
 		}
 	},

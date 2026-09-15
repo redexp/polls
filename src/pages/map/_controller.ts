@@ -4,8 +4,10 @@ import {error} from '@lib/notify.ts';
 import {createMap, buildGeoJSON, updateMapData, toggleCityRegions} from '@lib/map.ts';
 import {getAuthParams, getJwt, hasAuth, isAdmin, retrieveJwt} from '@lib/auth.ts';
 import {showModal} from '@lib/modal.ts';
+import type {Map} from 'mapbox-gl';
 
-const map = createMap('map');
+/** зʼявляється тільки після логіну: токен mapbox сервер віддає лише адмінам */
+let map: Map | null = null;
 
 const params = new URLSearchParams(location.search);
 const poll_id = params.get('poll') || location.pathname.replace('/map/', '').replace('/', '');
@@ -62,8 +64,6 @@ const legend = each<Filter & {title?: string}>('#legend', function (item, q) {
 	};
 }, true);
 
-addCityRegions();
-
 qs('form').addEventListener('change', function () {
 	updateCounts()
 	.catch(err => error(err.message || 'Server error'));
@@ -92,6 +92,10 @@ if (await isAdmin()) {
 	for (const inp of qsAll<HTMLInputElement>('.btn.arrow input')) {
 		inp.checked = false;
 	}
+
+	map = await createMap('map');
+
+	addCityRegions();
 
 	await updateAnswers();
 	await updateCounts();
@@ -158,11 +162,13 @@ function addCityRegions() {
 	input.checked = false;
 
 	input.onchange = function () {
-		toggleCityRegions(map, input.checked);
+		toggleCityRegions(map!, input.checked);
 	};
 }
 
 async function updateMap() {
+	if (!map) return;
+
 	const list = await api('/geo', {
 		filters: filters.filter(item => item.active),
 	});

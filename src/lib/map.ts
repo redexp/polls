@@ -1,10 +1,10 @@
-import {PUBLIC_MAP_TOKEN, MAP_CENTER} from "astro:env/client";
+import {MAP_CENTER} from "astro:env/client";
 import mapbox, {Map} from 'mapbox-gl';
 import type {GeoJSONSourceSpecification, GeoJSONSource} from "mapbox-gl";
+import ajax from './ajax';
+import {getJwt} from './auth.ts';
 
 type GeoData = GeoJSONSourceSpecification['data'];
-
-mapbox.accessToken = PUBLIC_MAP_TOKEN;
 
 export const COLORS = [
 	'#FDE2E2',
@@ -13,7 +13,14 @@ export const COLORS = [
 	'#B91C1C',
 ];
 
-export function createMap(container: string): Map {
+/**
+ * Токен mapbox не вшитий у бандл, а приходить з сервера: /api/map/token віддає
+ * його лише адмінам із валідним jwt. Тому карту можна створити тільки після
+ * логіну — до того токена просто немає.
+ */
+export async function createMap(container: string): Promise<Map> {
+	mapbox.accessToken = await loadToken();
+
 	const map = new Map({
 		container,
 		style: 'mapbox://styles/mapbox/streets-v12',
@@ -27,6 +34,12 @@ export function createMap(container: string): Map {
 	});
 
 	return map;
+}
+
+async function loadToken(): Promise<string> {
+	const {token} = await ajax('/api/map/token', {jwt: getJwt()});
+
+	return token;
 }
 
 function addPlusCodeMapSource(map: Map) {

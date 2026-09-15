@@ -1,6 +1,7 @@
 import {Router} from 'express';
 import pluscode from 'pluscodes';
 import ranges from './config/age-groups.js';
+import {MAP_TOKEN} from './config/index.js';
 import db from './db/index.js';
 import {polls} from './models/polls.js';
 import Statistic from './models/statistic.js';
@@ -20,6 +21,10 @@ router.use(function (req, res, next) {
 		next();
 	})
 	.catch(next);
+});
+
+router.post('/token', function (_req, res) {
+	res.json({token: MAP_TOKEN});
 });
 
 router.post('/answers', async function (req, res) {

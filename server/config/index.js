@@ -94,6 +94,13 @@ if (!config.astro.url) {
 	config.astro.url = local + config.astro.port;
 }
 
+/**
+ * Токен mapbox для браузера. Не потрапляє в клієнтський бандл: інакше лежав би
+ * у статиці відкрито для будь-кого. Сервер віддає його з /api/map/token лише
+ * адмінам після логіну.
+ */
+export const MAP_TOKEN = get('PUBLIC_MAP_TOKEN') || '';
+
 export const IS_DEV = get('NODE_ENV') !== 'production';
 export const SERVER = config.server;
 export const MAPS = config.maps;
