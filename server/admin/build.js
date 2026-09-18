@@ -8,11 +8,10 @@ import {
 	fromStructure,
 	validateSlug,
 } from '../models/pollFile.js';
-import {handler} from './errors.js';
 
 export const router = Router({mergeParams: true});
 
-router.post('/publish', handler(async function (req, res) {
+router.post('/publish', async function (req, res) {
 	const {slug} = req.body;
 
 	if (slug) {
@@ -25,9 +24,9 @@ router.post('/publish', handler(async function (req, res) {
 	const job = startBuild();
 
 	res.json(toJson(job));
-}));
+});
 
-router.post('/publish/status', handler(async function (req, res) {
+router.post('/publish/status', async function (req, res) {
 	const job = getJob(req.body.job_id);
 
 	if (!job) {
@@ -35,17 +34,17 @@ router.post('/publish/status', handler(async function (req, res) {
 	}
 
 	res.json(toJson(job));
-}));
+});
 
-router.post('/builds', handler(async function (req, res) {
+router.post('/builds', async function (req, res) {
 	res.json({builds: await listBuilds()});
-}));
+});
 
-router.post('/rollback', handler(async function (req, res) {
+router.post('/rollback', async function (req, res) {
 	await rollbackTo(req.body.name);
 
 	res.json({builds: await listBuilds()});
-}));
+});
 
 /**
  * Знімає чернетку. Проходить через генератор, а не через regex по frontmatter,

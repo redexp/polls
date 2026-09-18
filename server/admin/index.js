@@ -3,6 +3,7 @@ import BankID from '../models/bankid.js';
 import {router as polls} from './polls.js';
 import {router as build} from './build.js';
 import {router as preview} from './preview.js';
+import {errorHandler} from './errors.js';
 
 export const router = Router({mergeParams: true});
 
@@ -28,6 +29,13 @@ router.use(function (req, res, next) {
 router.use('/polls', polls);
 router.use(preview);
 router.use(build);
+
+/**
+ * Кинутий хендлером обʼєкт з полем type стає відповіддю 400 з текстом для
+ * форми. Тому хендлери — звичайні async-функції: express 5 сам ловить їхні
+ * відмови й доводить сюди.
+ */
+router.use(errorHandler);
 
 /**
  * Збереження опитування йде multipart, і на момент цієї перевірки тіла ще

@@ -1,7 +1,6 @@
 import {Router} from 'express';
 import {processor} from '../../src/lib/processor.js';
 import {fromStructure, stripFrontmatter, parsePoll, parseSegment, unescapeAnswers} from '../models/pollFile.js';
-import {handler} from './errors.js';
 
 export const router = Router({mergeParams: true});
 
@@ -19,7 +18,7 @@ async function getRenderer() {
 	return renderer;
 }
 
-router.post('/preview', handler(async function (req, res) {
+router.post('/preview', async function (req, res) {
 	const {title, intro, groups, outro, hideQuestions, expire, draft} = req.body;
 	const pub = req.body.public;
 
@@ -53,7 +52,7 @@ router.post('/preview', handler(async function (req, res) {
 			};
 		}),
 	});
-}));
+});
 
 /**
  * @param {*} value

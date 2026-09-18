@@ -25,7 +25,6 @@ import {
 	findDefinedIds,
 } from '../models/pollFile.js';
 import {IMAGE_NAME_RE, newImageName, saveImage, removeImages} from '../models/images.js';
-import {handler, sendError} from './errors.js';
 import {IMAGE_ID_RE, mapImageFields} from './imageFields.js';
 import {assertValuesPreserved} from './valueGuard.js';
 
@@ -52,7 +51,7 @@ const UPLOAD_ERRORS = new Map([
 	['LIMIT_FIELD_VALUE', 'poll_too_large'],
 ]);
 
-router.post('/list', handler(async function (req, res) {
+router.post('/list', async function (req, res) {
 	const files = await listPollFiles();
 
 	// підтеки в адмінці не показуються, але в перевірці колізій враховуються
@@ -96,9 +95,9 @@ router.post('/list', handler(async function (req, res) {
 	res.json({
 		polls: items.map(item => ({...item, votes: votes[item.slug] || 0})),
 	});
-}));
+});
 
-router.post('/get', handler(async function (req, res) {
+router.post('/get', async function (req, res) {
 	const {slug} = req.body;
 
 	validateSlug(slug);
@@ -122,17 +121,17 @@ router.post('/get', handler(async function (req, res) {
 		// хеш, що включає id опитування
 		slugLocked: votes > 0,
 	});
-}));
+});
 
-router.post('/slug', handler(async function (req, res) {
+router.post('/slug', async function (req, res) {
 	res.json({slug: slugify(req.body.title)});
-}));
+});
 
-router.post('/retype', handler(async function (req, res) {
+router.post('/retype', async function (req, res) {
 	const type = req.body.type === 'radio' ? 'radio' : 'checkbox';
 
 	res.json({body: retypeBody(req.body.body, type)});
-}));
+});
 
 /**
  * Опитування приходить multipart: поле `data` з JSON і картинки, у яких
@@ -143,14 +142,9 @@ router.post('/save', function (req, res, next) {
 	upload.any()(req, res, function (err) {
 		const type = UPLOAD_ERRORS.get(err?.code);
 
-		if (type) {
-			sendError(res, {type});
-			return;
-		}
-
-		next(err);
+		next(type ? {type} : err);
 	});
-}, handler(async function (req, res) {
+}, async function (req, res) {
 	const body = parseBody(req.body?.data);
 
 	const {slug, prev_slug, title, intro, groups, outro, hideQuestions, expire, draft} = body;
@@ -271,9 +265,9 @@ router.post('/save', function (req, res, next) {
 	}
 
 	res.json({slug, images: savedImages});
-}));
+});
 
-router.post('/delete', handler(async function (req, res) {
+router.post('/delete', async function (req, res) {
 	const {slug, confirm} = req.body;
 
 	validateSlug(slug);
@@ -304,7 +298,7 @@ router.post('/delete', handler(async function (req, res) {
 	}
 
 	res.json(true);
-}));
+});
 
 /**
  * Структура опитування приїздить полем multipart, тому JSON розбирається
