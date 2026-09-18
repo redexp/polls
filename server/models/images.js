@@ -1,8 +1,8 @@
 import sharp from 'sharp';
 import {randomBytes} from 'node:crypto';
-import {mkdir, readdir, stat, rename, unlink, writeFile, access} from 'node:fs/promises';
+import {mkdir, unlink, writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
-import {UPLOADS_DIR, UPLOADS_TMP_DIR} from '../config/index.js';
+import {UPLOADS_DIR} from '../config/index.js';
 
 /**
  * Ім'я файлу: 16 hex і розширення. Випадкове і унікальне на кожне завантаження,
@@ -18,18 +18,27 @@ const ALLOWED_FORMATS = new Set(['png', 'jpeg', 'webp']);
 /** картка опитування вужча за 800px, 1600 — запас під retina */
 const MAX_WIDTH = 1600;
 
-/** скільки живе файл у тимчасовій теці, якщо опитування так і не зберегли */
-const TMP_TTL = 60 * 60 * 1000;
+/**
+ * Ім'я для нової картинки. Видається до обробки файлу: адреса потрапляє в
+ * структуру опитування і проходить усі перевірки ще до того, як щось лягло на
+ * диск. Так можна, бо ім'я не залежить від вмісту.
+ *
+ * @returns {string}
+ */
+export function newImageName() {
+	return randomBytes(8).toString('hex') + '.webp';
+}
 
 /**
  * Приймає завантажений файл: перевіряє формат, ужимає, знімає метадані (разом з
- * GPS з EXIF) і кладе webp у тимчасову теку. Файл стає постійним лише разом
- * зі збереженням опитування — див. commitImages.
+ * GPS з EXIF) і кладе webp під заданим іменем. Викликається лише після всіх
+ * перевірок опитування, щоб відхилене збереження не лишало файлів.
  *
  * @param {Buffer} buffer
- * @returns {Promise<string>} ім'я файлу
+ * @param {string} name
+ * @returns {Promise<void>}
  */
-export async function storeUpload(buffer) {
+export async function saveImage(buffer, name) {
 	const meta = await sharp(buffer).metadata().catch(() => null);
 
 	if (!meta || !ALLOWED_FORMATS.has(meta.format)) {
@@ -46,87 +55,13 @@ export async function storeUpload(buffer) {
 		.toBuffer()
 	);
 
-	const name = randomBytes(8).toString('hex') + '.webp';
-
-	await mkdir(UPLOADS_TMP_DIR, {recursive: true});
-	await writeFile(resolve(UPLOADS_TMP_DIR, name), out);
-
-	await pruneTmp();
-
-	return name;
-}
-
-/**
- * Прибирає з тимчасової теки все, що старше за TMP_TTL: картинки з опитувань,
- * які так і не зберегли. Викликається при кожному завантаженні.
- *
- * @param {number} [now]
- * @returns {Promise<string[]>} видалені імена
- */
-export async function pruneTmp(now = Date.now()) {
-	const names = await readdir(UPLOADS_TMP_DIR).catch(() => []);
-	const removed = [];
-
-	for (const name of names) {
-		const path = resolve(UPLOADS_TMP_DIR, name);
-		const info = await stat(path).catch(() => null);
-
-		if (!info?.isFile()) continue;
-
-		if (now - info.mtimeMs < TMP_TTL) continue;
-
-		await unlink(path).catch(() => {});
-
-		removed.push(name);
-	}
-
-	return removed;
-}
-
-/**
- * Робить файли постійними: переносить із тимчасової теки. Ті, що вже постійні,
- * лишаються як є. Спершу перевіряються всі імена, і лише потім щось рухається —
- * інакше помилка на третьому файлі лишила б перші два сиротами в постійній теці.
- *
- * @param {string[]} names
- * @returns {Promise<void>}
- */
-export async function commitImages(names) {
-	const pending = [];
-	const unknown = [];
-
-	for (const name of names) {
-		if (!IMAGE_NAME_RE.test(name)) {
-			unknown.push(name);
-			continue;
-		}
-
-		if (await exists(resolve(UPLOADS_DIR, name))) continue;
-
-		if (await exists(resolve(UPLOADS_TMP_DIR, name))) {
-			pending.push(name);
-			continue;
-		}
-
-		unknown.push(name);
-	}
-
-	if (unknown.length > 0) {
-		throw {type: 'image_unknown', names: unknown};
-	}
-
-	if (pending.length === 0) return;
-
 	await mkdir(UPLOADS_DIR, {recursive: true});
-
-	for (const name of pending) {
-		await rename(resolve(UPLOADS_TMP_DIR, name), resolve(UPLOADS_DIR, name));
-	}
+	await writeFile(resolve(UPLOADS_DIR, name), out);
 }
 
 /**
- * Видаляє постійні файли. Відсутній файл — не помилка: його могли прибрати
- * руками.
+ * Видаляє файли. Відсутній файл — не помилка: його могли прибрати руками, а при
+ * відкаті збереження частина імен могла й не дійти до запису.
  *
  * @param {string[]} names
  * @returns {Promise<void>}
@@ -137,12 +72,4 @@ export async function removeImages(names) {
 
 		await unlink(resolve(UPLOADS_DIR, name)).catch(() => {});
 	}
-}
-
-/**
- * @param {string} path
- * @returns {Promise<boolean>}
- */
-function exists(path) {
-	return access(path).then(() => true, () => false);
 }

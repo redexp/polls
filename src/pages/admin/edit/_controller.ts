@@ -1,4 +1,4 @@
-import ajax, {uploadFile} from '@lib/ajax.js';
+import ajax, {postForm} from '@lib/ajax.js';
 import {qs, byId, loading, copyText} from '@lib/dom.ts';
 import {error, success} from '@lib/notify.ts';
 import {getAuthParams, getJwt, hasAuth, isAdmin, retrieveJwt} from '@lib/auth.ts';
@@ -18,6 +18,8 @@ type GroupData = {
 
 type PollStruct = {
 	slug?: string,
+	/** id, під яким опитування лежить зараз; null — створення нового */
+	prev_slug?: string|null,
 	title: string,
 	intro: string,
 	groups: GroupData[],
@@ -47,8 +49,10 @@ type ImageEntry = {
 
 const POLLS_PATH = '/polls/';
 
-const IMAGE_UPLOAD_URL = '/api/admin/polls/image';
 const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+/** ліміти дублюють серверні, щоб не тримати у вкладці те, що сервер відхилить */
+const MAX_IMAGE_SIZE = 3 * 1024 * 1024;
+const MAX_IMAGES = 10;
 /** підпис картинки в тексті; номер — наступний за найбільшим в опитуванні */
 const IMAGE_LABEL = 'Картинка';
 /** посилальна картинка в тексті: ![Картинка 1][id] */
@@ -600,10 +604,25 @@ function hasFiles(e: DragEvent): boolean {
  */
 function registerImageFiles(files: FileList|File[]): ImageItem[] {
 	const list = Array.from(files);
-	const accepted = list.filter(file => IMAGE_TYPES.includes(file.type));
+	const typed = list.filter(file => IMAGE_TYPES.includes(file.type));
 
-	if (accepted.length < list.length) {
+	if (typed.length < list.length) {
 		error('Підтримуються лише картинки png, jpg і webp');
+	}
+
+	const sized = typed.filter(file => file.size <= MAX_IMAGE_SIZE);
+
+	if (sized.length < typed.length) {
+		error('Картинка більша за 3 МБ');
+	}
+
+	// ліміт на запит, тож рахуються всі незбережені картинки опитування, а не
+	// лише ця пачка: інакше дві пачки по шість дали б відмову вже на сервері
+	const room = Math.max(0, MAX_IMAGES - pendingCount());
+	const accepted = sized.slice(0, room);
+
+	if (accepted.length < sized.length) {
+		error('За раз можна завантажити не більше 10 картинок');
 	}
 
 	// номери для всієї пачки одразу: текст оновиться лише після вставки
@@ -667,6 +686,17 @@ function managedAreas(): HTMLTextAreaElement[] {
 		outroInput,
 		...Array.from(groupsRoot.querySelectorAll<HTMLTextAreaElement>('[data-body]')),
 	];
+}
+
+/**
+ * Незбережені картинки, на які посилається текст — рівно те, що поїде
+ * файлами при збереженні. Записи в `images` лишаються і після прибирання
+ * токена, тому рахувати саму мапу не можна.
+ */
+function pendingCount(): number {
+	const text = managedAreas().map(area => area.value).join('\n');
+
+	return referencedIds(text).filter(id => images.get(id)?.file).length;
 }
 
 /**
@@ -820,35 +850,42 @@ function referencedImages(texts: string[]): Record<string, string> {
 }
 
 /**
- * Перша фаза збереження: незбережені файли їдуть на сервер, і мапа отримує
- * серверні адреси замість blob:. Самі записи не змінюються, поки опитування не
- * збережено — інакше невдале збереження лишило б мініатюри без картинок.
+ * Тіло збереження: структура опитування одним полем JSON, а незбережені
+ * картинки — файлами, у яких назва поля і є id картинки в тексті. Серверні
+ * адреси лишаються в `images` усередині JSON.
  */
-async function uploadPending(refs: Record<string, string>): Promise<Record<string, string>> {
-	const result: Record<string, string> = {};
+function saveBody(struct: PollStruct): FormData {
+	const body = new FormData();
+	const saved: Record<string, string> = {};
+	const files: [string, File][] = [];
 
-	for (const [id, url] of Object.entries(refs)) {
-		const entry = images.get(id);
+	for (const [id, url] of Object.entries(struct.images)) {
+		const file = images.get(id)?.file;
 
-		if (!entry?.file) {
-			result[id] = url;
-			continue;
+		if (file) {
+			files.push([id, file]);
 		}
-
-		const data = await uploadFile(IMAGE_UPLOAD_URL, entry.file, getJwt());
-
-		result[id] = data.url;
+		else {
+			saved[id] = url;
+		}
 	}
 
-	return result;
+	body.append('data', JSON.stringify({...struct, images: saved}));
+
+	for (const [id, file] of files) {
+		body.append(id, file, file.name);
+	}
+
+	return body;
 }
 
 /**
  * Після успішного збереження картинки стають серверними: blob: більше не
- * потрібен, як і сам файл у пам'яті.
+ * потрібен, як і сам файл у пам'яті. Адреси приходять від сервера — до
+ * збереження імен файлів клієнт не знає.
  */
 function commitUploaded(uploaded: Record<string, string>) {
-	for (const [id, url] of Object.entries(uploaded)) {
+	for (const [id, url] of Object.entries(uploaded || {})) {
 		const entry = images.get(id);
 
 		if (!entry || entry.url === url) continue;
@@ -1158,21 +1195,17 @@ async function save(): Promise<string> {
 	try {
 		const struct = collect();
 
-		// дві фази: спершу файли в тимчасову теку сервера, потім сам файл
-		// опитування з їхніми адресами — сервер перенесе їх у постійну теку
-		const uploaded = await uploadPending(struct.images);
-
-		const body = {
-			jwt: getJwt(),
+		// картинки їдуть тим самим запитом, тому тіло multipart, а jwt —
+		// у заголовку: розібрати тіло сервер може лише після перевірки прав
+		const body = saveBody({
+			...struct,
 			slug: slugInput.value.trim(),
 			prev_slug: currentSlug,
-			...struct,
-			images: uploaded,
-		};
+		});
 
-		const data = await ajax('/api/admin/polls/save', body);
+		const data = await postForm('/api/admin/polls/save', body, getJwt());
 
-		commitUploaded(uploaded);
+		commitUploaded(data.images);
 
 		currentSlug = data.slug;
 		slugTouched = true;

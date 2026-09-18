@@ -24,19 +24,33 @@ import {
 	findImageRefs,
 	findDefinedIds,
 } from '../models/pollFile.js';
-import {IMAGE_NAME_RE, storeUpload, commitImages, removeImages} from '../models/images.js';
+import {IMAGE_NAME_RE, newImageName, saveImage, removeImages} from '../models/images.js';
 import {handler, sendError} from './errors.js';
+import {IMAGE_ID_RE, mapImageFields} from './imageFields.js';
 import {assertValuesPreserved} from './valueGuard.js';
 
 export const router = Router({mergeParams: true});
 
 /** ліміт на вхідний файл; після обробки картинка все одно стане меншою */
-const MAX_UPLOAD = 10 * 1024 * 1024;
+const MAX_IMAGE_SIZE = 3 * 1024 * 1024;
+
+/** скільки нових картинок можна привезти одним збереженням */
+const MAX_IMAGES = 10;
+
+/** ліміт на поле data; це текст опитування, картинки сюди не входять */
+const MAX_BODY = 2 * 1024 * 1024;
 
 const upload = multer({
 	storage: multer.memoryStorage(),
-	limits: {fileSize: MAX_UPLOAD, files: 1},
+	limits: {fileSize: MAX_IMAGE_SIZE, files: MAX_IMAGES, fieldSize: MAX_BODY},
 });
+
+/** ліміти multer у типи помилок адмінки */
+const UPLOAD_ERRORS = new Map([
+	['LIMIT_FILE_SIZE', 'image_too_large'],
+	['LIMIT_FILE_COUNT', 'too_many_images'],
+	['LIMIT_FIELD_VALUE', 'poll_too_large'],
+]);
 
 router.post('/list', handler(async function (req, res) {
 	const files = await listPollFiles();
@@ -121,32 +135,26 @@ router.post('/retype', handler(async function (req, res) {
 }));
 
 /**
- * Перша фаза збереження: файл потрапляє в тимчасову теку і повертається його
- * ім'я. Постійним він стає лише разом зі збереженням опитування. Multipart, а
- * не JSON, тому jwt для цього маршруту іде в заголовку Authorization.
+ * Опитування приходить multipart: поле `data` з JSON і картинки, у яких
+ * назва поля — id картинки в тексті. Тіла на момент адмінської перевірки ще
+ * немає, тому jwt для цього маршруту іде в заголовку Authorization.
  */
-router.post('/image', function (req, res, next) {
-	upload.single('file')(req, res, function (err) {
-		if (err?.code === 'LIMIT_FILE_SIZE') {
-			sendError(res, {type: 'image_too_large'});
+router.post('/save', function (req, res, next) {
+	upload.any()(req, res, function (err) {
+		const type = UPLOAD_ERRORS.get(err?.code);
+
+		if (type) {
+			sendError(res, {type});
 			return;
 		}
 
 		next(err);
 	});
 }, handler(async function (req, res) {
-	if (!req.file?.buffer) {
-		throw {type: 'image_missing'};
-	}
+	const body = parseBody(req.body?.data);
 
-	const name = await storeUpload(req.file.buffer);
-
-	res.json({name, url: IMAGES_URL + name});
-}));
-
-router.post('/save', handler(async function (req, res) {
-	const {slug, prev_slug, title, intro, groups, outro, hideQuestions, expire, draft} = req.body;
-	const pub = req.body.public;
+	const {slug, prev_slug, title, intro, groups, outro, hideQuestions, expire, draft} = body;
+	const pub = body.public;
 
 	validateSlug(slug);
 
@@ -176,7 +184,15 @@ router.post('/save', handler(async function (req, res) {
 		throw {type: 'slug_conflict', slug, file: conflict};
 	}
 
-	const images = normalizeImages(req.body.images);
+	const images = normalizeImages(body.images);
+
+	// нові картинки отримують імена до обробки: адреса має пройти ті самі
+	// перевірки, що й у вже збережених, ще до того, як щось ляже на диск
+	const uploads = mapImageFields(req.files, new Set(Object.keys(images)), newImageName);
+
+	for (const [id, item] of uploads) {
+		images[id] = IMAGES_URL + item.name;
+	}
 
 	assertImagesDefined({intro, groups, outro}, images);
 
@@ -195,34 +211,66 @@ router.post('/save', handler(async function (req, res) {
 		assertValuesPreserved(prevMd, parsed, await Answers.countValues(target), target + '.md');
 	}
 
-	const nextImages = imageFilesOf(md);
+	const nextImages = new Set(imageFilesOf(md));
 	const prevImages = prevMd === null ? [] : imageFilesOf(prevMd);
 
-	// друга фаза: файли з тимчасової теки стають постійними. Після всіх
-	// перевірок, щоб відхилене збереження не лишало їх у постійній теці
-	await commitImages(nextImages);
+	// імена вже записаних картинок, щоб прибрати їх, якщо збереження впаде
+	const written = [];
 
-	await writePollFile(slug, md);
-
-	if (isRename) {
-		await deletePollFile(prev_slug);
-	}
+	let saved = false;
 
 	try {
+		// картинки лягають на диск після всіх перевірок, щоб відхилене
+		// збереження не лишало файлів
+		for (const {name, buffer} of uploads.values()) {
+			// картинки, чий токен зник з тексту, поки летів запит: визначення в
+			// .md для них немає, тож файл став би сиротою одразу після запису
+			if (!nextImages.has(name)) continue;
+
+			await saveImage(buffer, name);
+
+			written.push(name);
+		}
+
+		await writePollFile(slug, md);
+
+		saved = true;
+
+		if (isRename) {
+			await deletePollFile(prev_slug);
+		}
+
 		await reloadPollsData();
 	}
 	catch (err) {
-		// сервер не має лишитись із непрацездатним кешем опитувань
-		await restore({slug, prev_slug: isRename ? prev_slug : null, prevMd});
+		// картинка без файлу, який на неї посилається, вже нічия: імена
+		// унікальні на кожне завантаження, тому інше опитування їх не втратить
+		await removeImages(written);
+
+		// відновлювати нема чого, якщо запис самого файлу і не відбувся
+		if (saved) {
+			// сервер не має лишитись із непрацездатним кешем опитувань
+			await restore({slug, prev_slug: isRename ? prev_slug : null, prevMd});
+		}
 
 		throw err;
 	}
 
 	// картинки, які були у файлі, а тепер ні. Імена унікальні на кожне
 	// завантаження, тому інше опитування на них посилатись не може
-	await removeImages(prevImages.filter(name => !nextImages.includes(name)));
+	await removeImages(prevImages.filter(name => !nextImages.has(name)));
 
-	res.json({slug});
+	// клієнт заміщає цим свою мапу, тому в ній лише ті картинки, що справді
+	// потрапили у файл: адреса на незаписану картинку лишила б порожню мініатюру
+	const savedImages = {};
+
+	for (const [id, url] of Object.entries(images)) {
+		if (nextImages.has(imageNameFromUrl(url))) {
+			savedImages[id] = url;
+		}
+	}
+
+	res.json({slug, images: savedImages});
 }));
 
 router.post('/delete', handler(async function (req, res) {
@@ -259,6 +307,30 @@ router.post('/delete', handler(async function (req, res) {
 }));
 
 /**
+ * Структура опитування приїздить полем multipart, тому JSON розбирається
+ * тут, а не express.json.
+ *
+ * @param {*} data
+ * @returns {Object}
+ */
+function parseBody(data) {
+	if (typeof data !== 'string') throw {type: 'invalid_body'};
+
+	let parsed;
+
+	try {
+		parsed = JSON.parse(data);
+	}
+	catch {
+		throw {type: 'invalid_body'};
+	}
+
+	if (!parsed || typeof parsed !== 'object') throw {type: 'invalid_body'};
+
+	return parsed;
+}
+
+/**
  * Мапа id → адреса від клієнта. Приймаються лише адреси з IMAGES_URL з іменем
  * файлу правильної форми: усе інше — невідома картинка, а не шлях на диску.
  *
@@ -273,7 +345,7 @@ function normalizeImages(value) {
 	const unknown = [];
 
 	for (const [id, url] of Object.entries(value)) {
-		if (!/^[A-Za-z0-9_-]{1,64}$/.test(id)) continue;
+		if (!IMAGE_ID_RE.test(id)) throw {type: 'invalid_body'};
 
 		const name = imageNameFromUrl(url);
 

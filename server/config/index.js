@@ -46,15 +46,6 @@ export const UPLOADS_DIR = (
 	resolve(ROOT_DIR, 'uploads')
 );
 
-/**
- * Куди лягає завантажений файл до збереження опитування. Не роздається: усе,
- * що тут лежить, або переїде в UPLOADS_DIR при збереженні, або зникне за годину
- */
-export const UPLOADS_TMP_DIR = (
-	get('UPLOADS_TMP_DIR') ||
-	resolve(ROOT_DIR, 'uploads-tmp')
-);
-
 /** публічний шлях до картинок; у файлах опитувань адреси починаються з нього */
 export const IMAGES_URL = '/img/polls/';
 

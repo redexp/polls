@@ -17,7 +17,6 @@ dist/
 builds/
 # картинки опитувань, завантажені з адмінки
 uploads/
-uploads-tmp/
 # generated types
 .astro/
 
