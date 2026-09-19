@@ -119,8 +119,14 @@ const images = new Map<string, ImageEntry>();
  */
 const touchedAreas = new WeakSet<HTMLTextAreaElement>();
 
-const introImageBtn = byId<HTMLButtonElement>('intro-image');
-const introImageFile = byId<HTMLInputElement>('intro-image-file');
+/** спільний на всю сторінку; поле-адресата памʼятає imageTarget */
+const imageFile = byId<HTMLInputElement>('image-file');
+
+/** кнопка «Додати картинку» кожного поля — щоб ховати їх у візуальному режимі */
+const imageButtons = new Map<HTMLTextAreaElement, HTMLButtonElement>();
+
+/** поле, яке відкрило файловий діалог останнім */
+let imageTarget: HTMLTextAreaElement|null = null;
 
 /** перемикач візуального редактора; стан — вподобання людини, не опитування */
 const visualInput = byId<HTMLInputElement>('visual-editor');
@@ -196,27 +202,24 @@ introInput.addEventListener('focusin', () => scrollPreviewTo(null));
 // текст результатів — навпаки, хвіст сторінки
 outroInput.addEventListener('focusin', () => scrollPreviewToEnd());
 
-attachImageDrop(introInput);
-attachImageDrop(outroInput);
+attachImageDrop(introInput, byId<HTMLButtonElement>('intro-image'));
+attachImageDrop(outroInput, byId<HTMLButtonElement>('outro-image'));
 
-introImageBtn.onclick = function () {
-	introImageFile.click();
-};
-
-introImageFile.onchange = function () {
-	const files = introImageFile.files;
-	const editor = editors.get(introInput);
+imageFile.onchange = function () {
+	const files = imageFile.files;
+	const area = imageTarget;
+	const editor = area && editors.get(area);
 
 	if (files?.length && editor) {
 		// у візуальному режимі textarea схована — картинка стає в редактор
 		editor.insertImages(registerImageFiles(files));
 	}
-	else if (files?.length) {
-		addImageFiles(introInput, files);
+	else if (files?.length && area) {
+		addImageFiles(area, files);
 	}
 
 	// інакше той самий файл удруге не вибрати — change не спрацює
-	introImageFile.value = '';
+	imageFile.value = '';
 };
 
 resultsInput.onchange = applyResults;
@@ -351,7 +354,7 @@ function addGroup(group: GroupData): HTMLElement {
 	const limit = qs<HTMLInputElement>('[data-limit]', node);
 
 	body.value = group.body || '';
-	attachImageDrop(body);
+	attachImageDrop(body, qs<HTMLButtonElement>('[data-image]', node));
 	renderStrip(body);
 
 	if (visualInput.checked) {
@@ -391,6 +394,7 @@ function addGroup(group: GroupData): HTMLElement {
 
 		editors.get(body)?.destroy();
 		editors.delete(body);
+		imageButtons.delete(body);
 
 		node.remove();
 	};
@@ -541,6 +545,10 @@ function applyResults() {
 	editors.get(outroInput)?.element.classList.toggle('d-none', !on);
 	stripOf(outroInput).classList.toggle('d-none', !on);
 	hideQuestionsCol.classList.toggle('d-none', !on);
+
+	// у візуальному режимі кнопка схована в будь-якому разі: вона є на панелі
+	// редактора
+	imageButtons.get(outroInput)?.classList.toggle('d-none', !on || visualInput.checked);
 }
 
 // ---------------------------------------------------------------------------
@@ -553,11 +561,21 @@ function applyResults() {
 // ---------------------------------------------------------------------------
 
 /**
- * Перетягування і вставка з буфера працюють на всіх полях; кнопка з файловим
- * інпутом є лише у вступу.
+ * Перетягування, вставка з буфера і кнопка «Додати картинку» — на кожному полі.
+ * Файловий інпут при цьому один на сторінку: поле-адресата памʼятає imageTarget.
  */
-function attachImageDrop(area: HTMLTextAreaElement) {
+function attachImageDrop(area: HTMLTextAreaElement, button: HTMLButtonElement) {
 	stripOf(area);
+
+	imageButtons.set(area, button);
+
+	button.onclick = function () {
+		imageTarget = area;
+		imageFile.click();
+	};
+
+	// у візуальному режимі та сама кнопка вже є на панелі редактора
+	button.classList.toggle('d-none', visualInput.checked);
 
 	area.addEventListener('focusin', () => touchedAreas.add(area));
 	area.addEventListener('input', () => renderStrip(area));
@@ -1104,8 +1122,14 @@ function saveVisualPref(on: boolean) {
 async function setVisual(on: boolean) {
 	saveVisualPref(on);
 
-	// у візуальному режимі та сама кнопка є на панелі редактора вступу
-	introImageBtn.classList.toggle('d-none', on);
+	// у візуальному режимі та сама кнопка є на панелі кожного редактора
+	for (const button of imageButtons.values()) {
+		button.classList.toggle('d-none', on);
+	}
+
+	// кнопка результатів має ще й власне правило: вимкнений блок ховає її
+	// незалежно від режиму
+	applyResults();
 
 	if (on) {
 		await Promise.all(managedAreas().map(mountEditor));
@@ -1140,8 +1164,11 @@ async function mountEditor(area: HTMLTextAreaElement) {
 			renderStrip(area);
 		},
 		onImageFiles: registerImageFiles,
-		// кнопка «Картинка» є лише у вступу — та сама, що й у сирому режимі
-		onImageButton: area === introInput ? () => introImageFile.click() : undefined,
+		// та сама кнопка, що й у сирому режимі: відкриває спільний файловий інпут
+		onImageButton() {
+			imageTarget = area;
+			imageFile.click();
+		},
 	});
 
 	editors.set(area, editor);

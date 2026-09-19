@@ -1,14 +1,13 @@
-import {unified} from '@astrojs/markdown-remark';
-import remarkBreaks from 'remark-breaks';
+import {satteri} from '@astrojs/markdown-satteri';
+import breaks from './breaks.js';
 import transform from './transform.js';
 
 /**
  * Один процесор для збірки і для прев'ю в адмінці. Якби прев'ю збиралося
  * власним ланцюжком, воно б рано чи пізно почало брехати.
  */
-export const processor = unified({
-	remarkPlugins: [remarkBreaks],
-	rehypePlugins: [transform],
+export const processor = satteri({
+	mdastPlugins: [breaks],
+	hastPlugins: [transform],
 });
 
-export default processor;

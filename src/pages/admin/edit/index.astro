@@ -79,12 +79,9 @@ import '../../../styles/poll.less';
                             <span class="d-flex align-items-center gap-3">
                                 <label class="form-label mb-0" for="intro">Вступний текст</label>
 
-                                <!-- кнопка з файловим інпутом є лише тут; в інші поля
-                                     картинки потрапляють перетягуванням. У візуальному
-                                     режимі ховається: та сама кнопка є на панелі редактора -->
-                                <button id="intro-image" type="button" class="btn btn-sm btn-outline-secondary">Додати картинку</button>
-                                <input id="intro-image-file" type="file" class="d-none" multiple
-                                       accept="image/png,image/jpeg,image/webp"/>
+                                <!-- кнопка є в кожного текстового поля; у візуальному режимі
+                                     ховається: та сама кнопка є на панелі редактора -->
+                                <button id="intro-image" data-image type="button" class="btn btn-sm btn-outline-secondary">Додати картинку</button>
                             </span>
 
                             <!-- вмикає редактор на всіх полях одразу; стан —
@@ -120,10 +117,16 @@ import '../../../styles/poll.less';
                                 <button type="button" class="btn-help" data-help="help-hide-questions"
                                         aria-label="Пояснення про сховані питання">?</button>
                             </span>
+                            <!-- власного підпису поле не має, тому кнопка стоїть тут і
+                                 зникає разом із самим полем -->
+                            <button id="outro-image" data-image type="button" class="btn btn-sm btn-outline-secondary d-none">Додати картинку</button>
                         </div>
 
                         <textarea id="outro" name="outro" class="form-control mt-2 d-none" rows="4"></textarea>
                     </div>
+                    <!-- один на всю сторінку: яке поле його відкрило, памʼятає конструктор -->
+                    <input id="image-file" type="file" class="d-none" multiple
+                           accept="image/png,image/jpeg,image/webp"/>
                 </form>
 
                 <h2 class="h5 d-flex align-items-center">
@@ -145,6 +148,8 @@ import '../../../styles/poll.less';
                                 <button data-type="checkbox" type="button" class="btn btn-outline-secondary">Декілька відповідей</button>
                                 <button data-type="radio" type="button" class="btn btn-outline-secondary">Тільки одна відповідь</button>
                             </div>
+
+                            <button data-image type="button" class="btn btn-sm btn-outline-secondary">Додати картинку</button>
 
                             <span class="flex-fill"></span>
 
