@@ -1,7 +1,7 @@
 import {IS_DEV, MAPS} from '../config/index.js';
-import axios from "axios";
+import {createAjax} from "./ajax.js";
 
-const mapApi = axios.create({
+const mapApi = createAjax({
     baseURL: 'https://api.mapbox.com',
     method: 'GET',
 });

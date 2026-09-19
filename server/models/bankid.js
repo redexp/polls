@@ -1,4 +1,3 @@
-import axios from 'axios';
 import JWT from 'jsonwebtoken';
 import {promisify} from 'util';
 import {createHash, randomUUID} from 'crypto';
@@ -7,6 +6,7 @@ import BANKID from '../config/bankid.js';
 import AUTH from '../config/auth.js';
 import {BANKID_CERT, JWT_KEY} from '../keys/index.js';
 import authAddress from "../lib/authAddress.js";
+import {createAjax} from '../lib/ajax.js';
 
 /** @type {function(p: any, s: any, ops: import('jsonwebtoken').SignOptions): Promise<string>} */
 const jwtEncode = promisify(JWT.sign);
@@ -14,12 +14,12 @@ const jwtDecode = promisify(JWT.verify);
 
 const {client_id, client_secret} = BANKID;
 
-const bankApi = axios.create({
+const bankApi = createAjax({
 	baseURL: BANKID.url,
 	method: 'POST',
 });
 
-const cryptoApi = axios.create({
+const cryptoApi = createAjax({
 	baseURL: BANKID.crypto_url,
 	method: 'POST',
 });
